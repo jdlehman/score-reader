@@ -31,6 +31,7 @@ const STEPS = [
 const STEP = new Map(STEPS.map(([id, text, s], i) => [id, { text, i, before: STEPS.slice(0, i).reduce((a, x) => a + x[2], 0) }]))
 const PAGE_SECONDS = STEPS.reduce((a, x) => a + x[2], 0)
 const START_SECONDS = 12 // starting Java and Audiveris, before the first page
+const LATER = 0.6 // later pages take this much of the first one's time (Java has compiled Audiveris by then)
 
 const $ = id => document.getElementById(id)
 const show = id => { for (const s of ['pick', 'work', 'done', 'failed']) $(s).hidden = s !== id }
@@ -80,13 +81,13 @@ function fraction() {
   const p = progress
   const pages = p.pages ?? 1
   // the first page is slower than the rest (Java compiles Audiveris as it goes)
-  const total = START_SECONDS + PAGE_SECONDS * (1 + (pages - 1) * 0.4) + 3
+  const total = START_SECONDS + PAGE_SECONDS * (1 + (pages - 1) * LATER) + 3
   if (p.phase === 'start') return Math.min(0.95, (performance.now() - p.t0) / 1000 / total) * (START_SECONDS / (START_SECONDS + 1)) // creeps
-  const pageWeight = n => (n === 1 ? 1 : 0.4) * PAGE_SECONDS
+  const pageWeight = n => (n === 1 ? 1 : LATER) * PAGE_SECONDS
   let done = START_SECONDS
   for (let n = 1; n < p.page; n++) done += pageWeight(n)
   const s = STEP.get(p.step)
-  if (s) done += (pageWeight(p.page) * (s.before + Math.min(STEPS[s.i][2], (performance.now() - p.stepAt) / 1000 * (p.page === 1 ? 1 : 2.5)))) / PAGE_SECONDS
+  if (s) done += (pageWeight(p.page) * (s.before + Math.min(STEPS[s.i][2], (performance.now() - p.stepAt) / 1000 * (p.page === 1 ? 1 : 1 / LATER)))) / PAGE_SECONDS
   if (p.phase === 'export') done = total - 1
   return Math.min(0.99, done / total)
 }
@@ -239,14 +240,15 @@ function finish(input, results) {
   const failed = [...progress.failedPages].sort((a, b) => a - b)
   $('done-title').textContent = failed.length ? 'Done, with gaps' : 'Done'
   $('done-summary').textContent = `Read ${pages} page${pages === 1 ? '' : 's'} in ${time}.` +
-    (failed.length ? ` Page${failed.length === 1 ? '' : 's'} ${failed.join(', ')} couldn’t be read and ${failed.length === 1 ? 'is' : 'are'} missing.` : '')
+    (failed.length ? ` Page${failed.length === 1 ? '' : 's'} ${failed.join(', ')} couldn’t be read and ${failed.length === 1 ? 'is' : 'are'} missing.` : '') +
+    (results.length > 1 ? ` The music is in ${results.length} movements, a file each: Audiveris starts a new movement where the music starts afresh, as at a new title.` : '')
   const box = $('downloads')
   results.forEach((blob, i) => {
     const a = document.createElement('a')
     a.className = 'button primary'
     a.href = URL.createObjectURL(new Blob([blob], { type: 'application/vnd.recordare.musicxml' }))
     a.download = results.length === 1 ? `${input.title}.mxl` : `${input.title} (${i + 1}).mxl`
-    a.textContent = results.length === 1 ? `Download ${a.download}` : `Download part ${i + 1} of ${results.length}`
+    a.textContent = results.length === 1 ? `Download ${a.download}` : `Download movement ${i + 1}`
     box.append(a)
   })
   show('done')

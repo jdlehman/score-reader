@@ -24,7 +24,8 @@ time came down from 4 minutes a page to under 2.
 
 Limits: no words or part names yet (Audiveris reads text with Tesseract, which is native), so the
 parts come out named "Voice" or "Piano". The first page takes about 100 seconds and later pages
-about 30; each page needs about 250 MB of memory. The first visit downloads about 45 MB.
+half a minute to a minute (9 pages: 9 minutes). Memory grows by about 50 MB a page (9 pages:
+about 750 MB). The first visit downloads about 45 MB. Tested in Chrome.
 
 ## Building
 

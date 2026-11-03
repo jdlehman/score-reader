@@ -417,7 +417,7 @@ index f9321f1..b2dc80b 100644
          int height = ip.getHeight();
          int w = this.width; //se.getWidth();
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
-index bfbeda9..c2e4b2b 100644
+index bfbeda9..c921535 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/Book.java
 @@ -589,7 +589,9 @@ public class Book
@@ -431,3 +431,69 @@ index bfbeda9..c2e4b2b 100644
          final boolean ok = transcribe(theStubs, theScores, swap);
  
          if (!ok) {
+@@ -2048,6 +2050,9 @@ public class Book
+                             if (swap) {
+                                 swapAllSheets(); // Save sheet(s) & global book info to disk
+                                 logger.info("End of {}", stub);
++                            } else if (Boolean.getBoolean("scorereader.keepSheets") && stub.hasSheet()) {
++                                // score reader: keep the sheet, but only what the export needs
++                                stub.getSheet().lightenForExport();
+                             }
+ 
+                             LogUtil.stopStub();
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/Picture.java b/app/src/main/java/org/audiveris/omr/sheet/Picture.java
+index a3cb0f0..2390eaf 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/Picture.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/Picture.java
+@@ -549,6 +549,21 @@ public class Picture
+         return gray;
+     }
+ 
++    //---------//
++    // lighten //
++    //---------//
++    /**
++     * Score reader: drop every image, source and table, keeping the picture's size.
++     *
++     * @see Sheet#lightenForExport()
++     */
++    public void lighten ()
++    {
++        images.clear();
++        sources.clear();
++        tables.clear();
++    }
++
+     //-----------//
+     // getHeight //
+     //-----------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
+index 3efeee8..5b1eb0c 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
+@@ -1012,6 +1012,25 @@ public class Sheet
+         return lastPersistentId;
+     }
+ 
++    //----------------//
++    // lightenForExport //
++    //----------------//
++    /**
++     * Score reader: once the sheet is done, let go of what only its steps need.
++     * <p>
++     * In the browser (CheerpJ) objects held only by weak references are never freed, so each
++     * sheet kept all its images and every glyph ever tried. The export needs neither: only the
++     * picture's size, and inters keep their own glyphs. A glyph index is made afresh if asked.
++     */
++    public void lightenForExport ()
++    {
++        if (picture != null) {
++            picture.lighten();
++        }
++
++        glyphIndex = null;
++    }
++
+     //------------//
+     // getPicture //
+     //------------//

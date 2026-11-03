@@ -9,7 +9,7 @@ SRC=.work/audiveris/app/src/main/java/org/audiveris/omr
 # 1. our changed Audiveris classes, compiled against the Audiveris jars
 rm -rf .work/classes && mkdir -p .work/classes
 "$J/javac" -nowarn -proc:none -cp ".work/lib/*" -d .work/classes \
-  $SRC/sheet/Book.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
+  $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
   $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java 2>&1 | grep -v '^Note:' || true
 "$J/jar" cf .work/patched.jar -C .work/classes .
 

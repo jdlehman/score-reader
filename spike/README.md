@@ -21,6 +21,12 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `ScoreReaderHook.finished`: Audiveris's shutdown never ends in CheerpJ, so it tells the page
   when it is done (a JavaScript native) and is parked there.
 - No project file saved at the end in the browser (`scorereader.inBrowser`).
+- Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
+  images and its glyph index. CheerpJ never frees objects held only by weak references (a test
+  held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
+  once), and Audiveris holds a page's images and every glyph it tries that way. The export
+  needs neither; the MusicXML is the same as the release's on 9 pages (one movement varies in
+  its staccatos from run to run, in the release too).
 - `FlatMorphology`: the closing filter that finds beam spots, rewritten. The original calls a
   helper per pixel whose erosion branch CheerpJ never compiled (it compiles only branches seen
   taken), so half the calls ran in the interpreter. Same output (checked against the original on
