@@ -1,3 +1,4 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // What Audiveris reads: a PDF of grey pages, drawn here from the PDF or photos chosen.
 //
 // Audiveris can read PDFs and images itself, but in the browser only the simplest ones. Java's

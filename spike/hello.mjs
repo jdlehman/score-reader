@@ -1,5 +1,6 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // node spike/hello.mjs 25 1  -> runs spike/hello.html and prints its console
-import { chromium } from '/Users/jdlehman/code/github/jdlehman/midi_studio/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright-core'
 const [java = '25', wasm = '0'] = process.argv.slice(2)
 const browser = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch())
 const tab = await browser.newPage()

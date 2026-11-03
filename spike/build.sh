@@ -1,4 +1,5 @@
 #!/bin/sh
+# Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 # Build the browser classpath: Audiveris with our patches, its jars rewritten to use FastMath.
 #   spike/build.sh   (needs .work/ as ./setup.sh makes it)
 set -e

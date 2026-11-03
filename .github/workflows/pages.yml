@@ -24,13 +24,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      # Audiveris's source and release jars, and the JDK: about 300 MB to fetch otherwise
+      # Audiveris's source and release jars, the JDK and the libraries' source: about 300 MB to fetch otherwise
       - uses: actions/cache@v4
         with:
           path: |
             .work/audiveris
             .work/lib
             .work/jdk
+            .work/sources
           key: work-${{ hashFiles('setup.sh', 'patches/**') }}
       - run: ./setup.sh
       - run: npm ci

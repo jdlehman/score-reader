@@ -1,3 +1,4 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Drive the built page (dist/) in Chrome: choose files, wait, save the download and screenshots.
 //   node test/e2e.mjs <out name> <file>...   (with spike/serve.mjs running; results in .work/e2e/)
 //   MINUTES=n gives up after n minutes (default 20); the page's console goes to .work/e2e/<name>.log

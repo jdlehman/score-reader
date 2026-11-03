@@ -1,8 +1,9 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Open the spike page in Chrome and wait for Audiveris to finish; save the .mxl and the console.
 //   node spike/drive.mjs [page] [java]   (with spike/serve.mjs running)
 import { appendFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { chromium } from '/Users/jdlehman/code/github/jdlehman/midi_studio/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright-core'
 
 const [page = '/.work/page.png', java = '25', minutes = '30'] = process.argv.slice(2)
 const out = join(import.meta.dirname, '..', '.work')

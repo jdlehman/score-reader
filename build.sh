@@ -1,5 +1,7 @@
 #!/bin/sh
-# Build the site into dist/: the page, the licences, and Audiveris's jars (patched and rewritten).
+# Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+# Build the site into dist/: the page, the licences, Audiveris's jars (patched and rewritten), and
+# the source of the copyleft ones.
 #   ./build.sh   (needs .work/: see spike/README.md; and npm install, for PDF.js)
 #   ./build.sh page   rebuilds only the page, keeping the jars in dist/
 set -e
@@ -15,6 +17,7 @@ mkdir -p dist/jars dist/pdfjs
 cp app/index.html app/reader.js app/pdf.js app/style.css dist/
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
+printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt
 # PDF.js draws PDFs' pages: its library, its decoders for scanned images, its fonts and colour profiles
 pdfjs=node_modules/pdfjs-dist
 cp $pdfjs/build/pdf.min.mjs $pdfjs/build/pdf.worker.min.mjs $pdfjs/LICENSE dist/pdfjs/
@@ -25,4 +28,6 @@ rm -f dist/pdfjs/wasm/quickjs* dist/pdfjs/wasm/LICENSE_*QUICKJS # that one runs 
 # the jars in classpath order, patched classes first; the page adds where they are served from
 [ "$1" = page ] || sed 's|/app/.work/fast/||g' .work/classpath-fast.txt | tr ':' '\n' > dist/jars/classpath.txt
 [ "$1" = page ] || for j in $(cat dist/jars/classpath.txt); do cp ".work/fast/$j" dist/jars/; done
+# the source of the copyleft libraries (see NOTICE.txt)
+[ "$1" = page ] || { mkdir -p dist/source && cp .work/sources/*.jar dist/source/; }
 echo "dist: $(du -sh dist | cut -f1)"

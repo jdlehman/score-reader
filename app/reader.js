@@ -1,3 +1,4 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Score reader: Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the
 // file, follows its log for progress, and offers the MusicXML it writes.
 //

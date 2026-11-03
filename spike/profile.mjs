@@ -1,9 +1,10 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Profile one Audiveris step in the browser: start V8's sampling profiler when the step starts
 // (from the log) and stop after a while, then list where the time went.
 //   node spike/profile.mjs BEAMS 20   (step, seconds to sample)   (with spike/serve.mjs running)
 import { appendFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { chromium } from '/Users/jdlehman/code/github/jdlehman/midi_studio/node_modules/playwright/index.mjs'
+import { chromium } from 'playwright-core'
 
 const [from = 'BEAMS', seconds = '20', page = '/.work/page.png'] = process.argv.slice(2)
 const out = join(import.meta.dirname, '..', '.work')

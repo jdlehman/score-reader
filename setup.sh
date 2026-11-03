@@ -1,6 +1,7 @@
 #!/bin/sh
+# Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 # Make .work/, which ./build.sh needs: Audiveris 5.11.0's source with our patch applied, the jars
-# of its release, their class path, and a Temurin JDK 25.
+# of its release, their class path, a Temurin JDK 25, and the source of the copyleft libraries.
 #   ./setup.sh   (on macOS or Linux; needs git and curl, and dpkg-deb on Linux)
 # Each part is skipped if it is already there.
 set -e
@@ -50,4 +51,27 @@ if [ ! -d .work/jdk ]; then
   mkdir -p .work/jdk
   curl -fsSL "https://api.adoptium.net/v3/binary/latest/25/ga/$os/$arch/jdk/hotspot/normal/eclipse" | tar xz -C .work/jdk
   echo "jdk: $(ls .work/jdk)"
+fi
+
+# 5. the source of the libraries under copyleft licences (AGPL, LGPL, CDDL, EPL), which the site
+# serves next to their jars (in source/), as Maven Central publishes it. The rest are permissive.
+if [ ! -d .work/sources ]; then
+  mkdir -p .work/sources.tmp
+  for p in \
+    com/itextpdf/itextpdf/5.5.13.2/itextpdf-5.5.13.2 \
+    org/jfree/jfreechart/1.5.6/jfreechart-1.5.6 \
+    org/jdesktop/bsaf/bsaf/1.9.2/bsaf-1.9.2 \
+    org/audiveris/proxymusic/4.0.3/proxymusic-4.0.3 \
+    ch/qos/logback/logback-classic/1.4.14/logback-classic-1.4.14 \
+    ch/qos/logback/logback-core/1.4.14/logback-core-1.4.14 \
+    org/jgrapht/jgrapht-core/1.5.2/jgrapht-core-1.5.2 \
+    com/sun/xml/bind/jaxb-impl/2.3.1/jaxb-impl-2.3.1 \
+    com/sun/xml/bind/jaxb-core/2.3.0.1/jaxb-core-2.3.0.1 \
+    javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1 \
+    javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0
+  do
+    curl -fsSL -o ".work/sources.tmp/$(basename $p)-sources.jar" "https://repo1.maven.org/maven2/$p-sources.jar"
+  done
+  mv .work/sources.tmp .work/sources
+  echo "sources: $(ls .work/sources | wc -l | tr -d ' ') libraries"
 fi

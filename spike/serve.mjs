@@ -1,3 +1,4 @@
+// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // A static server with Range requests (CheerpJ reads jars in ranges). Serves the repository root.
 //   node spike/serve.mjs [port]
 import { createReadStream, statSync } from 'node:fs'

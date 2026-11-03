@@ -24,7 +24,7 @@ time came down from 4 minutes a page to under 2.
 
 Limits: no words or part names yet (Audiveris reads text with Tesseract, which is native), so the
 parts come out named "Voice" or "Piano". The first page takes about 100 seconds and later pages
-half a minute to a minute (9 pages: 9 minutes). Memory grows by about 50 MB a page (9 pages:
+up to a minute (9 pages: 9 minutes). Memory grows by about 50 MB a page (9 pages:
 about 750 MB). The first visit downloads about 45 MB. Tested in Chrome.
 
 ## Building
@@ -44,6 +44,8 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
 ## Licence
 
 GNU Affero General Public License v3 or later, like Audiveris: see `LICENSE`. `NOTICE.txt` lists
-the licences of Audiveris's libraries and of PDF.js. CheerpJ is loaded from Leaning Technologies'
+the licences of Audiveris's libraries and of PDF.js, and where their source is. The site serves the
+source of the libraries under copyleft licences next to their jars (`source/`, fetched by
+`setup.sh` from Maven Central), and each jar `Rewrite` changes says so inside it. CheerpJ is loaded from Leaning Technologies'
 servers under its community licence for non-commercial open-source projects; it is not part of
 this repository.
