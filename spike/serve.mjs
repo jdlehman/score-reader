@@ -5,16 +5,21 @@ import { createServer } from 'node:http'
 import { extname, join, normalize } from 'node:path'
 
 const root = join(import.meta.dirname, '..')
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.jar': 'application/java-archive', '.png': 'image/png', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.json': 'application/json' }
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.jar': 'application/java-archive', '.png': 'image/png', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.json': 'application/json', '.css': 'text/css', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' }
 const port = Number(process.argv[2] ?? 8787)
 
 createServer((req, res) => {
-  const path = normalize(join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname)))
+  let path = normalize(join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname)))
   if (!path.startsWith(root)) return res.writeHead(403).end()
   let size
   try {
-    const st = statSync(path)
-    if (!st.isFile()) return res.writeHead(404).end() // folders too: CheerpJ probes for them
+    let st = statSync(path)
+    // a folder: its index.html if it has one (CheerpJ probes for folders; those get 404)
+    if (st.isDirectory() && req.url.endsWith('/')) {
+      path = join(path, 'index.html')
+      st = statSync(path)
+    }
+    if (!st.isFile()) return res.writeHead(404).end()
     size = st.size
   } catch { return res.writeHead(404).end() }
   const headers = { 'Content-Type': types[extname(path)] ?? 'application/octet-stream', 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' }

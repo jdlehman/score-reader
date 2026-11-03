@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Score reader</title>
+<meta name="description" content="Turn a PDF or photo of sheet music into a MusicXML file, in your browser.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Score reader</h1>
+    <p class="lead">Turn a PDF or photos of sheet music into a MusicXML file, which <a href="https://inlehmansterms.net/sectional/">Sectional</a> and notation programs (MuseScore, Finale, Sibelius, Dorico) can open. It all happens in your browser: your music isn’t uploaded anywhere.</p>
+  </header>
+
+  <section id="pick" class="panel drop">
+    <p class="big">Drop a PDF or photos of the pages here</p>
+    <label class="button primary">Choose files<input id="files" type="file" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.bmp,application/pdf,image/*" multiple></label>
+    <ul class="tips">
+      <li>A clean PDF works best: notation software’s own PDFs, or those from CPDL or IMSLP.</li>
+      <li>For a paper copy, use your phone’s document scanner rather than the camera: Notes on an iPhone (tap the camera button, then Scan Documents), or Google Drive on Android (+, then Scan). It flattens the page and evens out the light, and saves a PDF.</li>
+      <li>Photos of several pages: choose them all at once, in page order.</li>
+    </ul>
+    <p class="muted small">Use a computer if you can: reading takes a minute or two for the first page and about half a minute for each page after, and needs a lot of memory. The first time, the page downloads about 45 MB.</p>
+  </section>
+
+  <section id="work" class="panel" hidden>
+    <div class="row"><strong id="work-name"></strong><span class="spacer"></span><span id="elapsed" class="mono muted"></span></div>
+    <div class="bar"><div id="bar-fill"></div></div>
+    <p id="status">Starting…</p>
+    <p id="pages" class="muted small"></p>
+    <details class="log"><summary>Details</summary><pre id="log"></pre></details>
+  </section>
+
+  <section id="done" class="panel" hidden>
+    <h2 id="done-title">Done</h2>
+    <p id="done-summary" class="muted"></p>
+    <div id="downloads" class="actions"></div>
+    <div class="next">
+      <p><strong>Next:</strong> open the file in <a href="https://inlehmansterms.net/sectional/">Sectional</a> to practise your part, or in MuseScore to check and correct it.</p>
+      <ul class="tips">
+        <li>The reader can’t read words or part names yet: in Sectional, type or paste the words for your part with “Words…”.</li>
+        <li>Recognition isn’t perfect. Listen through once and fix any wrong notes in MuseScore (free).</li>
+      </ul>
+    </div>
+    <div class="actions"><button id="again">Read another score</button></div>
+  </section>
+
+  <section id="failed" class="panel" hidden>
+    <h2>That didn’t work</h2>
+    <p id="failed-why"></p>
+    <div class="actions"><button id="again-failed">Try another file</button></div>
+  </section>
+
+  <footer class="muted small">
+    <p>Score reader runs <a href="https://audiveris.github.io/audiveris/">Audiveris</a> 5.11, the open-source music reader, in your browser. Built with <a href="https://cheerpj.com/">CheerpJ</a>.</p>
+    <p>Score reader is free software under the <a href="LICENSE.txt">GNU Affero General Public License v3</a>. <a href="https://github.com/jdlehman/score-reader">Source code</a>, including our changes to Audiveris. <a href="NOTICE.txt">Other licences</a>.</p>
+  </footer>
+</main>
+<div id="display" aria-hidden="true"></div>
+<script src="https://cjrtnc.leaningtech.com/5.0/loader.js"></script>
+<script type="module" src="reader.js"></script>
+</body>
+</html>

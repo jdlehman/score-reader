@@ -1,0 +1,50 @@
+# Build the site from Audiveris's release, our patches and PDF.js, and publish it on GitHub Pages.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      # Audiveris's source and release jars, and the JDK: about 300 MB to fetch otherwise
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .work/audiveris
+            .work/lib
+            .work/jdk
+          key: work-${{ hashFiles('setup.sh', 'patches/**') }}
+      - run: ./setup.sh
+      - run: npm ci
+      - run: ./build.sh
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

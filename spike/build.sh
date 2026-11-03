@@ -1,9 +1,9 @@
 #!/bin/sh
 # Build the browser classpath: Audiveris with our patches, its jars rewritten to use FastMath.
-#   spike/build.sh   (needs .work/audiveris with patches/ applied, .work/lib, .work/jdk)
+#   spike/build.sh   (needs .work/ as ./setup.sh makes it)
 set -e
 cd "$(dirname "$0")/.."
-J=$(ls -d .work/jdk/*/Contents/Home/bin | head -1)
+J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) # macOS or Linux
 SRC=.work/audiveris/app/src/main/java/org/audiveris/omr
 
 # 1. our changed Audiveris classes, compiled against the Audiveris jars

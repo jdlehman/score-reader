@@ -1,0 +1,17 @@
+{
+  "name": "score-reader",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "./build.sh",
+    "serve": "node spike/serve.mjs",
+    "e2e": "node test/e2e.mjs"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.5.438"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}

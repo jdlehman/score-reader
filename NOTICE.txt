@@ -1,0 +1,41 @@
+Score reader: notices
+
+Score reader (this page, its scripts, FastMath, Rewrite, and the changes to Audiveris in
+patches/) is free software under the GNU Affero General Public License, version 3 or later.
+Copyright (C) 2026 Jonathan Lehman. Source: https://github.com/jdlehman/score-reader
+
+It runs, unchanged except for the patches in its source and the Math calls redirected to
+FastMath (see the source):
+
+  Audiveris 5.11.0, GNU AGPL v3. Copyright Hervé Bitteur and others.
+  https://github.com/Audiveris/audiveris (source of this version: tag 5.11.0)
+
+with the libraries Audiveris 5.11.0 is distributed with. Each jar keeps its own licence files
+where its authors included them (META-INF). As they declare, or as published by their authors:
+
+  Apache License 2.0: Apache Commons IO, Lang and Logging; Apache PDFBox and FontBox; Jackson;
+    jsr305; JavaCPP and its Leptonica and Tesseract presets; jheaps; EventBus
+  MIT: args4j, apfloat, slf4j, GitHub API for Java
+  BSD: commonmark (2-clause), JGoodies Common, Forms and Looks, jai-imageio (with the JJ2000 and
+    Sun licences for JPEG 2000), jbig2-imageio
+  Eclipse Distribution License 1.0: Jakarta Activation and XML Binding, JAXB 4, istack, Angus
+  CDDL 1.1 or GPL 2 with the classpath exception: JAXB 2.3
+  Eclipse Public License 1.0 or LGPL 2.1: Logback
+  EPL 2.0 or LGPL 2.1: JGraphT
+  LGPL 2.1: JFreeChart, Better Swing Application Framework
+  MPL 1.1, LGPL 2.1 or Apache 2.0: Javassist
+  Apache 2.0 or LGPL 2.1: JNA
+  WTFPL or Apache 2.0: Reflections
+  GNU AGPL v3: iText 5
+  Public domain: ImageJ, JAMA
+  Creative Commons Attribution 2.5: jcip-annotations
+  See the jar: Java Advanced Imaging (jai-core 1.1.3), ProxyMusic, javax.activation 1.2
+
+The page draws PDFs' pages with PDF.js 6.5.438 (pdfjs/), Apache License 2.0, Copyright Mozilla
+Foundation and others (https://github.com/mozilla/pdf.js), with what it is distributed with:
+its JBIG2 decoder (from PDFium, BSD), OpenJPEG (BSD 2-clause), qcms (MIT), the Foxit fonts
+(from PDFium, BSD), the Liberation fonts (SIL Open Font License 1.1), Adobe's CMaps (BSD
+3-clause) and a colour profile (CC0). Their licence files are next to them in pdfjs/.
+
+Built with CheerpJ (https://cheerpj.com), loaded from Leaning Technologies' servers under its
+community licence for non-commercial open-source projects. CheerpJ is not part of Score reader.

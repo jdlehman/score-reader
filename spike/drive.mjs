@@ -16,6 +16,12 @@ const t0 = Date.now()
 const note = s => { lines.push(s); appendFileSync(live, `${((Date.now() - t0) / 1000).toFixed(1)}s ${s}\n`) }
 tab.on('console', m => note(m.text()))
 tab.on('pageerror', e => note('PAGEERROR ' + e.message))
+// what the page downloads: our files and CheerpJ's
+const bytes = { ours: 0, cheerpj: 0 }
+tab.on('requestfinished', async r => {
+  const size = (await r.sizes().catch(() => null))?.responseBodySize ?? 0
+  bytes[r.url().startsWith('http://127.0.0.1') ? 'ours' : 'cheerpj'] += size
+})
 await tab.goto(`http://127.0.0.1:8787/spike/index.html?page=${encodeURIComponent(page)}&java=${java}${process.env.EXTRA ?? ''}`)
 const started = Date.now()
 await tab.waitForFunction(() => window.spike?.done, null, { timeout: Number(minutes) * 60 * 1000, polling: 2000 })
@@ -24,5 +30,5 @@ const mxl = await tab.evaluate(() => window.spike.mxl)
 if (mxl) writeFileSync(join(out, 'spike-result.mxl'), Buffer.from(mxl))
 const memory = await tab.evaluate(() => performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1e6) + ' MB JS heap' : '')
 writeFileSync(join(out, 'spike-console.txt'), lines.join('\n'))
-console.log(JSON.stringify({ ...result, wall: Math.round((Date.now() - started) / 1000), memory }, null, 1))
+console.log(JSON.stringify({ ...result, wall: Math.round((Date.now() - started) / 1000), memory, downloadedMB: { ours: +(bytes.ours / 1e6).toFixed(1), cheerpj: +(bytes.cheerpj / 1e6).toFixed(1) } }, null, 1))
 await browser.close()

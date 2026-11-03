@@ -54,7 +54,7 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     EXTRA='&fast=1' node spike/profile.mjs HEADS 25   # where a step spends its time
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
-in `lib/`, `classpath.txt` and a Temurin 25 JDK in `jdk/`.
+in `lib/`, `classpath.txt` and a Temurin 25 JDK in `jdk/`: `./setup.sh` makes it.
 
 CheerpJ's community edition is free for non-commercial open-source projects loaded from its CDN,
 with a "Built with CheerpJ" credit.
