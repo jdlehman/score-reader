@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Score reader spike: Audiveris in CheerpJ</title>
+<script src="https://cjrtnc.leaningtech.com/5.0/loader.js"></script>
+<div id="display" style="width:320px;height:200px"></div>
+<pre id="log"></pre>
+<script type="module">
+// Run Audiveris's command line on one page, in the browser, and read back the MusicXML.
+//   ?page=/.work/page.png&java=25
+const params = new URLSearchParams(location.search)
+const page = params.get('page') ?? '/.work/page.png'
+const log = (...a) => { const s = a.join(' '); document.getElementById('log').textContent += s + '\n'; console.log('[spike]', s) }
+window.spike = { done: false, error: null, mxl: null, seconds: {} }
+const t0 = performance.now()
+const lap = name => { window.spike.seconds[name] = Math.round((performance.now() - t0) / 100) / 10; log(name, window.spike.seconds[name] + ' s') }
+let finished
+const done = new Promise(r => { finished = r })
+try {
+  await cheerpjInit({
+    natives: {
+      async Java_org_audiveris_omr_ScoreReaderHook_finished(lib, failure) {
+        finished(!!failure)
+        return new Promise(() => {}) // park Audiveris for good
+      },
+    }, wasmGC: params.get('wasm') === '1', version: Number(params.get('java') ?? 25), status: 'none', env: ['HOME=/files/home', 'XDG_CONFIG_HOME=/files/home/config', 'XDG_DATA_HOME=/files/home/data', 'XDG_CACHE_HOME=/files/home/cache'], javaProperties: ['file.encoding=UTF-8', 'java.awt.headless=true', 'sun.java2d.uiScale=1', 'com.sun.media.jai.disableMediaLib=true', 'sun.font.layout.ffm=false', 'scorereader.keepSheets=true', 'scorereader.inBrowser=true'] })
+  // Audiveris asks the window system whether it is on its thread, even in batch mode
+  cheerpjCreateDisplay(320, 200, document.getElementById('display'))
+  lap('cheerpj ready')
+  const bytes = new Uint8Array(await (await fetch(page)).arrayBuffer())
+  const name = page.split('/').pop()
+  cheerpOSAddStringFile('/str/' + name, bytes)
+  // our patched classes first, so they win over Audiveris's own
+  // ?fast=1: the jars rewritten to use FastMath (patched classes included)
+  const classpath = params.get('fast') === '1'
+    ? (await (await fetch('/.work/classpath-fast.txt')).text()).trim()
+    : '/app/.work/patched.jar:' + (await (await fetch('/.work/classpath.txt')).text()).trim()
+  const stem = name.replace(/\.[a-z]+$/, '')
+  const run = cheerpjRunMain('Audiveris', classpath, '-batch', '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', ...(params.get('serial') === '1' ? ['-constant', 'org.audiveris.omr.util.OmrExecutors.useParallelism=false'] : []), '-transcribe', '-export', '-output', '/files/out', '/str/' + name)
+    .then(code => { lap('audiveris exited ' + code); return true })
+  const failure = await Promise.race([run, done])
+  lap('audiveris finished' + (failure ? ' with a failure' : ''))
+  const blob = await cjFileBlob(`/files/out/${stem}.mxl`)
+  lap('mxl ready')
+  window.spike.mxl = Array.from(new Uint8Array(await blob.arrayBuffer()))
+  log('mxl bytes', window.spike.mxl.length)
+} catch (e) {
+  window.spike.error = String(e && (e.stack || e))
+  log('error', window.spike.error)
+}
+window.spike.done = true
+</script>

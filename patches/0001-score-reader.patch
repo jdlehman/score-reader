@@ -1,0 +1,433 @@
+diff --git a/app/src/main/java/org/audiveris/omr/CLI.java b/app/src/main/java/org/audiveris/omr/CLI.java
+index c2379bc..dc0d478 100644
+--- a/app/src/main/java/org/audiveris/omr/CLI.java
++++ b/app/src/main/java/org/audiveris/omr/CLI.java
+@@ -842,7 +842,9 @@ public class CLI
+                 }
+                 LogUtil.start(book);
+ 
+-                boolean swap = (OMR.gui == null) || isSwap() || swapProcessedSheets();
++                // score reader: keep sheets in memory; reloading them is slow in the browser
++                boolean swap = !Boolean.getBoolean("scorereader.keepSheets")
++                        && ((OMR.gui == null) || isSwap() || swapProcessedSheets());
+ 
+                 // Make sure stubs are available
+                 if (book.getStubs().isEmpty()) {
+@@ -961,7 +963,8 @@ public class CLI
+                     if (cancelled) {
+                         // Make a backup if needed, then save book "in its current status"
+                         book.store(BookManager.getDefaultSavePath(book), true);
+-                    } else {
++                    } else if (!Boolean.getBoolean("scorereader.inBrowser")) {
++                        // score reader: in the browser only the exported score is wanted
+                         book.store(BookManager.getDefaultSavePath(book), false);
+                     }
+ 
+diff --git a/app/src/main/java/org/audiveris/omr/Main.java b/app/src/main/java/org/audiveris/omr/Main.java
+index a076f34..1ba57ab 100644
+--- a/app/src/main/java/org/audiveris/omr/Main.java
++++ b/app/src/main/java/org/audiveris/omr/Main.java
+@@ -271,6 +271,11 @@ public class Main
+             // Run the required tasks, if any (and remember if at least one task failed)
+             final boolean failure = runBatchTasks();
+ 
++            // score reader: in the browser, tell the page and stop here (the shutdown below never ends there)
++            if (Boolean.getBoolean("scorereader.inBrowser")) {
++                ScoreReaderHook.finished(failure);
++            }
++
+             // At this point all tasks have completed (except timeout...)
+             // So shutdown gracefully the executors
+             final boolean timeout = !OmrExecutors.shutdown();
+diff --git a/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java b/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java
+new file mode 100644
+index 0000000..8e85854
+--- /dev/null
++++ b/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java
+@@ -0,0 +1,15 @@
++package org.audiveris.omr;
++
++/**
++ * Score reader: tells the web page that Audiveris has finished. Implemented in JavaScript (a
++ * CheerpJ native), which keeps the calling thread waiting for good.
++ */
++public final class ScoreReaderHook
++{
++    private ScoreReaderHook ()
++    {
++    }
++
++    /** @param failure true if a task failed */
++    public static native void finished (boolean failure);
++}
+diff --git a/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
+new file mode 100644
+index 0000000..7f0fa7b
+--- /dev/null
++++ b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
+@@ -0,0 +1,334 @@
++package org.audiveris.omr.image;
++
++import ij.process.ByteProcessor;
++
++/**
++ * Score reader: a fast closing (dilation, then erosion) by a flat structuring element.
++ *
++ * It gives exactly what MorphoProcessor.close gives for an element whose points all weigh 255
++ * (the circles Audiveris uses): a maximum over the element, then a minimum, with pixels outside
++ * the image left out. The element is split into its rows; each row's run is a sliding window,
++ * done with the van Herk / Gil-Werman method (three comparisons a pixel, whatever the length);
++ * the rows are then combined. Maximum and minimum have separate methods with steady branches, as
++ * CheerpJ (Java in the browser) compiles only the branches it has seen taken.
++ */
++final class FlatMorphology
++{
++    private FlatMorphology ()
++    {
++    }
++
++    /**
++     * Close the image in place, if the element suits.
++     *
++     * @param ip the image
++     * @param pg the element's points: {dy, dx, weight, ...}
++     * @return false if the element does not suit (not flat, or a row with a gap), and nothing done
++     */
++    static boolean close (ByteProcessor ip,
++                          int[][] pg)
++    {
++        if (pg.length == 0) {
++            return false;
++        }
++
++        int minDy = Integer.MAX_VALUE;
++        int maxDy = Integer.MIN_VALUE;
++
++        for (int[] q : pg) {
++            if (q[2] != 255) {
++                return false;
++            }
++
++            minDy = Math.min(minDy, q[0]);
++            maxDy = Math.max(maxDy, q[0]);
++        }
++
++        // each row of the element: its run [lo, hi], and that it has no gap
++        final int rows = maxDy - minDy + 1;
++        final int[] lo = new int[rows];
++        final int[] hi = new int[rows];
++        final int[] count = new int[rows];
++        java.util.Arrays.fill(lo, Integer.MAX_VALUE);
++        java.util.Arrays.fill(hi, Integer.MIN_VALUE);
++
++        for (int[] q : pg) {
++            final int r = q[0] - minDy;
++            lo[r] = Math.min(lo[r], q[1]);
++            hi[r] = Math.max(hi[r], q[1]);
++            count[r]++;
++        }
++
++        int n = 0;
++
++        for (int r = 0; r < rows; r++) {
++            if (count[r] > 0) {
++                if (hi[r] - lo[r] + 1 != count[r]) {
++                    return false; // a gap, or a point twice
++                }
++
++                n++;
++            }
++        }
++
++        final int[] dys = new int[n];
++        final int[] los = new int[n];
++        final int[] his = new int[n];
++
++        for (int r = 0, i = 0; r < rows; r++) {
++            if (count[r] > 0) {
++                dys[i] = r + minDy;
++                los[i] = lo[r];
++                his[i] = hi[r];
++                i++;
++            }
++        }
++
++        final int width = ip.getWidth();
++        final int height = ip.getHeight();
++        final byte[] pixels = (byte[]) ip.getPixels();
++        final byte[] grown = new byte[pixels.length];
++        dilate(pixels, grown, width, height, dys, los, his);
++        erode(grown, pixels, width, height, dys, los, his);
++
++        return true;
++    }
++
++    /** out = the maximum over the element (0 where it covers no pixel). */
++    private static void dilate (byte[] in,
++                                byte[] out,
++                                int width,
++                                int height,
++                                int[] dys,
++                                int[] los,
++                                int[] his)
++    {
++        final Windows w = new Windows(dys, los, his, width);
++        final int[] acc = new int[width];
++
++        for (int y = 0; y < height; y++) {
++            java.util.Arrays.fill(acc, 0);
++
++            for (int i = 0; i < dys.length; i++) {
++                final int yy = y + dys[i];
++
++                if (yy >= 0 && yy < height) {
++                    final int[] m = w.rowMax(in, yy, i);
++
++                    for (int x = 0; x < width; x++) {
++                        final int v = m[x];
++                        acc[x] = acc[x] >= v ? acc[x] : v;
++                    }
++                }
++            }
++
++            final int base = y * width;
++
++            for (int x = 0; x < width; x++) {
++                out[base + x] = (byte) acc[x];
++            }
++        }
++    }
++
++    /** out = the minimum over the element (255 where it covers no pixel). */
++    private static void erode (byte[] in,
++                               byte[] out,
++                               int width,
++                               int height,
++                               int[] dys,
++                               int[] los,
++                               int[] his)
++    {
++        final Windows w = new Windows(dys, los, his, width);
++        final int[] acc = new int[width];
++
++        for (int y = 0; y < height; y++) {
++            java.util.Arrays.fill(acc, 255);
++
++            for (int i = 0; i < dys.length; i++) {
++                final int yy = y + dys[i];
++
++                if (yy >= 0 && yy < height) {
++                    final int[] m = w.rowMin(in, yy, i);
++
++                    for (int x = 0; x < width; x++) {
++                        final int v = m[x];
++                        acc[x] = acc[x] <= v ? acc[x] : v;
++                    }
++                }
++            }
++
++            final int base = y * width;
++
++            for (int x = 0; x < width; x++) {
++                out[base + x] = (byte) acc[x];
++            }
++        }
++    }
++
++    /**
++     * Sliding windows over image rows, one window shape per element row, each kept for the
++     * element's height of image rows (a row is used by that many output rows).
++     */
++    private static final class Windows
++    {
++        final int width;
++
++        final int[] los;
++
++        final int[] his;
++
++        /** window shape of each element row (rows with the same run share one). */
++        final int[] shape;
++
++        final int[] shapeLo;
++
++        final int[] shapeHi;
++
++        /** per shape, a ring of computed rows, and which image row each holds. */
++        final int[][][] ring;
++
++        final int[][] ringRow;
++
++        final int span;
++
++        final int[] g;
++
++        final int[] h;
++
++        Windows (int[] dys,
++                 int[] los,
++                 int[] his,
++                 int width)
++        {
++            this.width = width;
++            this.los = los;
++            this.his = his;
++            shape = new int[dys.length];
++
++            final int[] sl = new int[dys.length];
++            final int[] sh = new int[dys.length];
++            int shapes = 0;
++
++            for (int i = 0; i < dys.length; i++) {
++                int k = 0;
++
++                while (k < shapes && !(sl[k] == los[i] && sh[k] == his[i])) {
++                    k++;
++                }
++
++                if (k == shapes) {
++                    sl[k] = los[i];
++                    sh[k] = his[i];
++                    shapes++;
++                }
++
++                shape[i] = k;
++            }
++
++            shapeLo = java.util.Arrays.copyOf(sl, shapes);
++            shapeHi = java.util.Arrays.copyOf(sh, shapes);
++            span = dys[dys.length - 1] - dys[0] + 1;
++            ring = new int[shapes][span][width];
++            ringRow = new int[shapes][span];
++
++            for (int[] r : ringRow) {
++                java.util.Arrays.fill(r, -1);
++            }
++
++            int longest = 0;
++
++            for (int k = 0; k < shapes; k++) {
++                longest = Math.max(longest, shapeHi[k] - shapeLo[k] + 1);
++            }
++
++            g = new int[width + 2 * longest + 2];
++            h = new int[width + 2 * longest + 2];
++        }
++
++        /** For image row yy, at each x: the maximum of row yy over [x + lo, x + hi]. */
++        int[] rowMax (byte[] in,
++                      int yy,
++                      int i)
++        {
++            final int k = shape[i];
++            final int slot = yy % span;
++
++            if (ringRow[k][slot] == yy) {
++                return ring[k][slot];
++            }
++
++            final int[] out = ring[k][slot];
++            ringRow[k][slot] = yy;
++
++            final int lo = shapeLo[k];
++            final int len = shapeHi[k] - lo + 1;
++
++            // the stretch of the row the windows read: [lo, width - 1 + hi], 0 outside the image
++            final int n = width + len - 1;
++            final int base = yy * width;
++
++            // g: running maximum from the start of each block of len; h: from its end
++            for (int t = 0; t < n; t++) {
++                final int x = t + lo;
++                final int v = (x >= 0 && x < width) ? (in[base + x] & 0xFF) : 0;
++                g[t] = (t % len == 0) ? v : (g[t - 1] >= v ? g[t - 1] : v);
++            }
++
++            for (int t = n - 1; t >= 0; t--) {
++                final int x = t + lo;
++                final int v = (x >= 0 && x < width) ? (in[base + x] & 0xFF) : 0;
++                h[t] = (t == n - 1 || (t + 1) % len == 0) ? v : (h[t + 1] >= v ? h[t + 1] : v);
++            }
++
++            for (int x = 0; x < width; x++) {
++                final int a = h[x];
++                final int b = g[x + len - 1];
++                out[x] = a >= b ? a : b;
++            }
++
++            return out;
++        }
++
++        /** For image row yy, at each x: the minimum of row yy over [x + lo, x + hi]. */
++        int[] rowMin (byte[] in,
++                      int yy,
++                      int i)
++        {
++            final int k = shape[i];
++            final int slot = yy % span;
++
++            if (ringRow[k][slot] == yy) {
++                return ring[k][slot];
++            }
++
++            final int[] out = ring[k][slot];
++            ringRow[k][slot] = yy;
++
++            final int lo = shapeLo[k];
++            final int len = shapeHi[k] - lo + 1;
++            final int n = width + len - 1;
++            final int base = yy * width;
++
++            for (int t = 0; t < n; t++) {
++                final int x = t + lo;
++                final int v = (x >= 0 && x < width) ? (in[base + x] & 0xFF) : 255;
++                g[t] = (t % len == 0) ? v : (g[t - 1] <= v ? g[t - 1] : v);
++            }
++
++            for (int t = n - 1; t >= 0; t--) {
++                final int x = t + lo;
++                final int v = (x >= 0 && x < width) ? (in[base + x] & 0xFF) : 255;
++                h[t] = (t == n - 1 || (t + 1) % len == 0) ? v : (h[t + 1] <= v ? h[t + 1] : v);
++            }
++
++            for (int x = 0; x < width; x++) {
++                final int a = h[x];
++                final int b = g[x + len - 1];
++                out[x] = a <= b ? a : b;
++            }
++
++            return out;
++        }
++    }
++}
+diff --git a/app/src/main/java/org/audiveris/omr/image/MorphoProcessor.java b/app/src/main/java/org/audiveris/omr/image/MorphoProcessor.java
+index f9321f1..b2dc80b 100644
+--- a/app/src/main/java/org/audiveris/omr/image/MorphoProcessor.java
++++ b/app/src/main/java/org/audiveris/omr/image/MorphoProcessor.java
+@@ -105,6 +105,11 @@ public class MorphoProcessor
+      */
+     public void close (ByteProcessor ip)
+     {
++        // score reader: the same result, much faster (and without the branches the browser runs slowly)
++        if (FlatMorphology.close(ip, pg)) {
++            return;
++        }
++
+         int width = ip.getWidth();
+         int height = ip.getHeight();
+         int w = this.width; //se.getWidth();
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
+index bfbeda9..c2e4b2b 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/Book.java
+@@ -589,7 +589,9 @@ public class Book
+                            List<Score> theScores)
+     {
+         // Make sure material is ready
+-        final boolean swap = (OMR.gui == null) || Main.getCli().isSwap() || swapProcessedSheets();
++        // score reader: keep sheets in memory; reloading them is slow in the browser
++        final boolean swap = !Boolean.getBoolean("scorereader.keepSheets")
++                && ((OMR.gui == null) || Main.getCli().isSwap() || swapProcessedSheets());
+         final boolean ok = transcribe(theStubs, theScores, swap);
+ 
+         if (!ok) {
