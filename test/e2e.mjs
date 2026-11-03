@@ -2,6 +2,7 @@
 // Drive the built page (dist/) in Chrome: choose files, wait, save the download and screenshots.
 //   node test/e2e.mjs <out name> <file>...   (with spike/serve.mjs running; results in .work/e2e/)
 //   MINUTES=n gives up after n minutes (default 20); the page's console goes to .work/e2e/<name>.log
+//   URL=... reads on another copy of the site, such as the published one
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { chromium } from 'playwright-core'
@@ -19,7 +20,7 @@ const t00 = Date.now()
 const note = text => appendFileSync(logFile, `${String(Math.round((Date.now() - t00) / 1000)).padStart(5)}s ${text}\n`)
 tab.on('console', m => note(m.text()))
 tab.on('response', r => { if (r.status() >= 400) note(`(${r.status()} ${r.url()})`) })
-await tab.goto('http://127.0.0.1:8787/dist/')
+await tab.goto(process.env.URL ?? 'http://127.0.0.1:8787/dist/') // URL=https://inlehmansterms.net/score-reader/ tests the live site
 await tab.screenshot({ path: join(out, `${name}-0-start.png`), fullPage: true })
 const t0 = Date.now()
 // the page's memory every 15 s (Java's heap lives in it)
