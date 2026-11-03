@@ -26,6 +26,12 @@ const t0 = Date.now()
 // the page's memory every 15 s (Java's heap lives in it)
 setInterval(() => tab.evaluate(() => Math.round(performance.memory.usedJSHeapSize / 1e6)).then(mb => note(`(heap ${mb} MB)`), () => {}), 15000).unref()
 await tab.setInputFiles('#files', files.map(f => resolve(f)))
+// the page must start reading at once: if not, its script failed
+await tab.waitForFunction(() => !document.getElementById('work').hidden, null, { timeout: 30000 }).catch(async () => {
+  console.error('The page did not start reading:', errors.join('\n') || '(no errors reported)')
+  await browser.close()
+  process.exit(1)
+})
 // a look at the progress once the first page is under way
 await tab.waitForFunction(() => /^Page \d/.test(document.getElementById('pages')?.textContent ?? '') || !document.getElementById('failed').hidden, null, { timeout: 120000 }).catch(() => {})
 await tab.waitForTimeout(20000)

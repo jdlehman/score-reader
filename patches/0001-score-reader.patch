@@ -416,6 +416,156 @@ index f9321f1..b2dc80b 100644
          int width = ip.getWidth();
          int height = ip.getHeight();
          int w = this.width; //se.getWidth();
+diff --git a/app/src/main/java/org/audiveris/omr/image/Template.java b/app/src/main/java/org/audiveris/omr/image/Template.java
+index eda0a76..6f60fcd 100644
+--- a/app/src/main/java/org/audiveris/omr/image/Template.java
++++ b/app/src/main/java/org/audiveris/omr/image/Template.java
+@@ -33,6 +33,7 @@ import org.audiveris.omr.sheet.Scale;
+ import org.audiveris.omr.sheet.Scale.InterlineScale;
+ import org.audiveris.omr.ui.symbol.MusicFamily;
+ import org.audiveris.omr.util.ByteUtil;
++import org.audiveris.omr.util.Table;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+@@ -112,6 +113,21 @@ public class Template
+     /** Collection of key points lazily computed for this template. */
+     private List<PixelDistance> keyPoints;
+ 
++    /**
++     * Score Reader: the key points as arrays, for evaluate's loop (built from keyArraysOf): their
++     * abscissa, ordinate and kind (0: foreground, d == 0; 1: background, d > 0; 2: hole, d < 0).
++     */
++    private int[] keyX;
++
++    private int[] keyY;
++
++    private byte[] keyKind;
++
++    private List<PixelDistance> keyArraysOf;
++
++    /** Score Reader: getOffset for each anchor, by ordinal (cleared by putOffset). */
++    private final Point[] intOffsets = new Point[Anchor.values().length];
++
+     //~ Constructors -------------------------------------------------------------------------------
+ 
+     /**
+@@ -204,8 +220,6 @@ public class Template
+                             Anchor anchor,
+                             DistanceTable distances)
+     {
+-        final Point ul = upperLeft(x, y, anchor);
+-
+         // Loop through template key positions and read related distance.
+         // Compute the mean value on all distances read
+         final int imgWidth = distances.getWidth();
+@@ -216,6 +230,85 @@ public class Template
+         double weights = 0; // Sum of weights
+         double total = 0; // Sum of weighted distances
+ 
++        // Score Reader: the same loop on plain arrays when the distances are a Table.Short. In the
++        // browser, the list's iterator and the two table calls per point cost far more than the
++        // arithmetic, and this loop is most of the HEADS step. Same values, in the same order.
++        final Table table = (distances instanceof DistanceTable.Abstract dt) ? dt.getTable() : null;
++
++        if (table instanceof Table.Short st) {
++            // upperLeft, without its allocations and roundings for each call
++            int ulx = x;
++            int uly = y;
++
++            if (anchor != null) {
++                Point offset = intOffsets[anchor.ordinal()];
++
++                if (offset == null) {
++                    offset = intOffsets[anchor.ordinal()] = getOffset(anchor);
++                }
++
++                ulx -= offset.x;
++                uly -= offset.y;
++            }
++
++            final List<PixelDistance> points = getKeyPoints();
++
++            if (keyArraysOf != points) {
++                final int n = points.size();
++                final int[] xs = new int[n];
++                final int[] ys = new int[n];
++                final byte[] kinds = new byte[n];
++
++                for (int i = 0; i < n; i++) {
++                    final PixelDistance pix = points.get(i);
++                    xs[i] = pix.x;
++                    ys[i] = pix.y;
++                    kinds[i] = (byte) ((pix.d == 0) ? 0 : ((pix.d > 0) ? 1 : 2));
++                }
++
++                keyX = xs;
++                keyY = ys;
++                keyKind = kinds;
++                keyArraysOf = points;
++            }
++
++            final short[] data = st.rawData();
++            final int stride = st.rawWidth();
++            final int ox = st.roiX();
++            final int oy = st.roiY();
++            final int[] xs = keyX;
++            final int[] ys = keyY;
++            final byte[] kinds = keyKind;
++
++            for (int i = 0; i < xs.length; i++) {
++                final int nx = ulx + xs[i];
++                final int ny = uly + ys[i];
++
++                if ((nx >= 0) && (nx < imgWidth) && (ny >= 0) && (ny < imgHeight)) {
++                    final int actualDist = data[((ny + oy) * stride) + nx + ox];
++
++                    if (actualDist != ChamferDistance.VALUE_UNKNOWN) {
++                        final int kind = kinds[i];
++                        final double weight = (kind == 0) ? foreWeight
++                                : ((kind == 1) ? backWeight : holeWeight);
++
++                        // actual and expected are 0 or 1, so weight * |actual - expected| is
++                        // the weight when they differ (ink where none is expected, or none where
++                        // it is), and 0 otherwise
++                        if ((actualDist == 0) != (kind == 0)) {
++                            total += weight;
++                        }
++
++                        weights += weight;
++                    }
++                }
++            }
++
++            return (weights == 0) ? Double.MAX_VALUE : total / weights;
++        }
++
++        final Point ul = upperLeft(x, y, anchor);
++
+         for (PixelDistance pix : getKeyPoints()) {
+             int nx = ul.x + pix.x;
+             int ny = ul.y + pix.y;
+@@ -587,6 +680,7 @@ public class Template
+                                  double dy)
+     {
+         offsets.put(anchor, new Point2D.Double(dx, dy));
++        intOffsets[anchor.ordinal()] = null;
+     }
+ 
+     //----------//
+diff --git a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
+index 080c091..63a8596 100644
+--- a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
++++ b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
+@@ -1545,7 +1545,7 @@ public class PartwiseBuilder
+                     (location.getY() < current.note.getCenter().y) ? AboveBelow.ABOVE
+                             : AboveBelow.BELOW);
+             // Metronome?
+-            if (sentence instanceof MetronomeInter metro) {
++            if (sentence instanceof MetronomeInter metro && metro.isParsed()) { // Score Reader: only if parsed
+                 final Metronome metronome = factory.createMetronome();
+ 
+                 // Tempo text indication?
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
 index bfbeda9..c921535 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
@@ -497,3 +647,297 @@ index 3efeee8..5b1eb0c 100644
      //------------//
      // getPicture //
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
+index b7f0cf3..87af6fc 100644
+--- a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
++++ b/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
+@@ -583,6 +583,21 @@ public class MetronomeInter
+         return super.getValue();
+     }
+ 
++    /**
++     * Score Reader: report whether the metronome text could be parsed. A line that only looks like a
++     * metronome mark (OCR read "J: 88" for "J = 88") is exported as plain words instead.
++     *
++     * @return true if parsed
++     */
++    public boolean isParsed ()
++    {
++        if (model == null) {
++            model = buildModel();
++        }
++
++        return model != null;
++    }
++
+     //----------------//
+     // hasParentheses //
+     //----------------//
+diff --git a/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
+new file mode 100644
+index 0000000..e51c525
+--- /dev/null
++++ b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
+@@ -0,0 +1,207 @@
++package org.audiveris.omr.text;
++
++import org.audiveris.omr.sheet.Sheet;
++
++import java.awt.Point;
++import java.awt.Rectangle;
++import java.awt.geom.Line2D;
++import java.awt.image.BufferedImage;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import java.util.SortedSet;
++import java.util.TreeSet;
++
++/**
++ * Score Reader: OCR in the browser. Tesseract's native code can't run in CheerpJ, so the web page
++ * reads the text with tesseract.js (the same Tesseract, compiled to WebAssembly, running the legacy
++ * engine as TesseractOrder does) and hands back its lines, words and characters.
++ * <p>
++ * Tesseract.js gives no font attributes, so each word gets a plain font whose size comes from its
++ * line's height; TextWord fits the size to the word's bounds anyway.
++ */
++public final class BrowserOCR
++        implements OCR
++{
++    private static final BrowserOCR INSTANCE = new BrowserOCR();
++
++    /** The languages the page has data for. */
++    private static final SortedSet<String> LANGUAGES = Collections.unmodifiableSortedSet(
++            new TreeSet<>(List.of("eng")));
++
++    /** Tesseract's page segmentation modes, as TesseractOCR uses them. */
++    private static final int PSM_AUTO = 3;
++
++    private static final int PSM_SINGLE_BLOCK = 6;
++
++    private BrowserOCR ()
++    {
++    }
++
++    public static BrowserOCR getInstance ()
++    {
++        return INSTANCE;
++    }
++
++    /**
++     * Implemented by the web page (a CheerpJ native): read the text in a grey image.
++     *
++     * @return one line per item, in order: "L x0 y0 x1 y1 bx0 by0 bx1 by1 height" for a text line
++     *         (its bounds, baseline and row height), "W x0 y0 x1 y1 confidence text" for each of
++     *         its words, and "C x0 y0 x1 y1 text" for each of a word's characters
++     */
++    private static native String read (byte[] grey,
++                                       int width,
++                                       int height,
++                                       String languages,
++                                       int pageSegMode);
++
++    @Override
++    public SortedSet<String> getSupportedLanguages ()
++    {
++        return LANGUAGES;
++    }
++
++    @Override
++    public double getMinConfidence ()
++    {
++        return 0.65; // as TesseractOCR
++    }
++
++    @Override
++    public String identify ()
++    {
++        return "Tesseract (tesseract.js), in the browser";
++    }
++
++    @Override
++    public boolean isAvailable ()
++    {
++        return true;
++    }
++
++    @Override
++    public boolean supports (String langSpec)
++    {
++        final List<String> codes = (langSpec == null) ? List.of() : Language.codesOf(langSpec);
++        return !codes.isEmpty() && LANGUAGES.containsAll(codes);
++    }
++
++    @Override
++    public List<TextLine> recognize (Sheet sheet,
++                                     BufferedImage image,
++                                     Point topLeft,
++                                     String langSpec,
++                                     LayoutMode layoutMode,
++                                     String label)
++    {
++        final int width = image.getWidth();
++        final int height = image.getHeight();
++        BufferedImage grey = image;
++
++        if (image.getType() != BufferedImage.TYPE_BYTE_GRAY) {
++            grey = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
++            grey.createGraphics().drawImage(image, 0, 0, null);
++        }
++
++        final byte[] pixels = (byte[]) grey.getRaster().getDataElements(0, 0, width, height, null);
++        final int mode = (layoutMode == LayoutMode.SINGLE_BLOCK) ? PSM_SINGLE_BLOCK : PSM_AUTO;
++        final List<TextLine> lines = parse(sheet, read(pixels, width, height, langSpec, mode));
++
++        if (topLeft != null) {
++            for (TextLine line : lines) {
++                line.translate(topLeft.x, topLeft.y);
++            }
++        }
++
++        return lines;
++    }
++
++    private static Rectangle box (String[] f)
++    {
++        final int x0 = Integer.parseInt(f[1]);
++        final int y0 = Integer.parseInt(f[2]);
++        return new Rectangle(x0, y0, Integer.parseInt(f[3]) - x0, Integer.parseInt(f[4]) - y0);
++    }
++
++    /** The page's answer as Audiveris's lines, words and characters, as TesseractOrder builds them. */
++    private static List<TextLine> parse (Sheet sheet,
++                                         String answer)
++    {
++        final List<TextLine> lines = new ArrayList<>();
++        TextLine line = null;
++        TextWord word = null;
++        Line2D baseline = null;
++        int pointSize = 10;
++
++        for (String row : answer.split("\n")) {
++            if (row.isEmpty()) {
++                continue;
++            }
++
++            switch (row.charAt(0)) {
++            case 'L' -> {
++                final String[] f = row.split(" ");
++                line = new TextLine(sheet);
++                lines.add(line);
++                baseline = new Line2D.Double(
++                        Integer.parseInt(f[5]),
++                        Integer.parseInt(f[6]),
++                        Integer.parseInt(f[7]),
++                        Integer.parseInt(f[8]));
++                pointSize = Math.max(1, Integer.parseInt(f[9]));
++                word = null;
++            }
++
++            case 'W' -> {
++                final String[] f = row.split(" ", 7);
++                if (line == null || f.length < 7) {
++                    continue;
++                }
++                word = new TextWord(
++                        sheet,
++                        box(f),
++                        f[6],
++                        baseline,
++                        Integer.parseInt(f[5]) / 100.0,
++                        new FontInfo(false, false, pointSize, null),
++                        line);
++                line.appendWord(word);
++            }
++
++            case 'C' -> {
++                final String[] f = row.split(" ", 6);
++                if (word == null || f.length < 6) {
++                    continue;
++                }
++                final Rectangle bounds = box(f);
++                final String value = f[5];
++                final int len = value.length();
++
++                if (len == 1) {
++                    word.addChar(new TextChar(bounds, value));
++                } else {
++                    // several characters in one symbol: share the width, as TesseractOrder does
++                    final double each = (double) bounds.width / len;
++                    for (int i = 0; i < len; i++) {
++                        word.addChar(new TextChar(
++                                new Rectangle(
++                                        (int) Math.round(bounds.x + i * each),
++                                        bounds.y,
++                                        (int) Math.round(each),
++                                        bounds.height),
++                                value.substring(i, i + 1)));
++                    }
++                }
++            }
++
++            default -> {
++            }
++            }
++        }
++
++        lines.removeIf(l -> l.getValue().isBlank());
++
++        return lines;
++    }
++}
+diff --git a/app/src/main/java/org/audiveris/omr/text/OcrUtil.java b/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
+index 2d8925f..d08de99 100644
+--- a/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
++++ b/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
+@@ -51,7 +51,9 @@ public abstract class OcrUtil
+     private static final Logger logger = LoggerFactory.getLogger(OcrUtil.class);
+ 
+     /** The related OCR. */
+-    private static final OCR ocr = TesseractOCR.getInstance();
++    // Score Reader: in the browser, the page reads the text (Tesseract is native code)
++    private static final OCR ocr = Boolean.getBoolean("scorereader.inBrowser") ? BrowserOCR.getInstance()
++            : TesseractOCR.getInstance();
+ 
+     //~ Constructors -------------------------------------------------------------------------------
+     /** Not meant to be instantiated. */
+diff --git a/app/src/main/java/org/audiveris/omr/util/Table.java b/app/src/main/java/org/audiveris/omr/util/Table.java
+index b8368e4..946079f 100644
+--- a/app/src/main/java/org/audiveris/omr/util/Table.java
++++ b/app/src/main/java/org/audiveris/omr/util/Table.java
+@@ -445,6 +445,35 @@ public interface Table
+             return data[(y * width) + x];
+         }
+ 
++        /**
++         * Score Reader: the underlying array, view or not, for a tight read loop (Template.evaluate):
++         * the value at (x, y) is at ((y + roiY()) * rawWidth()) + x + roiX().
++         *
++         * @return the array
++         */
++        public short[] rawData ()
++        {
++            return data;
++        }
++
++        /** @return Score Reader: the width of the whole array (see rawData) */
++        public int rawWidth ()
++        {
++            return width;
++        }
++
++        /** @return Score Reader: the abscissa of this view in the array (see rawData) */
++        public int roiX ()
++        {
++            return (roi == null) ? 0 : roi.x;
++        }
++
++        /** @return Score Reader: the ordinate of this view in the array (see rawData) */
++        public int roiY ()
++        {
++            return (roi == null) ? 0 : roi.y;
++        }
++
+         public short[] getValues ()
+         {
+             if (roi != null) {

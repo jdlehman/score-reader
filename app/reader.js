@@ -2,6 +2,7 @@
 // Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the score as a PDF,
 // follows its log for progress, and offers the MusicXML it writes.
 
+import { readText, startOcr } from './ocr.js'
 import { imagesToPdf, pdfToPdf } from './pdf.js'
 
 /** Audiveris's steps for each page, with roughly how long each takes (seconds, first page). */
@@ -14,11 +15,11 @@ const STEPS = [
   ['STEM_SEEDS', 'Looking for stems', 0.6],
   ['BEAMS', 'Finding beams', 6.4],
   ['LEDGERS', 'Finding ledger lines', 2.3],
-  ['HEADS', 'Finding note heads (the longest part)', 38.9],
+  ['HEADS', 'Finding note heads (the longest part)', 18],
   ['STEMS', 'Joining stems to notes', 3.6],
   ['REDUCTION', 'Sorting out overlaps', 0.5],
   ['CUE_BEAMS', 'Looking for small notes', 0.1],
-  ['TEXTS', 'Looking for text', 0.1],
+  ['TEXTS', 'Reading the words', 5],
   ['MEASURES', 'Finding bar lines', 0.1],
   ['CHORDS', 'Grouping notes into chords', 0.1],
   ['CURVES', 'Finding ties and slurs', 6.3],
@@ -150,6 +151,8 @@ async function read(files) {
   $('work-name').textContent = stem(files[0]?.name ?? '')
   progress.t0 = performance.now()
   const timer = setInterval(render, 500)
+  // Tesseract and its data download while the pages are prepared and Java starts
+  startOcr().catch(e => console.warn('Tesseract could not start, so the words will be left out:', e))
   let input
   try {
     input = await prepare(files, (n, of) => {
@@ -185,6 +188,15 @@ async function read(files) {
           finished(!!failure)
           return new Promise(() => {})
         },
+        // our patch's OCR: Audiveris asks the page to read the text in an image (see ocr.js)
+        async Java_org_audiveris_omr_text_BrowserOCR_read(lib, grey, width, height, languages, pageSegMode) {
+          try {
+            return await readText(grey, width, height, pageSegMode)
+          } catch (e) {
+            console.warn('Tesseract failed, so this text is left out:', e)
+            return ''
+          }
+        },
       },
     })
     // Audiveris asks the window system which thread it is on, even without windows
@@ -194,7 +206,7 @@ async function read(files) {
     const classpath = (await (await fetch('jars/classpath.txt')).text()).trim().split('\n').map(j => '/app' + jars + j).join(':')
     cheerpjRunMain('Audiveris', classpath,
       '-batch',
-      '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // Tesseract is native: no text yet
+      '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // its Tesseract is native: the page reads the text
       '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
       '-transcribe', '-export', '-output', '/files/out', INPUT,
     ).then(code => finished(code !== 0))

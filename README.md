@@ -16,16 +16,19 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    read most PDFs and photos itself: Java's JPEG decoder and colour management are native code
    that CheerpJ can't run to the end.
 2. Audiveris reads them in batch mode (`-transcribe -export`) and writes a `.mxl` file, which the
-   page offers to download (`app/reader.js`). Its log drives the progress bar.
+   page offers to download (`app/reader.js`). Its log drives the progress bar. When Audiveris
+   reads text, the page reads it for it with tesseract.js (`app/ocr.js`).
 
 Audiveris is used as released, with a few changes for the browser (`patches/`) and every jar's
 `Math` calls pointed at a faster `FastMath` (`java/`). `NOTES.md` explains them and how the
-time came down from 4 minutes a page to under 2.
+time came down from 4 minutes a page to about 1.
 
-Limits: no words or part names yet (Audiveris reads text with Tesseract, which is native), so the
-parts come out named "Voice" or "Piano". The first page takes about 100 seconds and later pages
-up to a minute (9 pages: 9 minutes). Memory grows by about 50 MB a page (9 pages:
-about 750 MB). The first visit downloads about 45 MB. Tested in Chrome.
+Words, titles and part names are read with Tesseract, as desktop Audiveris reads them, but with
+tesseract.js in the page (`app/ocr.js`), since Tesseract itself is native code.
+
+Limits: a one-page score takes a minute or two, and each page after it under a minute (9 pages:
+under 7 minutes). Memory reaches about 1 GB on 9 pages. The first visit downloads about 60 MB
+(Java and Audiveris, and Tesseract with its English data). Tested in Chrome.
 
 ## Building
 

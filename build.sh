@@ -18,7 +18,8 @@ else
   rm -rf .work/classes && mkdir -p .work/classes
   "$J/javac" -nowarn -proc:none -cp ".work/lib/*" -d .work/classes \
     $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
-    $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java 2>&1 | grep -v '^Note:' || true
+    $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
+    $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
   # FastMath, and every jar rewritten to call it (patched classes first, so they win)
@@ -38,7 +39,7 @@ else
   cp .work/sources/*.jar dist/source/
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/style.css app/*.svg app/*.png dist/
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt
@@ -50,4 +51,16 @@ cp $pdfjs/build/pdf.min.mjs $pdfjs/build/pdf.worker.min.mjs $pdfjs/LICENSE dist/
 cp -R $pdfjs/cmaps $pdfjs/iccs $pdfjs/standard_fonts dist/pdfjs/
 cp $pdfjs/wasm/*.wasm $pdfjs/wasm/*_nowasm_fallback.js $pdfjs/wasm/LICENSE_* dist/pdfjs/wasm/
 rm -f dist/pdfjs/wasm/quickjs* dist/pdfjs/wasm/LICENSE_*QUICKJS # that one runs a PDF's scripts, which aren't wanted
+
+# Tesseract (tesseract.js) reads the words: its library and worker, the builds of its engine that
+# include the legacy engine Audiveris uses (a browser loads one), and the English data
+rm -rf dist/tesseract dist/tessdata
+mkdir -p dist/tesseract dist/tessdata
+tjs=node_modules/tesseract.js
+cp $tjs/dist/tesseract.esm.min.js $tjs/dist/worker.min.js $tjs/dist/*.LICENSE.txt dist/tesseract/
+cp $tjs/LICENSE.md dist/tesseract/LICENSE.md
+cp node_modules/tesseract.js-core/tesseract-core.wasm.js node_modules/tesseract.js-core/tesseract-core-simd.wasm.js \
+  node_modules/tesseract.js-core/tesseract-core-relaxedsimd.wasm.js dist/tesseract/
+cp node_modules/tesseract.js-core/LICENSE dist/tesseract/LICENSE-core
+cp node_modules/@tesseract.js-data/eng/4.0.0/eng.traineddata.gz dist/tessdata/
 echo "dist: $(du -sh dist | cut -f1)"

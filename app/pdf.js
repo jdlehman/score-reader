@@ -34,6 +34,9 @@ export async function pdfToPdf(bytes, onPage) {
     if (e?.name === 'PasswordException') throw new Error('This PDF is locked with a password. Open it, save or print a copy without one, and try that.')
     throw new Error('This file couldn’t be opened as a PDF.')
   }
+  // what paints an image (a scan), as opposed to drawn shapes and text
+  const IMAGE = new Set([pdfjs.OPS.paintImageXObject, pdfjs.OPS.paintInlineImageXObject, pdfjs.OPS.paintImageXObjectRepeat,
+    pdfjs.OPS.paintInlineImageXObjectGroup, pdfjs.OPS.paintImageMaskXObject, pdfjs.OPS.paintImageMaskXObjectGroup, pdfjs.OPS.paintImageMaskXObjectRepeat])
   try {
     const pages = []
     for (let n = 1; n <= doc.numPages; n++) {
@@ -46,8 +49,14 @@ export async function pdfToPdf(bytes, onPage) {
       canvas.width = Math.round(viewport.width)
       canvas.height = Math.round(viewport.height)
       await page.render({ canvas, viewport, background: '#fff' }).promise
+      // Audiveris draws a PDF's pages without antialiasing: drawn music and text come out crisp, a
+      // pixel black when its centre is inside a shape. PDF.js antialiases, and Audiveris reads the
+      // grey edges as ink, so letters thicken and Tesseract reads "e" as "c" (60% of a test piece's
+      // words, against 92%). So a page of drawn shapes is made black and white at half coverage,
+      // as Audiveris would draw it; a page with images (a scan) keeps its greys, as Audiveris does.
+      const crisp = !(await page.getOperatorList()).fnArray.some(f => IMAGE.has(f))
       const g = canvas.getContext('2d')
-      pages.push(await greyPage(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data))
+      pages.push(await greyPage(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data, crisp))
       canvas.width = canvas.height = 0
       page.cleanup()
     }
@@ -89,11 +98,12 @@ export async function imagesToPdf(files, onPage) {
   return writePdf(pages)
 }
 
-/** A page from RGBA pixels: grey (by luminance), one byte a pixel, deflated. */
-export async function greyPage(w, h, rgba) {
+/** A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel, deflated. */
+export async function greyPage(w, h, rgba, crisp = false) {
   const grey = new Uint8Array(w * h)
   for (let i = 0, j = 0; i < grey.length; i++, j += 4) {
-    grey[i] = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
+    const v = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
+    grey[i] = crisp ? (v < 128 ? 0 : 255) : v
   }
   return { w, h, data: await deflate(grey) }
 }

@@ -55,5 +55,14 @@ its JBIG2 decoder (from PDFium, BSD), OpenJPEG (BSD 2-clause), qcms (MIT), the F
 (from PDFium, BSD), the Liberation fonts (SIL Open Font License 1.1), Adobe's CMaps (BSD
 3-clause) and a colour profile (CC0). Their licence files are next to them in pdfjs/.
 
+The page reads text (words, titles, part names) with tesseract.js 7.0.0 (tesseract/), Apache
+License 2.0, Copyright Jerome Wu and others (https://github.com/naptha/tesseract.js), which runs
+Tesseract OCR (Apache License 2.0, https://github.com/tesseract-ocr/tesseract) with Leptonica
+(BSD 2-clause) and their image libraries compiled to WebAssembly (tesseract.js-core, Apache
+License 2.0). Its worker includes buffer (MIT), ieee754 (BSD 3-clause), regenerator-runtime (MIT)
+and zlib.js (MIT). The English data (tessdata/eng.traineddata.gz) is Tesseract's, Apache License
+2.0 (https://github.com/tesseract-ocr/tessdata), as packaged by @tesseract.js-data/eng 1.0.0.
+Their licence files are in tesseract/.
+
 Built with CheerpJ (https://cheerpj.com), loaded from Leaning Technologies' servers under its
 community licence for non-commercial open-source projects. CheerpJ is not part of Score Reader.

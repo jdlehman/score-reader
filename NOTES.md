@@ -10,7 +10,8 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `sun.java2d.uiScale=1`: skips a screen-scaling check that loads JNA.
 - `sun.font.layout.ffm=false`: Java 25 lays out text with HarfBuzz through the foreign-function
   API, which CheerpJ lacks; this uses the older path. Audiveris lays out its music font to find clefs.
-- `TesseractOCR.useOCR=false`: Tesseract is native; no words for now.
+- `TesseractOCR.useOCR=false`: Audiveris's own Tesseract is native code, so it stays off; the page
+  reads the text instead (`BrowserOCR`, below).
 - `Main.sheetStepTimeOut=3600`: some steps take over the default 120 s in the browser.
 - `cheerpjCreateDisplay`: Audiveris asks Swing which thread it is on, even in batch mode.
 
@@ -31,6 +32,35 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   helper per pixel whose erosion branch CheerpJ never compiled (it compiles only branches seen
   taken), so half the calls ran in the interpreter. Same output (checked against the original on
   the page and 300 random images); beams went from 73 s to 6 s.
+- `BrowserOCR`: reading text (words, titles, part names) in the browser. `OcrUtil` picks it when
+  `scorereader.inBrowser` is set. It hands the page each image Audiveris would give Tesseract, as
+  grey bytes (a CheerpJ native), and the page reads it with tesseract.js, the same Tesseract in
+  WebAssembly, with its legacy engine as `TesseractOrder` uses and the same English data
+  (`app/ocr.js`). Lines, words and characters come back with their boxes and baselines, but no
+  font attributes: a word's font size comes from its line's height, and `TextWord` fits the size
+  to the word's bounds anyway. On four test pieces (clean pages) it reads 64–77% of the
+  syllables, against 76–86% for desktop Audiveris on the same pages, and all the part names; on a
+  scan and on photos, 76%. Both use the same engine and data, and on the same image tesseract.js
+  reads what desktop Tesseract reads; most of the gap was the page's antialiasing (below), and the
+  rest is still to find.
+- `MetronomeInter.isParsed`: a line that only looks like a tempo mark (OCR read "J: 88" for
+  "J = 88") is exported as plain words. Before, its export failed on a null model.
+- `Template.evaluate` on plain arrays: matching note-head templates is most of the HEADS step, and
+  it read the distance table through a list iterator and two interface calls a point, which
+  CheerpJ runs far slower than the arithmetic. For a `Table.Short` it now reads the array
+  directly, the template's key points copied into arrays once (`Table.Short.rawData`), and each
+  anchor's offset worked out once (`upperLeft` allocated two points and rounded twice a call).
+  The same values in the same order: the MusicXML is identical. Note heads on a page went from
+  33 s to 18 s, the page from 91 s to 75 s.
+
+## Pages as Audiveris draws them (app/pdf.js)
+
+Audiveris draws a PDF's pages without antialiasing (`ImageLoading`), so drawn music and text come
+out crisp. PDF.js antialiases, and Audiveris's binarization reads the grey edges as ink: letters
+thicken by a third, and Tesseract reads "e" as "c". On a test page, 79 of its syllables came out
+right, against 133 from the PDF itself. So the page makes a page of drawn shapes black and white
+at half coverage, as Audiveris would draw it (129 right); a page with images, a scan, keeps its
+greys, as Audiveris keeps an image's.
 
 ## FastMath (java/org/scorereader)
 
