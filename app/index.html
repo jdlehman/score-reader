@@ -1,19 +1,32 @@
 <!doctype html>
-<!-- Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Score reader</title>
-<!-- unlisted, like the hub's apps that aren't on its landing page yet -->
-<meta name="robots" content="noindex, nofollow, noarchive">
-<meta name="description" content="Turn a PDF or photo of sheet music into a MusicXML file, in your browser.">
+<title>Score Reader</title>
+<meta name="description" content="Sheet music to MusicXML, from a PDF or photos of the pages, in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://inlehmansterms.net/score-reader/">
+<meta property="og:title" content="Score Reader">
+<meta property="og:description" content="Sheet music to MusicXML, from a PDF or photos of the pages, in your browser.">
+<meta property="og:image" content="https://inlehmansterms.net/score-reader/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Score Reader">
+<meta name="twitter:description" content="Sheet music to MusicXML, from a PDF or photos of the pages, in your browser.">
+<meta name="twitter:image" content="https://inlehmansterms.net/score-reader/og-image.png">
+<meta name="theme-color" content="#0a0b0d">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32x32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="app">
   <header>
-    <h1>Score reader</h1>
+    <h1>Score Reader</h1>
     <p class="lead">Turn a PDF or photos of sheet music into a MusicXML file, which <a href="https://inlehmansterms.net/sectional/">Sectional</a> and notation programs (MuseScore, Finale, Sibelius, Dorico) can open. It all happens in your browser: your music isn’t uploaded anywhere.</p>
   </header>
 
@@ -57,8 +70,8 @@
   </section>
 
   <footer class="muted small">
-    <p>Score reader runs <a href="https://audiveris.github.io/audiveris/">Audiveris</a> 5.11, the open-source music reader, in your browser. Built with <a href="https://cheerpj.com/">CheerpJ</a>.</p>
-    <p>Score reader is free software under the <a href="LICENSE.txt">GNU Affero General Public License v3</a>. <a href="https://github.com/jdlehman/score-reader">Source code</a>, including our changes to Audiveris. <a href="NOTICE.txt">Other licences</a>.</p>
+    <p>Score Reader runs <a href="https://audiveris.github.io/audiveris/">Audiveris</a> 5.11, the open-source music reader, in your browser. Built with <a href="https://cheerpj.com/">CheerpJ</a>.</p>
+    <p>Score Reader is free software under the <a href="LICENSE.txt">GNU Affero General Public License v3</a>. <a href="https://github.com/jdlehman/score-reader">Source code</a>, including our changes to Audiveris. <a href="NOTICE.txt">Other licences</a>.</p>
   </footer>
 </main>
 <div id="display" aria-hidden="true"></div>

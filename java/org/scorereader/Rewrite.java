@@ -1,4 +1,4 @@
-// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+// Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 package org.scorereader;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public final class Rewrite
 
     private static String changes (int classes)
     {
-        return "Changed by Score reader (https://github.com/jdlehman/score-reader) on " + LocalDate.now() + ".\n\n"
+        return "Changed by Score Reader (https://github.com/jdlehman/score-reader) on " + LocalDate.now() + ".\n\n"
                 + "In " + classes + " classes of this jar, calls to java.lang.Math's (or StrictMath's) abs, min, max,\n"
                 + "rint, floor, ceil, sqrt and hypot now go to org.scorereader.FastMath, which gives the same results\n"
                 + "faster in the browser. Nothing else was changed, except that jar signatures were removed. The\n"

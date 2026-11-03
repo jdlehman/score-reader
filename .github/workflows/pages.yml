@@ -1,4 +1,6 @@
 # Build the site from Audiveris's release, our patches and PDF.js, and publish it on GitHub Pages.
+# Uses no secrets. The build job can only read the repository; only the deploy job, which runs no
+# code of ours or of npm's, may publish.
 name: Pages
 
 on:
@@ -6,10 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -18,8 +17,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: 24
@@ -34,7 +37,8 @@ jobs:
             .work/sources
           key: work-${{ hashFiles('setup.sh', 'patches/**') }}
       - run: ./setup.sh
-      - run: npm ci
+      # only PDF.js is needed to build, and none of the packages' install scripts
+      - run: npm ci --omit=dev --ignore-scripts
       - run: ./build.sh
       - uses: actions/upload-pages-artifact@v4
         with:
@@ -43,6 +47,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

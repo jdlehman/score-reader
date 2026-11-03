@@ -1,5 +1,5 @@
 #!/bin/sh
-# Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+# Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 # Make .work/, which ./build.sh needs: Audiveris 5.11.0's source with our patch applied, the jars
 # of its release, their class path, a Temurin JDK 25, and the source of the copyleft libraries.
 #   ./setup.sh   (on macOS or Linux; needs git and curl, and dpkg-deb on Linux)
@@ -8,6 +8,12 @@ set -e
 cd "$(dirname "$0")"
 V=5.11.0
 mkdir -p .work
+
+# the SHA-256 of each release file used, as GitHub lists them: what the site serves is built from these
+sha256() { (sha256sum "$1" 2>/dev/null || shasum -a 256 "$1") | cut -d' ' -f1; }
+check() {
+  [ "$(sha256 "$1")" = "$2" ] || { echo "$1: not the file released (SHA-256 differs)" >&2; exit 1; }
+}
 
 # 1. the source, for the classes we change (patches/; the files have CRLF line ends)
 if [ ! -d .work/audiveris ]; then
@@ -22,13 +28,19 @@ if [ ! -d .work/lib ]; then
   release=https://github.com/Audiveris/audiveris/releases/download/$V
   case $(uname) in
     Darwin)
-      curl -fsSL -o "$tmp/a.dmg" "$release/Audiveris-$V-macosx-$(uname -m | sed 's/aarch64/arm64/').dmg"
+      arch=$(uname -m | sed 's/aarch64/arm64/')
+      curl -fsSL -o "$tmp/a.dmg" "$release/Audiveris-$V-macosx-$arch.dmg"
+      case $arch in
+        arm64) check "$tmp/a.dmg" 17491af8b6d40153b031dd1f0815e37213f0999ef23f10586af46706e59b2eb6 ;;
+        *) check "$tmp/a.dmg" 11794424c6f1698617836a77d2c5818c46405a3fe7388281c623c4e383fa33cb ;;
+      esac
       # the image shows Audiveris's licence (the AGPL) and asks to agree before it opens
       yes | PAGER=cat hdiutil attach -nobrowse -readonly -mountpoint "$tmp/mnt" "$tmp/a.dmg" > /dev/null
       app="$tmp/mnt/Audiveris.app/Contents/app"
       ;;
     Linux)
       curl -fsSL -o "$tmp/a.deb" "$release/Audiveris-$V-ubuntu24.04-x86_64.deb"
+      check "$tmp/a.deb" f20113aaa33b3149ec8d6a09b2a7963360e65fafd92d69389987a85bbc3ec7a3
       dpkg-deb -x "$tmp/a.deb" "$tmp/deb"
       app=$(dirname "$(find "$tmp/deb" -name audiveris.jar | head -1)")
       ;;

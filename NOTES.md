@@ -1,10 +1,10 @@
-# Spike: Audiveris in the browser (CheerpJ)
+# How Audiveris runs in the browser (CheerpJ)
 
 Audiveris 5.11 runs unchanged on CheerpJ 5.0's Java 25 runtime, with these settings and patches.
 One clean page (gen-02-open from midi_studio's recognition test) reads in about 100 s, against
 19 s natively, and the result is the same (100% of notes).
 
-## Settings (spike/index.html)
+## Settings (app/reader.js)
 
 - `env`: HOME and XDG folders (Audiveris needs a home).
 - `sun.java2d.uiScale=1`: skips a screen-scaling check that loads JNA.
@@ -54,10 +54,11 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
 
 ## Running it
 
-    spike/build.sh                         # patched classes, rewritten jars, classpath
-    node spike/serve.mjs &                 # static server with ranges, port 8787
-    EXTRA='&fast=1' node spike/drive.mjs   # one page; result in .work/spike-result.mxl
-    EXTRA='&fast=1' node spike/profile.mjs HEADS 25   # where a step spends its time
+    ./build.sh                          # patched classes, rewritten jars, the site
+    npm run serve &                     # static server with ranges, port 8787
+    node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
+    node test/profile.mjs HEADS 25      # where a step spends its time, on .work/page.png
+    EXTRA='&fast=0' node test/profile.mjs HEADS 25   # the same without FastMath
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
 in `lib/`, `classpath.txt` and a Temurin 25 JDK in `jdk/`: `./setup.sh` makes it.

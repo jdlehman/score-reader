@@ -1,4 +1,4 @@
-// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+// Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // What Audiveris reads: a PDF of grey pages, drawn here from the PDF or photos chosen.
 //
 // Audiveris can read PDFs and images itself, but in the browser only the simplest ones. Java's
@@ -6,8 +6,6 @@
 // JPEGs), and so is its colour management. So the page draws everything itself, the PDF with
 // PDF.js and photos with the browser, and hands Audiveris raw grey pixels compressed with
 // deflate, which Java reads in Java.
-//
-// Copyright (C) 2026 Jonathan Lehman. GNU AGPL v3 or later: see LICENSE.txt.
 
 /** Audiveris draws a PDF's pages at 300 dpi; pages this size come out at the images' own size. */
 const DPI = 300

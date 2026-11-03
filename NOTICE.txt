@@ -1,6 +1,6 @@
-Score reader: notices
+Score Reader: notices
 
-Score reader (this page, its scripts, FastMath, Rewrite, and the changes to Audiveris in
+Score Reader (this page, its scripts, FastMath, Rewrite, and the changes to Audiveris in
 patches/) is free software under the GNU Affero General Public License, version 3 or later.
 Copyright (C) 2026 Jonathan Lehman. Source: https://github.com/jdlehman/score-reader
 
@@ -56,4 +56,4 @@ its JBIG2 decoder (from PDFium, BSD), OpenJPEG (BSD 2-clause), qcms (MIT), the F
 3-clause) and a colour profile (CC0). Their licence files are next to them in pdfjs/.
 
 Built with CheerpJ (https://cheerpj.com), loaded from Leaning Technologies' servers under its
-community licence for non-commercial open-source projects. CheerpJ is not part of Score reader.
+community licence for non-commercial open-source projects. CheerpJ is not part of Score Reader.

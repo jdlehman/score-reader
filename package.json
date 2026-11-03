@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "./build.sh",
-    "serve": "node spike/serve.mjs",
+    "serve": "node test/serve.mjs",
     "e2e": "node test/e2e.mjs"
   },
   "dependencies": {

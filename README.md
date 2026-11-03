@@ -1,4 +1,4 @@
-# Score reader
+# Score Reader
 
 Turn a PDF or photos of sheet music into a MusicXML file, in the browser. Nothing is uploaded:
 the music is read on the visitor's own computer.
@@ -19,7 +19,7 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    page offers to download (`app/reader.js`). Its log drives the progress bar.
 
 Audiveris is used as released, with a few changes for the browser (`patches/`) and every jar's
-`Math` calls pointed at a faster `FastMath` (`java/`). `spike/README.md` explains them and how the
+`Math` calls pointed at a faster `FastMath` (`java/`). `NOTES.md` explains them and how the
 time came down from 4 minutes a page to under 2.
 
 Limits: no words or part names yet (Audiveris reads text with Tesseract, which is native), so the

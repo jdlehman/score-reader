@@ -1,8 +1,6 @@
-// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// Score reader: Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the
-// file, follows its log for progress, and offers the MusicXML it writes.
-//
-// Copyright (C) 2026 Jonathan Lehman. GNU AGPL v3 or later: see LICENSE.txt.
+// Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+// Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the score as a PDF,
+// follows its log for progress, and offers the MusicXML it writes.
 
 import { imagesToPdf, pdfToPdf } from './pdf.js'
 
@@ -34,6 +32,10 @@ const PAGE_SECONDS = STEPS.reduce((a, x) => a + x[2], 0)
 const START_SECONDS = 12 // starting Java and Audiveris, before the first page
 const LATER = 0.6 // later pages take this much of the first one's time (Java has compiled Audiveris by then)
 
+/** Where Audiveris finds the score, and what it names its output after. */
+const INPUT = '/str/score.pdf'
+const OUTPUT_NAME = 'score'
+
 const $ = id => document.getElementById(id)
 const show = id => { for (const s of ['pick', 'work', 'done', 'failed']) $(s).hidden = s !== id }
 
@@ -62,8 +64,8 @@ async function prepare(files, onPage) {
   if (pdfs.length + images.length < files.length) throw new Error(`${files.find(f => !isPdf(f) && !isImage(f)).name} isn’t a PDF or an image.`)
   if (pdfs.length > 1 || (pdfs.length && images.length)) throw new Error('Choose one PDF at a time, or photos of the pages (not both).')
   if (files.some(f => /\.hei[cf]$/i.test(f.name))) throw new Error('HEIC photos can’t be read here. On an iPhone, share the photos as JPEG, or scan the pages with Notes instead.')
-  if (pdfs.length) return { file: 'score.pdf', bytes: await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
-  return { file: 'score.pdf', bytes: await imagesToPdf(images, onPage), title: stem(images[0].name) }
+  if (pdfs.length) return { bytes: await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
+  return { bytes: await imagesToPdf(images, onPage), title: stem(images[0].name) }
 }
 
 // ---- progress, from Audiveris's log ----
@@ -187,17 +189,17 @@ async function read(files) {
     })
     // Audiveris asks the window system which thread it is on, even without windows
     cheerpjCreateDisplay(320, 200, $('display'))
-    cheerpOSAddStringFile('/str/' + input.file, input.bytes)
+    cheerpOSAddStringFile(INPUT, input.bytes)
     const jars = new URL('jars/', location.href).pathname
     const classpath = (await (await fetch('jars/classpath.txt')).text()).trim().split('\n').map(j => '/app' + jars + j).join(':')
     cheerpjRunMain('Audiveris', classpath,
       '-batch',
       '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // Tesseract is native: no text yet
       '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
-      '-transcribe', '-export', '-output', '/files/out', '/str/' + input.file,
+      '-transcribe', '-export', '-output', '/files/out', INPUT,
     ).then(code => finished(code !== 0))
     const failure = await done
-    const results = await outputs(stem(input.file))
+    const results = await outputs(OUTPUT_NAME)
     clearInterval(timer)
     render()
     if (!results.length) {

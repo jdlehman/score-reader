@@ -1,7 +1,7 @@
-// Score reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+// Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Profile one Audiveris step in the browser: start V8's sampling profiler when the step starts
 // (from the log) and stop after a while, then list where the time went.
-//   node spike/profile.mjs BEAMS 20   (step, seconds to sample)   (with spike/serve.mjs running)
+//   node test/profile.mjs BEAMS 20   (step, seconds to sample; with npm run serve running)
 import { appendFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
@@ -35,7 +35,7 @@ const finished = new Promise(resolve => {
     }
   })
 })
-await tab.goto(`http://127.0.0.1:8787/spike/index.html?page=${encodeURIComponent(page)}&java=25${process.env.EXTRA ?? ''}`)
+await tab.goto(`http://127.0.0.1:8787/test/profile.html?page=${encodeURIComponent(page)}${process.env.EXTRA ?? ''}`)
 const profile = await finished
 writeFileSync(join(out, `profile-${from}.cpuprofile`), JSON.stringify(profile))
 
