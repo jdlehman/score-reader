@@ -20,15 +20,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
       # Audiveris's source and release jars, the JDK and the libraries' source: about 300 MB to fetch otherwise
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             .work/audiveris
@@ -40,7 +40,7 @@ jobs:
       # only PDF.js is needed to build, and none of the packages' install scripts
       - run: npm ci --omit=dev --ignore-scripts
       - run: ./build.sh
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
@@ -55,4 +55,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
