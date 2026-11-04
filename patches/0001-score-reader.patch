@@ -567,7 +567,7 @@ index 080c091..63a8596 100644
  
                  // Tempo text indication?
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
-index bfbeda9..c921535 100644
+index bfbeda9..8362f9c 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/Book.java
 @@ -589,7 +589,9 @@ public class Book
@@ -581,7 +581,52 @@ index bfbeda9..c921535 100644
          final boolean ok = transcribe(theStubs, theScores, swap);
  
          if (!ok) {
-@@ -2048,6 +2050,9 @@ public class Book
+@@ -1405,6 +1407,28 @@ public class Book
+         return sel;
+     }
+ 
++    //------------//
++    // skipFailed //
++    //------------//
++    /**
++     * Score Reader: leave a sheet that failed out of the book, so that the other sheets are still
++     * exported (with scorereader.skipFailedPages). Without it, one bad page loses the whole book.
++     *
++     * @param stub the sheet that failed
++     * @return true if the sheet was left out
++     */
++    private static boolean skipFailed (SheetStub stub)
++    {
++        if (!Boolean.getBoolean("scorereader.skipFailedPages")) {
++            return false;
++        }
++
++        logger.warn("Sheet ignored: {} could not be read, and is left out", stub);
++        stub.invalidate();
++
++        return true;
++    }
++
+     //---------------//
+     // getValidStubs //
+     //---------------//
+@@ -2014,7 +2038,7 @@ public class Book
+                                 // Exception raised on stub
+                                 // Let processing continue for the other stubs
+                                 logger.warn("Error processing stub");
+-                                someFailure = true;
++                                someFailure |= !skipFailed(stub);
+                             } finally {
+                                 stub.printWatch(false);
+                                 if (swap) {
+@@ -2042,12 +2066,15 @@ public class Book
+                             // Exception raised on stub
+                             // Let processing continue for the other stubs
+                             logger.warn("Error processing stub {}", ex.getMessage(), ex);
+-                            someFailure = true;
++                            someFailure |= !skipFailed(stub);
+                         } finally {
+                             stub.printWatch(false);
                              if (swap) {
                                  swapAllSheets(); // Save sheet(s) & global book info to disk
                                  logger.info("End of {}", stub);
@@ -647,6 +692,25 @@ index 3efeee8..5b1eb0c 100644
      //------------//
      // getPicture //
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
+index 69c2f0f..7f4c3be 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
+@@ -245,6 +245,14 @@ public class MeasureStack
+ 
+         if (part != null) {
+             final Measure measure = getMeasureAt(part);
++
++            if (measure == null) {
++                // Score Reader: a part this stack has no measure for (parts that change from
++                // system to system); Audiveris failed the whole book here
++                logger.info("No measure for {} in {} of {}", inter, part, this);
++                return;
++            }
++
+             measure.addInter(inter);
+ 
+             if (inter instanceof TupletInter tupletInter) {
 diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
 index b7f0cf3..87af6fc 100644
 --- a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java

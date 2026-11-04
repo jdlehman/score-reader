@@ -19,7 +19,8 @@ else
   "$J/javac" -nowarn -proc:none -cp ".work/lib/*" -d .work/classes \
     $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
     $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
-    $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java 2>&1 | grep -v '^Note:' || true
+    $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java \
+    $SRC/sheet/rhythm/MeasureStack.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
   # FastMath, and every jar rewritten to call it (patched classes first, so they win)

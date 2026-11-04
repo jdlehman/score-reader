@@ -41,6 +41,7 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
     ./build.sh           # the site, in dist/ (./build.sh page rebuilds only the page)
     npm run serve        # http://127.0.0.1:8787/dist/
     node test/e2e.mjs pdf1 some-score.pdf   # read a score in Chrome; results in .work/e2e/
+    node test/stale.mjs score.pdf blank.png # a read offers only what it wrote
 
 `.github/workflows/pages.yml` does the same on GitHub and publishes `dist/` with GitHub Pages.
 

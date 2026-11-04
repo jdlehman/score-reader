@@ -36,6 +36,13 @@ const LATER = 0.6 // later pages take this much of the first one's time (Java ha
 /** Where Audiveris finds the score, and what it names its output after. */
 const INPUT = '/str/score.pdf'
 const OUTPUT_NAME = 'score'
+/**
+ * Where this read's MusicXML goes: a folder of its own. CheerpJ keeps what Java writes in /files
+ * between visits, so a fixed folder still held an earlier read's score, which was offered when a
+ * read wrote none of its own (it failed) or wrote movements instead. (Java may not write in
+ * /files/uploads, the folder CheerpJ clears.)
+ */
+const OUTPUT = `/files/reads/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
 const $ = id => document.getElementById(id)
 const show = id => { for (const s of ['pick', 'work', 'done', 'failed']) $(s).hidden = s !== id }
@@ -181,6 +188,7 @@ async function read(files) {
         'sun.font.layout.ffm=false', // Java 25's HarfBuzz text layout needs native code; use the older one
         'scorereader.keepSheets=true', // our patch: keep pages in memory (reloading them is slow here)
         'scorereader.inBrowser=true', // our patch: tell the page when done; don't save the project file
+        'scorereader.skipFailedPages=true', // our patch: a page Audiveris can't read is left out, not the whole score
       ],
       natives: {
         // our patch calls this when Audiveris is done; Java's shutdown never ends in CheerpJ, so park it here
@@ -208,7 +216,9 @@ async function read(files) {
       '-batch',
       '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // its Tesseract is native: the page reads the text
       '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
-      '-transcribe', '-export', '-output', '/files/out', INPUT,
+      // one piece, one score: Audiveris starts a new movement at each indented system, and hymnals indent many
+      '-constant', 'org.audiveris.omr.sheet.ProcessingSwitches.indentations=false',
+      '-transcribe', '-export', '-output', OUTPUT, INPUT,
     ).then(code => finished(code !== 0))
     const failure = await done
     const results = await outputs(OUTPUT_NAME)
@@ -237,11 +247,11 @@ async function outputs(radix) {
       return null
     }
   }
-  const one = await blob(`/files/out/${radix}.mxl`)
+  const one = await blob(`${OUTPUT}/${radix}.mxl`)
   if (one) return [one]
   const movements = []
   for (let n = 1; n < 30; n++) {
-    const b = await blob(`/files/out/${radix}.mvt${n}.mxl`)
+    const b = await blob(`${OUTPUT}/${radix}.mvt${n}.mxl`)
     if (!b) break
     movements.push(b)
   }
