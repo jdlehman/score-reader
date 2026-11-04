@@ -59,6 +59,15 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   The same values in the same order: the MusicXML is identical. Note heads on a page went from
   33 s to 18 s, the page from 91 s to 75 s.
 
+## Settings for scans of books (app/reader.js)
+
+- `LinesRetriever.maxSlopeDiff=0.05` (Audiveris: 0.025): a staff line may tilt this much more than
+  the page. A scanned book page is warped: on one, the top staves tilted −0.032 and the bottom
+  ones about 0, against −0.008 for the page, and Audiveris dropped 1 or 2 staves a page (10 of
+  12). With 0.05 it found them all. No change on the recognition test's pages, scan or photos.
+- `ProcessingSwitches.indentations=false`: no new movement at each indented system. Hymnals
+  indent many, and a 5-page hymn came back as 11 movements.
+
 ## Pages as Audiveris draws them (app/pdf.js)
 
 Audiveris draws a PDF's pages without antialiasing (`ImageLoading`), so drawn music and text come

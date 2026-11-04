@@ -218,6 +218,9 @@ async function read(files) {
       '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
       // one piece, one score: Audiveris starts a new movement at each indented system, and hymnals indent many
       '-constant', 'org.audiveris.omr.sheet.ProcessingSwitches.indentations=false',
+      // staff lines may tilt more against the page: scans of a book and photos warp it, and lines
+      // tilting 0.03 more than the page were dropped, with their staves (see NOTES.md)
+      '-constant', 'org.audiveris.omr.sheet.grid.LinesRetriever.maxSlopeDiff=0.05',
       '-transcribe', '-export', '-output', OUTPUT, INPUT,
     ).then(code => finished(code !== 0))
     const failure = await done
