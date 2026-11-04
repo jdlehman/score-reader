@@ -45,6 +45,12 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   rest is still to find.
 - `MetronomeInter.isParsed`: a line that only looks like a tempo mark (OCR read "J: 88" for
   "J = 88") is exported as plain words. Before, its export failed on a null model.
+- `PeakGraph.joinByLeftLines`: staves that no bar line connects but a thin line left of their
+  start does are one system. Hymnals and choir books with organ give each choir its own bar lines
+  and join the whole system by a thin line outside the brackets, which Audiveris missed, so it
+  split every system into its groups (a page of 3 systems of 4 staves read as 5 systems). The line
+  must cross the whole gap between the staves, nearly unbroken, and be thin. No change on the test
+  pieces (identical MusicXML).
 - `Template.evaluate` on plain arrays: matching note-head templates is most of the HEADS step, and
   it read the distance table through a list iterator and two interface calls a point, which
   CheerpJ runs far slower than the arithmetic. For a `Table.Short` it now reads the array

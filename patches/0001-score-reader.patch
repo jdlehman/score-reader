@@ -692,6 +692,158 @@ index 3efeee8..5b1eb0c 100644
      //------------//
      // getPicture //
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java b/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
+index 3779932..5bdc070 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
+@@ -607,6 +607,109 @@ public class PeakGraph
+         return p;
+     }
+ 
++    //-----------------//
++    // joinByLeftLines //
++    //-----------------//
++    /**
++     * Score Reader: join into one system consecutive staves that no bar line connects but a thin
++     * vertical line left of their start does. Some engravings (hymnals, choir books with organ)
++     * give each choir and the organ bar lines of their own and join the whole system only by a
++     * thin line left of the choirs' brackets, out of reach of the staves' bar peaks.
++     * <p>
++     * The line must cross the whole gap between the two staves, nearly unbroken, and be thin:
++     * text in the margin is not continuous, and the shadow of a book's binding is wide.
++     *
++     * @param systemTops for each staff (by index), the id of the staff that starts its system
++     */
++    private void joinByLeftLines (Integer[] systemTops)
++    {
++        if (!constants.useLeftLines.isSet()) {
++            return;
++        }
++
++        final ByteProcessor binary = sheet.getPicture().getSource(Picture.SourceKey.BINARY);
++        final Scale scale = sheet.getScale();
++        final double slope = sheet.getSkew().getSlope();
++        final int lookup = scale.toPixels(constants.leftLineLookup);
++        final int maxWidth = Math.max(2, scale.toPixels(constants.leftLineMaxWidth));
++        final int maxGap = scale.toPixels(constants.leftLineMaxGap);
++        final double maxWhite = constants.leftLineMaxWhiteRatio.getValue();
++
++        for (int i = 1; i < systemTops.length; i++) {
++            if (systemTops[i].equals(systemTops[i - 1])) {
++                continue;
++            }
++
++            final Staff above = staffManager.getStaff(i - 1);
++            final Staff below = staffManager.getStaff(i);
++            final int aboveLeft = above.getAbscissa(LEFT);
++            final int belowLeft = below.getAbscissa(LEFT);
++            final int yTop = above.getLastLine().yAt(aboveLeft);
++            final int yBottom = below.getFirstLine().yAt(belowLeft);
++
++            if (yBottom <= yTop) {
++                continue;
++            }
++
++            final int xMax = Math.min(binary.getWidth() - 2, Math.min(aboveLeft, belowLeft) + scale.getInterline());
++            final int xMin = Math.max(1, Math.min(aboveLeft, belowLeft) - lookup);
++
++            for (int x = xMax; x >= xMin; x--) {
++                final AreaUtil.CoreData core = verticalStrip(binary, x, 1, yTop, yBottom, slope);
++
++                if ((core.whiteRatio > maxWhite) || (core.gap > maxGap)) {
++                    continue;
++                }
++
++                // A line, not a band: white on both sides within the maximum width
++                final AreaUtil.CoreData leftSide = verticalStrip(binary, x - maxWidth, 0, yTop, yBottom, slope);
++                final AreaUtil.CoreData rightSide = verticalStrip(binary, x + maxWidth, 0, yTop, yBottom, slope);
++
++                if ((leftSide.whiteRatio < 0.5) && (rightSide.whiteRatio < 0.5)) {
++                    continue;
++                }
++
++                logger.info(
++                        "Staves #{} and #{} joined by a line on their left at x:{}",
++                        above.getId(),
++                        below.getId(),
++                        x);
++                final Integer from = systemTops[i];
++                final Integer to = systemTops[i - 1];
++
++                for (int j = 0; j < systemTops.length; j++) {
++                    if (systemTops[j].equals(from)) {
++                        systemTops[j] = to;
++                    }
++                }
++
++                break;
++            }
++        }
++    }
++
++    /** Score Reader: how dark a strip 2 * halfWidth + 1 wide is, along the page's vertical. */
++    private static AreaUtil.CoreData verticalStrip (ByteProcessor binary,
++                                                    int x,
++                                                    int halfWidth,
++                                                    int yTop,
++                                                    int yBottom,
++                                                    double slope)
++    {
++        // a line perpendicular to the staff lines: x shifts by -slope for each pixel down
++        final double dx = -slope * (yBottom - yTop);
++
++        if ((Math.min(x, x + dx) - halfWidth < 0) || (Math.max(x, x + dx) + halfWidth + 1 >= binary.getWidth())) {
++            return new AreaUtil.CoreData(yBottom - yTop + 1, yBottom - yTop + 1, 1.0); // off the page: white
++        }
++        final GeoPath left = new GeoPath(
++                new Line2D.Double(x - halfWidth, yTop, x - halfWidth + dx, yBottom));
++        final GeoPath right = new GeoPath(
++                new Line2D.Double(x + halfWidth, yTop, x + halfWidth + dx, yBottom));
++
++        return AreaUtil.verticalCore(binary, left, right);
++    }
++
+     //---------------//
+     // createSystems //
+     //---------------//
+@@ -1063,6 +1166,9 @@ public class PeakGraph
+             }
+         }
+ 
++        // Score Reader: staves that only a line left of the staves joins
++        joinByLeftLines(systemTops);
++
+         final int[] ids = new int[staffManager.getStaffCount()];
+ 
+         for (int i = 0; i < ids.length; i++) {
+@@ -1464,6 +1570,27 @@ public class PeakGraph
+         private final Scale.Fraction maxFirstConnectionXOffset = new Scale.Fraction(
+                 2.0,
+                 "Max horizontal offset between staff start and first connection");
++
++        // Score Reader: systems joined by a line left of the staves (see joinByLeftLines)
++        private final Constant.Boolean useLeftLines = new Constant.Boolean(
++                true,
++                "Should a thin line left of the staves join them into one system?");
++
++        private final Scale.Fraction leftLineLookup = new Scale.Fraction(
++                5.0,
++                "How far left of the staves to look for a line joining them");
++
++        private final Scale.Fraction leftLineMaxWidth = new Scale.Fraction(
++                0.6,
++                "Maximum width of a line joining staves on their left");
++
++        private final Scale.Fraction leftLineMaxGap = new Scale.Fraction(
++                0.5,
++                "Maximum vertical gap in a line joining staves on their left");
++
++        private final Constant.Ratio leftLineMaxWhiteRatio = new Constant.Ratio(
++                0.1,
++                "Maximum white ratio in a line joining staves on their left");
+     }
+ 
+     //------------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
 index 69c2f0f..7f4c3be 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
