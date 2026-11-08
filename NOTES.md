@@ -68,6 +68,31 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `ProcessingSwitches.indentations=false`: no new movement at each indented system. Hymnals
   indent many, and a 5-page hymn came back as 11 movements.
 
+## Photo preflight (app/preflight.js)
+
+Before Audiveris spends a minute a page, the page checks the grey pixels it already made:
+binarise, search the tilt from −5° to +5° that levels the staff lines, find the staves by row
+projection. If no staves are found, or the staff lines hold under half the page's ink, the
+reader warns to rescan before starting Java — a read can't restart without a reload, so a
+rescan now is cheaper than gaps later. Reading anyway is allowed. An odd staff count alone
+never warns (1- and 3-staff pages are legitimate).
+
+Measured (2026-11-08, spike harness, Node): clean Verovio hymn 4/4 staves, ~0.8 s; the
+simulated phone photo of the same page found 0 staves at angle 0 and all 4 after the deskew
+search. On clean open pages (Schubert Lieder, Handel Hallelujah) it never false-warned
+(confidence 0.62–0.76), but the staff *count* undercounts on real pages (7/9 Lindenbaum,
+16/22 Beethoven scan), so the count is reported and never used to decide anything. On
+synthetic phone photos of the open pages it warns on the hard ones (Lindenbaum hard: 2
+staves, confidence 0.186; Hallelujah hard: 0 staves) and never on the mild ones — and the
+warn path fires where Audiveris itself falls apart (Lindenbaum hard: 70 of 216 notes, 0/5
+measures valid, against 172/216 on mild/moderate). Node timing on full-size pages is
+~2–3 s; browser timing is to be confirmed by running `test/e2e-preflight.mjs` locally.
+
+One bug the tests caught: the angle search first tried −5° upwards and kept the first angle
+that tied for best, so a level one-staff page was "corrected" by −0.5°, which spread its
+2 px staff lines below the detection threshold. Angles are now tried in order of increasing
+|angle|, so 0 wins ties.
+
 ## Pages as Audiveris draws them (app/pdf.js)
 
 Audiveris draws a PDF's pages without antialiasing (`ImageLoading`), so drawn music and text come

@@ -14,7 +14,9 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    300 dpi, photos with the browser (which applies a phone's rotation). It makes them grey and
    hands Audiveris one PDF of plain pixel pages (`app/pdf.js`). In the browser Audiveris can't
    read most PDFs and photos itself: Java's JPEG decoder and colour management are native code
-   that CheerpJ can't run to the end.
+   that CheerpJ can't run to the end. Before the read starts, each grey page is checked for
+   staff lines (`app/preflight.js`): if a page looks unreadable, you're warned to rescan
+   instead of spending a minute a page on it.
 2. Audiveris reads them in batch mode (`-transcribe -export`) and writes a `.mxl` file, which the
    page offers to download (`app/reader.js`). Its log drives the progress bar. When Audiveris
    reads text, the page reads it for it with tesseract.js (`app/ocr.js`).
