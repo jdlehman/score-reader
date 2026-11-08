@@ -36,6 +36,7 @@
     <ul class="tips">
       <li>A clean PDF works best: notation software’s own PDFs, or those from CPDL or IMSLP.</li>
       <li>For a paper copy, use your phone’s document scanner rather than the camera: Notes on an iPhone (tap the camera button, then Scan Documents), or Google Drive on Android (+, then Scan). It flattens the page and evens out the light, and saves a PDF.</li>
+      <li>Photos are checked first: if a page looks too tilted or blurry to read, you’ll be warned before the minute-long read starts, so you can rescan instead.</li>
       <li>Photos of several pages: choose them all at once, in page order.</li>
     </ul>
     <p class="muted small">Use a computer if you can: reading takes a minute or two for the first page and up to a minute for each page after, and needs a lot of memory. The first time, the page downloads about 60 MB.</p>
@@ -46,6 +47,13 @@
     <div class="bar"><div id="bar-fill"></div></div>
     <p id="status">Starting…</p>
     <p id="pages" class="muted small"></p>
+    <div id="preflight-warn" class="warn" hidden>
+      <p id="preflight-warn-text"></p>
+      <div class="actions">
+        <button id="preflight-continue" class="button primary">Read it anyway</button>
+        <button id="preflight-rescan">Choose different files</button>
+      </div>
+    </div>
     <details class="log"><summary>Details</summary><pre id="log"></pre></details>
   </section>
 

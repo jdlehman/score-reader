@@ -33,6 +33,8 @@ button,.button{display:inline-flex; align-items:center; justify-content:center; 
 .log summary{cursor:pointer; color:var(--muted); font-size:13px}
 .log pre{margin:8px 0 0; max-height:240px; overflow:auto; font-family:var(--mono); font-size:11px; color:var(--muted); white-space:pre-wrap}
 .next{display:flex; flex-direction:column; gap:6px}
+.warn{border:1px solid var(--amber); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px; background:#1c1710}
+.warn p{margin:0}
 footer p{margin:4px 0}
 /* CheerpJ needs a display; nothing is drawn on it */
 #display{position:fixed; left:-10000px; top:0; width:320px; height:200px}

@@ -72,8 +72,27 @@ async function prepare(files, onPage) {
   if (pdfs.length + images.length < files.length) throw new Error(`${files.find(f => !isPdf(f) && !isImage(f)).name} isn’t a PDF or an image.`)
   if (pdfs.length > 1 || (pdfs.length && images.length)) throw new Error('Choose one PDF at a time, or photos of the pages (not both).')
   if (files.some(f => /\.hei[cf]$/i.test(f.name))) throw new Error('HEIC photos can’t be read here. On an iPhone, share the photos as JPEG, or scan the pages with Notes instead.')
-  if (pdfs.length) return { bytes: await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
-  return { bytes: await imagesToPdf(images, onPage), title: stem(images[0].name) }
+  if (pdfs.length) {
+    const { bytes, preflight } = await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage)
+    return { bytes, title: stem(pdfs[0].name), preflight }
+  }
+  const { bytes, preflight } = await imagesToPdf(images, onPage)
+  return { bytes, title: stem(images[0].name), preflight }
+}
+
+/** Ask whether to read on after the preflight warned: resolves true to read anyway, false to pick other files. */
+function askPreflight(verdicts) {
+  const bad = verdicts.map((v, i) => ({ v, page: i + 1 })).filter(({ v }) => v.warnRescan)
+  $('preflight-warn-text').textContent =
+    `This looks hard to read: ${bad.map(({ v, page }) => `page ${page} found ${v.staves.length} stave${v.staves.length === 1 ? '' : 's'} (confidence ${v.confidence})`).join('; ')}. ` +
+    'A clearer scan or a flatter photo usually reads much better, and a read takes about a minute a page. You can read it anyway — it may come back with gaps.'
+  $('preflight-warn').hidden = false
+  $('status').textContent = 'This may be hard to read — check before the minute-long read starts.'
+  return new Promise(resolve => {
+    const done = go => { $('preflight-warn').hidden = true; resolve(go) }
+    $('preflight-continue').onclick = () => done(true)
+    $('preflight-rescan').onclick = () => done(false)
+  })
 }
 
 // ---- progress, from Audiveris's log ----
@@ -169,6 +188,19 @@ async function read(files) {
   } catch (e) {
     clearInterval(timer)
     return fail(e.message)
+  }
+  // The preflight ran while the pages were prepared (see preflight.js): if a page looks
+  // unreadable, warn before starting Java — a read takes a minute a page and can't restart
+  // without a reload, so a rescan now is cheaper than gaps later. Reading anyway is allowed:
+  // a warned page can still read, just badly.
+  if (input.preflight.some(v => v.warnRescan)) {
+    const goOn = await askPreflight(input.preflight)
+    if (!goOn) {
+      clearInterval(timer)
+      started = false
+      show('pick')
+      return
+    }
   }
   $('status').textContent = 'Starting the reader (it downloads about 45 MB the first time)…'
 

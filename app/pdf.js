@@ -7,6 +7,8 @@
 // PDF.js and photos with the browser, and hands Audiveris raw grey pixels compressed with
 // deflate, which Java reads in Java.
 
+import { preflight } from './preflight.js'
+
 /** Audiveris draws a PDF's pages at 300 dpi; pages this size come out at the images' own size. */
 const DPI = 300
 
@@ -56,11 +58,17 @@ export async function pdfToPdf(bytes, onPage) {
       // as Audiveris would draw it; a page with images (a scan) keeps its greys, as Audiveris does.
       const crisp = !(await page.getOperatorList()).fnArray.some(f => IMAGE.has(f))
       const g = canvas.getContext('2d')
-      pages.push(await greyPage(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data, crisp))
+      // The preflight (see preflight.js) runs on the grey pixels, before they are deflated:
+      // if the page looks unreadable, the reader warns to rescan instead of spending a
+      // minute a page on it. The deskewed copy is dropped here — only the verdict is kept.
+      const grey = toGrey(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data, crisp)
+      const verdict = preflight(grey, canvas.width, canvas.height)
+      delete verdict.deskewedGrey
+      pages.push({ w: canvas.width, h: canvas.height, data: await deflate(grey), preflight: verdict })
       canvas.width = canvas.height = 0
       page.cleanup()
     }
-    return writePdf(pages)
+    return { bytes: writePdf(pages), preflight: pages.map(p => p.preflight) }
   } finally {
     task.destroy() // and the worker with it
   }
@@ -92,20 +100,30 @@ export async function imagesToPdf(files, onPage) {
     g.imageSmoothingQuality = 'high'
     g.drawImage(bitmap, 0, 0, w, h)
     bitmap.close()
-    pages.push(await greyPage(w, h, g.getImageData(0, 0, w, h).data))
+    // Photos are the pages most likely to be unreadable, so they get the same preflight
+    // check as PDF pages (see pdfToPdf above).
+    const grey = toGrey(w, h, g.getImageData(0, 0, w, h).data)
+    const verdict = preflight(grey, w, h)
+    delete verdict.deskewedGrey
+    pages.push({ w, h, data: await deflate(grey), preflight: verdict })
     canvas.width = canvas.height = 0 // let go of the pixels now, not when collected
   }
-  return writePdf(pages)
+  return { bytes: writePdf(pages), preflight: pages.map(p => p.preflight) }
 }
 
-/** A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel, deflated. */
-export async function greyPage(w, h, rgba, crisp = false) {
+/** Grey pixels from RGBA: by luminance, or only black and white if crisp. */
+export function toGrey(w, h, rgba, crisp = false) {
   const grey = new Uint8Array(w * h)
   for (let i = 0, j = 0; i < grey.length; i++, j += 4) {
     const v = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
     grey[i] = crisp ? (v < 128 ? 0 : 255) : v
   }
-  return { w, h, data: await deflate(grey) }
+  return grey
+}
+
+/** A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel, deflated. */
+export async function greyPage(w, h, rgba, crisp = false) {
+  return { w, h, data: await deflate(toGrey(w, h, rgba, crisp)) }
 }
 
 /** zlib-wrapped deflate, which is what a PDF's FlateDecode reads. */
