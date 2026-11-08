@@ -7,10 +7,15 @@
     "build": "./build.sh",
     "serve": "node test/serve.mjs",
     "e2e": "node test/e2e.mjs",
-    "test": "node --test test/preflight.test.mjs test/merge.test.mjs"
+    "test": "node --test test/preflight.test.mjs test/merge.test.mjs test/language.test.mjs"
   },
   "dependencies": {
+    "@tesseract.js-data/deu": "1.0.0",
     "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/fra": "1.0.0",
+    "@tesseract.js-data/ita": "1.0.0",
+    "@tesseract.js-data/lat": "1.0.0",
+    "@tesseract.js-data/spa": "1.0.0",
     "pdfjs-dist": "6.5.438",
     "tesseract.js": "7.0.0"
   },

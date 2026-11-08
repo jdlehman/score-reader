@@ -33,6 +33,17 @@
   <section id="pick" class="panel drop">
     <p class="big">Drop a PDF or photos of the pages here</p>
     <label class="button primary">Choose files<input id="files" type="file" accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.bmp,application/pdf,image/*" multiple></label>
+    <label class="field">Language of the words (lyrics, titles, part names)
+      <select id="ocr-language">
+        <option value="eng" selected>English</option>
+        <option value="deu">German</option>
+        <option value="fra">French</option>
+        <option value="ita">Italian</option>
+        <option value="spa">Spanish</option>
+        <option value="lat">Latin</option>
+      </select>
+    </label>
+    <p class="muted small">Each language downloads about 6–14 MB the first time you use it, and is then kept by the browser. The music itself is the same in every language.</p>
     <ul class="tips">
       <li>A clean PDF works best: notation software’s own PDFs, or those from CPDL or IMSLP.</li>
       <li>For a paper copy, use your phone’s document scanner rather than the camera: Notes on an iPhone (tap the camera button, then Scan Documents), or Google Drive on Android (+, then Scan). It flattens the page and evens out the light, and saves a PDF.</li>

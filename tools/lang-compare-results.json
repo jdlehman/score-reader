@@ -1,0 +1,46 @@
+[
+ {
+  "page": "lieder-lindenbaum",
+  "line": 1859,
+  "lang": "eng",
+  "ref": 14,
+  "hits": 14,
+  "accuracy": 1,
+  "charSim": 1,
+  "meanConf": 93,
+  "got": "am brun nen vor dem tho re da steht ein lin den baum ich"
+ },
+ {
+  "page": "lieder-lindenbaum",
+  "line": 1859,
+  "lang": "deu",
+  "ref": 14,
+  "hits": 14,
+  "accuracy": 1,
+  "charSim": 1,
+  "meanConf": 91,
+  "got": "am brun nen vor dem tho re da steht ein lin den baum ich"
+ },
+ {
+  "page": "lieder-gute-nacht",
+  "line": 1148,
+  "lang": "eng",
+  "ref": 18,
+  "hits": 14,
+  "accuracy": 0.778,
+  "charSim": 1,
+  "meanConf": 91,
+  "got": "fremd bin ich einge zo gen fremd zieh ich wieder aus der mai war mir ge"
+ },
+ {
+  "page": "lieder-gute-nacht",
+  "line": 1148,
+  "lang": "deu",
+  "ref": 18,
+  "hits": 14,
+  "accuracy": 0.778,
+  "charSim": 1,
+  "meanConf": 88,
+  "got": "fremd bin ich einge zo gen fremd zieh ich wieder aus der mai war mir ge"
+ }
+]

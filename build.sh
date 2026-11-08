@@ -40,7 +40,7 @@ else
   cp .work/sources/*.jar dist/source/
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/preflight.js app/merge.js app/zip-mxl.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/merge.js app/zip-mxl.js app/style.css app/*.svg app/*.png dist/
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt
@@ -54,7 +54,10 @@ cp $pdfjs/wasm/*.wasm $pdfjs/wasm/*_nowasm_fallback.js $pdfjs/wasm/LICENSE_* dis
 rm -f dist/pdfjs/wasm/quickjs* dist/pdfjs/wasm/LICENSE_*QUICKJS # that one runs a PDF's scripts, which aren't wanted
 
 # Tesseract (tesseract.js) reads the words: its library and worker, the builds of its engine that
-# include the legacy engine Audiveris uses (a browser loads one), and the English data
+# include the legacy engine Audiveris uses (a browser loads one), and the language data.
+# One pack a language (~6-14 MB each, MIT packages of the Apache-2.0 tessdata 4.0.0 data —
+# the standard data, which the legacy engine needs; tessdata_fast is LSTM-only and would
+# not work here). No traineddata is committed to the repo: build.sh copies it from npm.
 rm -rf dist/tesseract dist/tessdata
 mkdir -p dist/tesseract dist/tessdata
 tjs=node_modules/tesseract.js
@@ -63,5 +66,7 @@ cp $tjs/LICENSE.md dist/tesseract/LICENSE.md
 cp node_modules/tesseract.js-core/tesseract-core.wasm.js node_modules/tesseract.js-core/tesseract-core-simd.wasm.js \
   node_modules/tesseract.js-core/tesseract-core-relaxedsimd.wasm.js dist/tesseract/
 cp node_modules/tesseract.js-core/LICENSE dist/tesseract/LICENSE-core
-cp node_modules/@tesseract.js-data/eng/4.0.0/eng.traineddata.gz dist/tessdata/
+for lang in deu eng fra ita lat spa; do
+  cp "node_modules/@tesseract.js-data/$lang/4.0.0/$lang.traineddata.gz" dist/tessdata/
+done
 echo "dist: $(du -sh dist | cut -f1)"

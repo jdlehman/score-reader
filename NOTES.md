@@ -35,8 +35,8 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `BrowserOCR`: reading text (words, titles, part names) in the browser. `OcrUtil` picks it when
   `scorereader.inBrowser` is set. It hands the page each image Audiveris would give Tesseract, as
   grey bytes (a CheerpJ native), and the page reads it with tesseract.js, the same Tesseract in
-  WebAssembly, with its legacy engine as `TesseractOrder` uses and the same English data
-  (`app/ocr.js`). Lines, words and characters come back with their boxes and baselines, but no
+  WebAssembly, with its legacy engine as `TesseractOrder` uses and the language data the score
+  was picked in (`app/ocr.js`, `app/language.js`). Lines, words and characters come back with their boxes and baselines, but no
   font attributes: a word's font size comes from its line's height, and `TextWord` fits the size
   to the word's bounds anyway. On four test pieces (clean pages) it reads 64–77% of the
   syllables, against 76–86% for desktop Audiveris on the same pages, and all the part names; on a
@@ -58,6 +58,43 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   anchor's offset worked out once (`upperLeft` allocated two points and rounded twice a call).
   The same values in the same order: the MusicXML is identical. Note heads on a page went from
   33 s to 18 s, the page from 91 s to 75 s.
+
+## Lyric language (app/language.js, app/ocr.js)
+
+The pick panel offers the language of the words: English (default), German, French, Italian,
+Spanish, Latin. One language a score; a '+' combination (Audiveris's "deu+eng" form) is
+accepted from Audiveris if it ever sets one, but the panel does not offer it.
+
+- The choice is made before the read starts (`reader.js` reads the selector, `startOcr`
+  preloads that pack) and is resolved again for every image Audiveris hands the page
+  (`resolveOcrLanguage`): a non-default panel choice wins over Audiveris's spec, because
+  Audiveris's default is always 'eng' — honouring its spec first would make the selector
+  do nothing. An explicitly-set Audiveris language wins when the panel is still on English.
+- Java: `BrowserOCR.LANGUAGES` in patches/0001-score-reader.patch lists all six codes.
+  Before, it listed only "eng", so `OcrUtil.scan` returned no text at all for any other
+  language (`ocr.supports(languages)` was false) — the selector would have been refused
+  before any OCR ran.
+- Data: `build.sh` copies `@tesseract.js-data/<code>/4.0.0/<code>.traineddata.gz` for all
+  six into `dist/tessdata/` (MIT packages of the Apache-2.0 tessdata 4.0.0 data; the
+  standard data, which the legacy engine needs — `tessdata_fast` is LSTM-only and does
+  not work with it). No traineddata is committed to the repo. Sizes (unpacked, npm
+  registry 2026-11-08): eng 13.9 MB, deu 8.4 MB, fra 7.0 MB, ita 8.6 MB, spa 10.5 MB,
+  lat 5.7 MB — about 53 MB if every pack is ever downloaded, one pack per score in
+  practice, cached by the browser afterwards.
+- One worker serves one language (tesseract.js v7 has no safe public way to re-language
+  a booted worker): a different language terminates the old worker and starts a new one.
+  If a pack fails to load, the read falls back to English and warns, never stopping.
+- Measured (tools/lang-compare-results.json, PR 4 harness method — legacy engine, 70 dpi,
+  PSM 6, grey lyric strips — language the only change): on the German Lieder pages,
+  'deu' does NOT measurably beat 'eng'. Lindenbaum 14/14 syllables in both languages,
+  Gute Nacht 14/18 in both, character similarity 1.0 in both, the same words read line
+  for line (28/32 syllables total, mean confidence 92 eng vs 90 deu). The 4 Gute Nacht
+  misses are the same in both languages. This is selector infrastructure, not an
+  accuracy claim: the value is that a German/French/Italian/Spanish/Latin score can now
+  be read in its own language at all (before, Audiveris refused every non-English spec),
+  and that the right language pack is loaded — whether it reads better on harder pages
+  (photos, hymnals, old type) is unmeasured and must be tested on those pages, not
+  assumed from these clean strips.
 
 ## Settings for scans of books (app/reader.js)
 
