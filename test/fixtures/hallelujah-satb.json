@@ -1,0 +1,2000 @@
+{
+ "parts": [
+  {
+   "id": "P1",
+   "name": "Soprano",
+   "note_count": 54,
+   "notes": [
+    {
+     "bar": 4,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 4,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 4,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 4,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 5,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 7,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 7,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 7,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 8,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 8,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 8,
+     "pitch": "F5",
+     "midi": 78,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 8,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 9,
+     "pitch": "F5",
+     "midi": 78,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 9,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "F5",
+     "midi": 78,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 10,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "F5",
+     "midi": 78,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 11,
+     "pitch": "F5",
+     "midi": 78,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 11,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 11,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 11,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 12,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "for"
+    },
+    {
+     "bar": 12,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "the"
+    },
+    {
+     "bar": 12,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Lord"
+    },
+    {
+     "bar": 13,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "God"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "om"
+    },
+    {
+     "bar": 13,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "ni"
+    },
+    {
+     "bar": 13,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "po"
+    },
+    {
+     "bar": 13,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "tent"
+    },
+    {
+     "bar": 14,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "reign"
+    },
+    {
+     "bar": 14,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "eth,"
+    },
+    {
+     "bar": 14,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 14,
+     "pitch": "E5",
+     "midi": 76,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    }
+   ]
+  },
+  {
+   "id": "P2",
+   "name": "Alto",
+   "note_count": 54,
+   "notes": [
+    {
+     "bar": 4,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 4,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 4,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 5,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 5,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 7,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 7,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 8,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 8,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 8,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 8,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 11,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 11,
+     "pitch": "G4",
+     "midi": 68,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 11,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 12,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "for"
+    },
+    {
+     "bar": 12,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "the"
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Lord"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "God"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "om"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "ni"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "po"
+    },
+    {
+     "bar": 13,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "tent"
+    },
+    {
+     "bar": 14,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "reign"
+    },
+    {
+     "bar": 14,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "eth,"
+    },
+    {
+     "bar": 14,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 14,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    }
+   ]
+  },
+  {
+   "id": "P3",
+   "name": ":Tenore",
+   "note_count": 55,
+   "notes": [
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 5,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 5,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 6,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 7,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 7,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 7,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 8,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 8,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 9,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 9,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 10,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 11,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 11,
+     "pitch": "F4",
+     "midi": 66,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 11,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 12,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "for"
+    },
+    {
+     "bar": 12,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "the"
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Lord"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "God"
+    },
+    {
+     "bar": 13,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "om"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "ni"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "po"
+    },
+    {
+     "bar": 13,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "tent"
+    },
+    {
+     "bar": 14,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "reign"
+    },
+    {
+     "bar": 14,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "eth,"
+    },
+    {
+     "bar": 14,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 14,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    }
+   ]
+  },
+  {
+   "id": "P4",
+   "name": "Basso",
+   "note_count": 55,
+   "notes": [
+    {
+     "bar": 4,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 4,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 4,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 5,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 5,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 5,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 5,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 6,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 6,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 6,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 6,
+     "pitch": "F3",
+     "midi": 54,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 7,
+     "pitch": "E3",
+     "midi": 52,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 7,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 7,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 7,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 8,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 8,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 8,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 9,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 9,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 9,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 9,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 10,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 10,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 10,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    },
+    {
+     "bar": 11,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 11,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "lu"
+    },
+    {
+     "bar": 11,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "jah,"
+    },
+    {
+     "bar": 12,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "for"
+    },
+    {
+     "bar": 12,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "the"
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Lord"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "God"
+    },
+    {
+     "bar": 13,
+     "pitch": "D3",
+     "midi": 50,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "om"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter.",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "ni"
+    },
+    {
+     "bar": 13,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "po"
+    },
+    {
+     "bar": 13,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "tent"
+    },
+    {
+     "bar": 14,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "half",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "reign"
+    },
+    {
+     "bar": 14,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "eth,"
+    },
+    {
+     "bar": 14,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Hal"
+    },
+    {
+     "bar": 14,
+     "pitch": "C4",
+     "midi": 61,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "le"
+    }
+   ]
+  }
+ ],
+ "total_notes": 218,
+ "total_lyrics": 208,
+ "page": "hallelujah-satb",
+ "beats": 4,
+ "beat_type": 4,
+ "bars": 14
+}
