@@ -129,9 +129,37 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
     node test/profile.mjs HEADS 25      # where a step spends its time, on .work/page.png
     EXTRA='&fast=0' node test/profile.mjs HEADS 25   # the same without FastMath
+    node tools/merge.mjs audiveris.mxl tromr-dir/ out.musicxml  # gated TrOMR merge, below
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
 in `lib/`, `classpath.txt` and a Temurin 25 JDK in `jdk/`: `./setup.sh` makes it.
 
 CheerpJ's community edition is free for non-commercial open-source projects loaded from its CDN,
 with a "Built with CheerpJ" credit.
+
+## Gated TrOMR merge (app/merge.js, tools/merge.mjs)
+
+Audiveris is the authority. Polyphonic-TrOMR, run on staff crops, is consulted only where
+Audiveris's own output is broken, and only under a gate: a staff slice of a measure is replaced
+only when Audiveris's slice is duration-invalid or missing, the TrOMR replacement is itself
+duration-valid, AND TrOMR's distinct pitches cover Audiveris's distinct pitches for that slice.
+Never a note-list union; a valid Audiveris measure is never touched; only one staff in a
+measure is ever replaced. System bar ranges come from Audiveris's own `<print new-system="yes">`
+markers, so no Verovio SVG is needed; staff order is top-to-bottom per system.
+
+Why the pitch check: the ungated spike merge fixed Hallelujah validity 41/57 -> 56/56 but lost
+pitch 217 -> 213, because Audiveris's "invalid" measures were invalid only in rest durations
+while their pitches were right. With the gate, Hallelujah stays at 217 exact pitch and validity
+improves (measured in test/merge.test.mjs, which scores the merge against ground truth). The
+check is a set of distinct pitches, not a multiset: Audiveris splits one sounding pitch across
+voices in divisi, so multiplicity would refuse the divisi case the merge exists for.
+
+Pitches are resolved through the key signature: TrOMR writes no `<alter>` elements (it relies on
+the key — F# and C# in D major are bare `<step>F</step>`), while Audiveris writes them explicitly,
+so raw steps would call those different pitches and refuse nearly every replacement in a sharp
+or flat key.
+
+What it is not: the merge is not wired into the read flow yet. TrOMR has no in-browser runner in
+the repo (the spikes used its native `focr` CLI), so `tools/merge.mjs` runs it offline for now,
+and no model weights are vendored (TrOMR is ~61 MB). Transcoda is deliberately not a source: it
+scored 0/218 on the Hallelujah page.
