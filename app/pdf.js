@@ -6,6 +6,11 @@
 // JPEGs), and so is its colour management. So the page draws everything itself, the PDF with
 // PDF.js and photos with the browser, and hands Audiveris raw grey pixels compressed with
 // deflate, which Java reads in Java.
+//
+// Each photo and scanned page also gets a quick look (preflight.js), so the page can warn before a
+// read that Audiveris would give up on.
+
+import { preflight } from './preflight.js'
 
 /** Audiveris draws a PDF's pages at 300 dpi; pages this size come out at the images' own size. */
 const DPI = 300
@@ -15,7 +20,10 @@ const MAX_SIDE = 4096
 
 const PDFJS = new URL('pdfjs/', import.meta.url)
 
-/** A PDF's pages, drawn at 300 dpi with PDF.js. onPage(n, of) tells how far it has got. */
+/**
+ * A PDF's pages, drawn at 300 dpi with PDF.js. onPage(n, of) tells how far it has got. Returns the
+ * PDF Audiveris reads, and for each page what the quick look found (null for a drawn page).
+ */
 export async function pdfToPdf(bytes, onPage) {
   const pdfjs = await import(new URL('pdf.min.mjs', PDFJS).href)
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.mjs', PDFJS).href
@@ -60,7 +68,7 @@ export async function pdfToPdf(bytes, onPage) {
       canvas.width = canvas.height = 0
       page.cleanup()
     }
-    return writePdf(pages)
+    return { bytes: writePdf(pages), checks: pages.map(p => p.check) }
   } finally {
     task.destroy() // and the worker with it
   }
@@ -95,17 +103,21 @@ export async function imagesToPdf(files, onPage) {
     pages.push(await greyPage(w, h, g.getImageData(0, 0, w, h).data))
     canvas.width = canvas.height = 0 // let go of the pixels now, not when collected
   }
-  return writePdf(pages)
+  return { bytes: writePdf(pages), checks: pages.map(p => p.check) }
 }
 
-/** A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel, deflated. */
+/**
+ * A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel,
+ * deflated. A page that isn't crisp (a photo or a scan) also gets a quick look (preflight.js);
+ * drawn pages, from notation software, don't need one.
+ */
 export async function greyPage(w, h, rgba, crisp = false) {
   const grey = new Uint8Array(w * h)
   for (let i = 0, j = 0; i < grey.length; i++, j += 4) {
     const v = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
     grey[i] = crisp ? (v < 128 ? 0 : 255) : v
   }
-  return { w, h, data: await deflate(grey) }
+  return { w, h, data: await deflate(grey), check: crisp ? null : preflight(grey, w, h) }
 }
 
 /** zlib-wrapped deflate, which is what a PDF's FlateDecode reads. */

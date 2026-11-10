@@ -59,6 +59,23 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   The same values in the same order: the MusicXML is identical. Note heads on a page went from
   33 s to 18 s, the page from 91 s to 75 s.
 
+## A quick look before reading (app/preflight.js)
+
+Each photo and scanned page (not drawn PDF pages) gets a look while it is prepared, about 0.3 s a
+page. If Audiveris would give up on a page, the page says why and asks before the read starts,
+since a read can't be stopped and started again without reloading. Audiveris gives up when it
+finds no staves ("No regularly spaced lines found") or when staff lines are under 11 pixels apart
+(`ScaleBuilder.minInterline`; "too low interline value").
+
+- Ink is a pixel clearly darker than its neighbourhood, so a dark table or a shadow doesn't count.
+- Staves are found in 12 vertical strips, each at its own tilt (a photo's perspective tilts lines
+  differently across the page): five evenly spaced rows of ink in at least 3 strips.
+- On midi_studio's recognition test: all 20 phone photos (which Audiveris reads at 74–91% of
+  notes), every scan and clean page, and the hymnal pass; a blank page and photos shrunk below
+  Audiveris's limit warn, and Audiveris rejects those. Staff counts and spacings come out right.
+- `test/e2e-check.mjs` checks the warning in Chrome with two photos of a recognition-test piece:
+  desktop Audiveris reads `photo.jpg` and rejects `photo-small.jpg` (spacing 9 pixels).
+
 ## Lyric language (app/language.js, app/ocr.js)
 
 The pick panel asks for the language of the words: English (the default), German, French,

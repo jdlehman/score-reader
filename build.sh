@@ -40,7 +40,7 @@ else
   cp .work/sources/*.jar dist/source/
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/style.css app/*.svg app/*.png dist/
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt

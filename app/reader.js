@@ -73,8 +73,31 @@ async function prepare(files, onPage) {
   if (pdfs.length + images.length < files.length) throw new Error(`${files.find(f => !isPdf(f) && !isImage(f)).name} isn’t a PDF or an image.`)
   if (pdfs.length > 1 || (pdfs.length && images.length)) throw new Error('Choose one PDF at a time, or photos of the pages (not both).')
   if (files.some(f => /\.hei[cf]$/i.test(f.name))) throw new Error('HEIC photos can’t be read here. On an iPhone, share the photos as JPEG, or scan the pages with Notes instead.')
-  if (pdfs.length) return { bytes: await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
-  return { bytes: await imagesToPdf(images, onPage), title: stem(images[0].name) }
+  if (pdfs.length) return { ...await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
+  return { ...await imagesToPdf(images, onPage), title: stem(images[0].name) }
+}
+
+/**
+ * If the quick look (preflight.js) says Audiveris would give up on a page, say so before the read
+ * starts, since a read can't be stopped and started again without reloading the page. Resolves true
+ * to read anyway, false to choose other files.
+ */
+function askToRead(checks) {
+  const pages = which => checks.flatMap((c, i) => c?.warn === which ? [i + 1] : [])
+  const list = ns => checks.length === 1 ? 'this page' : `${ns.length === 1 ? 'page' : 'pages'} ${ns.join(', ')}`
+  const none = pages('no-staves'), small = pages('too-small')
+  if (!none.length && !small.length) return Promise.resolve(true)
+  const why = []
+  if (none.length) why.push(`No staves could be found on ${list(none)}: ${none.length > 1 && checks.length > 1 ? 'they' : 'it'} may be blurred, too faint, too small or not music.`)
+  if (small.length) why.push(`The music on ${list(small)} is too small to read: take the photo closer, or use a bigger image.`)
+  $('check-why').textContent = why.join(' ')
+  $('check').hidden = false
+  $('status').textContent = 'Check the pages before reading.'
+  return new Promise(resolve => {
+    const answer = go => { $('check').hidden = true; resolve(go) }
+    $('check-read').onclick = () => answer(true)
+    $('check-other').onclick = () => answer(false)
+  })
 }
 
 // ---- progress, from Audiveris's log ----
@@ -174,6 +197,13 @@ async function read(files) {
   } catch (e) {
     clearInterval(timer)
     return fail(e.message)
+  }
+  if (!await askToRead(input.checks)) {
+    clearInterval(timer)
+    started = false
+    $('files').value = ''
+    show('pick')
+    return
   }
   $('status').textContent = 'Starting the reader (it downloads about 45 MB the first time)…'
 
