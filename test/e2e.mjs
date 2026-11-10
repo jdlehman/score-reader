@@ -3,6 +3,7 @@
 //   node test/e2e.mjs <out name> <file>...   (with npm run serve running; results in .work/e2e/)
 //   MINUTES=n gives up after n minutes (default 20); the page's console goes to .work/e2e/<name>.log
 //   URL=... reads on another copy of the site, such as the published one
+//   LANG_OF_WORDS=deu (or fra, ita, spa, lat) picks the language of the words first
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { chromium } from 'playwright-core'
@@ -25,6 +26,7 @@ await tab.screenshot({ path: join(out, `${name}-0-start.png`), fullPage: true })
 const t0 = Date.now()
 // the page's memory every 15 s (Java's heap lives in it)
 setInterval(() => tab.evaluate(() => Math.round(performance.memory.usedJSHeapSize / 1e6)).then(mb => note(`(heap ${mb} MB)`), () => {}), 15000).unref()
+if (process.env.LANG_OF_WORDS) await tab.selectOption('#ocr-language', process.env.LANG_OF_WORDS)
 await tab.setInputFiles('#files', files.map(f => resolve(f)))
 // the page must start reading at once: if not, its script failed
 await tab.waitForFunction(() => !document.getElementById('work').hidden, null, { timeout: 30000 }).catch(async () => {

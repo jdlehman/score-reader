@@ -922,9 +922,9 @@ index 0000000..e51c525
 +{
 +    private static final BrowserOCR INSTANCE = new BrowserOCR();
 +
-+    /** The languages the page has data for. */
++    /** The languages the page has data for (the pick panel's selector, app/language.js). */
 +    private static final SortedSet<String> LANGUAGES = Collections.unmodifiableSortedSet(
-+            new TreeSet<>(List.of("eng")));
++            new TreeSet<>(List.of("deu", "eng", "fra", "ita", "lat", "spa")));
 +
 +    /** Tesseract's page segmentation modes, as TesseractOCR uses them. */
 +    private static final int PSM_AUTO = 3;

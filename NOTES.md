@@ -35,8 +35,8 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `BrowserOCR`: reading text (words, titles, part names) in the browser. `OcrUtil` picks it when
   `scorereader.inBrowser` is set. It hands the page each image Audiveris would give Tesseract, as
   grey bytes (a CheerpJ native), and the page reads it with tesseract.js, the same Tesseract in
-  WebAssembly, with its legacy engine as `TesseractOrder` uses and the same English data
-  (`app/ocr.js`). Lines, words and characters come back with their boxes and baselines, but no
+  WebAssembly, with its legacy engine as `TesseractOrder` uses and the language data the score
+  was picked in (`app/ocr.js`, `app/language.js`). Lines, words and characters come back with their boxes and baselines, but no
   font attributes: a word's font size comes from its line's height, and `TextWord` fits the size
   to the word's bounds anyway. On four test pieces (clean pages) it reads 64–77% of the
   syllables, against 76–86% for desktop Audiveris on the same pages, and all the part names; on a
@@ -58,6 +58,24 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   anchor's offset worked out once (`upperLeft` allocated two points and rounded twice a call).
   The same values in the same order: the MusicXML is identical. Note heads on a page went from
   33 s to 18 s, the page from 91 s to 75 s.
+
+## Lyric language (app/language.js, app/ocr.js)
+
+The pick panel asks for the language of the words: English (the default), German, French,
+Italian, Spanish or Latin, one a score.
+
+- `reader.js` reads the choice when a read starts and `startOcr` downloads that language's data
+  while the pages are prepared. For each image Audiveris hands over, `resolveOcrLanguage` picks
+  the panel's choice over Audiveris's own, because Audiveris always asks for English.
+- `BrowserOCR.LANGUAGES` (in the patch) lists all six, so Audiveris doesn't refuse them.
+- `build.sh` serves `@tesseract.js-data/<code>/4.0.0` for all six: the standard data, which the
+  legacy engine needs (`tessdata_fast` works only with the newer engine). From 5.7 MB (Latin) to
+  13.9 MB (English); a browser downloads only the one picked, and keeps it.
+- One worker reads one language; a new language ends the old worker. If a language's data fails
+  to load, the words are read in English from then on.
+- What it buys: accents. On a line of German lyrics, English data reads "Grü- ße, schö- ne Mül-"
+  as "Grii- Be, sché- ne Mﬁl-"; German data reads it right, and French data reads French the
+  same way (`test/language.test.mjs`). Without accents the words come out alike.
 
 ## Settings for scans of books (app/reader.js)
 

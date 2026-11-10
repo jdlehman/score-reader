@@ -21,6 +21,8 @@ h2{margin:0; font-size:19px}
 .tips{margin:0; padding-left:20px; color:var(--muted); font-size:14px}
 .tips li + li{margin-top:4px}
 .muted{color:var(--muted)} .small{font-size:13px} .mono{font-family:var(--mono); font-size:13px}
+.field{display:flex; flex-direction:column; gap:4px; font-size:14px}
+.field select{background:var(--panel-2); border:1px solid var(--border-2); border-radius:8px; padding:8px 10px; min-height:42px; font:inherit; font-size:15px; color:inherit; cursor:pointer}
 .row{display:flex; align-items:center; gap:10px}
 .spacer{flex:1}
 .actions{display:flex; flex-wrap:wrap; gap:10px}

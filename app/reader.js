@@ -3,6 +3,7 @@
 // follows its log for progress, and offers the MusicXML it writes.
 
 import { readText, startOcr } from './ocr.js'
+import { resolveOcrLanguage } from './language.js'
 import { imagesToPdf, pdfToPdf } from './pdf.js'
 
 /** Audiveris's steps for each page, with roughly how long each takes (seconds, first page). */
@@ -151,15 +152,19 @@ for (const level of ['log', 'info', 'warn', 'error']) {
 // ---- reading ----
 
 let started = false
+/** The pick panel's lyric-language choice for this read (a single code, 'eng' by default). */
+let ocrLanguage = 'eng'
 async function read(files) {
   if (started) return
   started = true
+  ocrLanguage = $('ocr-language')?.value ?? 'eng'
   show('work')
   $('work-name').textContent = stem(files[0]?.name ?? '')
   progress.t0 = performance.now()
   const timer = setInterval(render, 500)
-  // Tesseract and its data download while the pages are prepared and Java starts
-  startOcr().catch(e => console.warn('Tesseract could not start, so the words will be left out:', e))
+  // Tesseract and its data download while the pages are prepared and Java starts, in the
+  // language picked for this score (a pack is ~6-14 MB, cached by the browser afterwards)
+  startOcr(ocrLanguage).catch(e => console.warn('Tesseract could not start, so the words will be left out:', e))
   let input
   try {
     input = await prepare(files, (n, of) => {
@@ -196,10 +201,13 @@ async function read(files) {
           finished(!!failure)
           return new Promise(() => {})
         },
-        // our patch's OCR: Audiveris asks the page to read the text in an image (see ocr.js)
+        // our patch's OCR: Audiveris asks the page to read the text in an image (see ocr.js).
+        // Audiveris passes the language it was told to use; the page resolves it against
+        // the pick panel's choice (see language.js — Audiveris's default is always 'eng',
+        // so a non-default panel choice wins, or the selector would do nothing).
         async Java_org_audiveris_omr_text_BrowserOCR_read(lib, grey, width, height, languages, pageSegMode) {
           try {
-            return await readText(grey, width, height, pageSegMode)
+            return await readText(grey, width, height, pageSegMode, resolveOcrLanguage(languages, ocrLanguage))
           } catch (e) {
             console.warn('Tesseract failed, so this text is left out:', e)
             return ''
