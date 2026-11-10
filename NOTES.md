@@ -22,6 +22,14 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
 - `ScoreReaderHook.finished`: Audiveris's shutdown never ends in CheerpJ, so it tells the page
   when it is done (a JavaScript native) and is parked there.
 - No project file saved at the end in the browser (`scorereader.inBrowser`).
+- A page Audiveris can't read is left out, not the whole score (`scorereader.skipFailedPages`,
+  `Book.skipFailed`), and stays out: leaving a page out undoes its steps, so every later book
+  step read it again (3 times before the export), failing each time. That took seconds on the
+  desktop and about 4 minutes a time in the browser, where a 5-page hymnal with 2 bad pages
+  never finished.
+- `Measure.purgeVoices` drops a null voice as well as an empty one. A hymnal page read in the
+  browser had one and was lost to a NullPointerException (the same page reads on the desktop;
+  where the null comes from is still to find).
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
@@ -51,6 +59,17 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   split every system into its groups (a page of 3 systems of 4 staves read as 5 systems). The line
   must cross the whole gap between the staves, nearly unbroken, and be thin. No change on the test
   pieces (identical MusicXML).
+- `PartCollation`: which part of one system continues which part of another, across a score.
+  Audiveris matched them by position and staff count, and by name only as OCR read it: any name,
+  however garbled ("r", "sorrumos"), kept a part from joining one named otherwise or not named. A
+  hymnal whose layout changes every few systems (solo and organ, chorus on two staves, two
+  choirs) came out as 11 parts, one of them treble and bass staves mixed. Now staves that open
+  with a treble clef and a bass clef are never the same part (a C clef, rare in choir music and
+  the likeliest misreading, agrees with either), and names keep parts apart only when both are
+  read and name different voices or instruments, or are both whole words that differ. That
+  hymnal: 6 parts, none mixed. On the recognition test's 51 pages, 45 are unchanged and 6 photos
+  improve (Audiveris broke their systems into single staves, and the soprano and alto staff no
+  longer joins the tenor and bass part).
 - `Template.evaluate` on plain arrays: matching note-head templates is most of the HEADS step, and
   it read the distance table through a list iterator and two interface calls a point, which
   CheerpJ runs far slower than the arithmetic. For a `Table.Short` it now reads the array
@@ -96,10 +115,15 @@ Italian, Spanish or Latin, one a score.
 
 ## Settings for scans of books (app/reader.js)
 
-- `LinesRetriever.maxSlopeDiff=0.05` (Audiveris: 0.025): a staff line may tilt this much more than
-  the page. A scanned book page is warped: on one, the top staves tilted −0.032 and the bottom
-  ones about 0, against −0.008 for the page, and Audiveris dropped 1 or 2 staves a page (10 of
-  12). With 0.05 it found them all. No change on the recognition test's pages, scan or photos.
+- `LinesRetriever.maxSlopeDiff=0.1` (Audiveris: 0.025) and `maxFilamentRotation=0.2` (0.1): a
+  staff line may tilt this much more than the page, and bend this much along its length. A
+  scanned book page is warped: on one, the top staves tilted −0.032 and the bottom ones about 0,
+  against −0.008 for the page, and Audiveris dropped 1 or 2 staves a page (10 of 12); 0.05 found
+  them all. Near the binding the lines also bend, and Audiveris kept only their straight part:
+  a hymnal's staves started 400–900 pixels late, so a system lost its join (page 3) and staves
+  lost their clefs and keys (page 5). Both settings together found every staff's true start.
+  On the recognition test's 71 inputs (pages, scans, photos, PDFs) the staves and systems are
+  unchanged (one staff end moves a pixel).
 - `ProcessingSwitches.indentations=false`: no new movement at each indented system. Hymnals
   indent many, and a 5-page hymn came back as 11 movements.
 

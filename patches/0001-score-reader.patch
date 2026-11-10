@@ -553,6 +553,224 @@ index eda0a76..6f60fcd 100644
      }
  
      //----------//
+diff --git a/app/src/main/java/org/audiveris/omr/score/PartCollation.java b/app/src/main/java/org/audiveris/omr/score/PartCollation.java
+index cfbf72a..6476bb8 100644
+--- a/app/src/main/java/org/audiveris/omr/score/PartCollation.java
++++ b/app/src/main/java/org/audiveris/omr/score/PartCollation.java
+@@ -23,14 +23,20 @@ package org.audiveris.omr.score;
+ 
+ import org.audiveris.omr.constant.Constant;
+ import org.audiveris.omr.constant.ConstantSet;
++import org.audiveris.omr.sheet.Part;
+ import org.audiveris.omr.sheet.SheetStub;
++import org.audiveris.omr.sheet.Staff;
++import org.audiveris.omr.sig.inter.ClefInter;
+ 
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ 
+ import java.util.ArrayList;
++import java.util.HashMap;
+ import java.util.LinkedHashSet;
+ import java.util.List;
++import java.util.Locale;
++import java.util.Map;
+ import java.util.Objects;
+ import java.util.Set;
+ 
+@@ -88,6 +94,11 @@ public class PartCollation
+      */
+     private boolean logicalsLocked;
+ 
++    /**
++     * Score Reader: the clefs each part's staves open with, one letter a staff, looked up once.
++     */
++    private final Map<PartRef, String> clefsCache = new HashMap<>();
++
+     //~ Constructors -------------------------------------------------------------------------------
+ 
+     /**
+@@ -145,6 +156,7 @@ public class PartCollation
+ 
+         final Record record = new Record(logical);
+         record.partRefs.add(partRef);
++        record.clefs = clefsOf(partRef);
+ 
+         if (logical.getName() != null) {
+             logicalNames.add(logical.getName());
+@@ -241,6 +253,129 @@ public class PartCollation
+         }
+     }
+ 
++    //---------//
++    // clefsOf //
++    //---------//
++    /**
++     * Score Reader: the clefs the part's staves open with, a letter a staff: G (treble), F (bass)
++     * or ? (any other, which agrees with either: C clefs are rare in choir music and the likeliest
++     * misreading); null if a staff has none, for instance when the sheet isn't loaded.
++     *
++     * @param partRef the part
++     * @return its clefs, or null
++     */
++    private String clefsOf (PartRef partRef)
++    {
++        if (clefsCache.containsKey(partRef)) {
++            return clefsCache.get(partRef);
++        }
++
++        String clefs = null;
++        try {
++            final Part part = partRef.getRealPart();
++            final StringBuilder sb = new StringBuilder();
++            for (Staff staff : part.getStaves()) {
++                final ClefInter clef = (staff.getHeader() != null) ? staff.getHeader().clef : null;
++                if (clef == null) {
++                    sb.setLength(0);
++                    break;
++                }
++                sb.append(switch (clef.getKind()) {
++                    case TREBLE -> 'G';
++                    case BASS, BARITONE -> 'F';
++                    default -> '?';
++                });
++            }
++            clefs = (sb.length() == part.getStaves().size()) ? sb.toString() : null;
++        } catch (Exception ex) {
++            logger.debug("No clefs for {}: {}", partRef, ex.toString());
++        }
++
++        clefsCache.put(partRef, clefs);
++        return clefs;
++    }
++
++    //------------//
++    // clefsAgree //
++    //------------//
++    /**
++     * Score Reader: whether two parts' clefs (see clefsOf) could be the same part's: unknown, or
++     * no staff treble in one and bass in the other.
++     */
++    private static boolean clefsAgree (String a,
++                                       String b)
++    {
++        if ((a == null) || (b == null) || (a.length() != b.length())) {
++            return true;
++        }
++
++        for (int i = 0; i < a.length(); i++) {
++            final char ca = a.charAt(i), cb = b.charAt(i);
++            if ((ca != '?') && (cb != '?') && (ca != cb)) {
++                return false;
++            }
++        }
++
++        return true;
++    }
++
++    //---------------//
++    // namesDisagree //
++    //---------------//
++    /**
++     * Score Reader: whether two part names clearly name different parts. Both must be read; then
++     * they disagree if they name different voices or instruments (soprano, alto, organ...), or,
++     * when neither names one we know, if both are whole words that differ. A name only half read
++     * ("r", "Voice") or one side unnamed never keeps parts apart.
++     *
++     * @param a a name, perhaps null
++     * @param b another, perhaps null
++     * @return true if they disagree
++     */
++    static boolean namesDisagree (String a,
++                                  String b)
++    {
++        final String na = normalized(a);
++        final String nb = normalized(b);
++        if (na.isEmpty() || nb.isEmpty() || na.equals(nb)) {
++            return false;
++        }
++
++        final String ra = roleOf(na);
++        final String rb = roleOf(nb);
++        if ((ra != null) && (rb != null)) {
++            return !ra.equals(rb);
++        }
++
++        if ((ra != null) || (rb != null)) {
++            return false; // a voice name against a half-read one
++        }
++
++        return (na.length() >= 5) && (nb.length() >= 5) && !na.equals("voice") && !nb.equals("voice");
++    }
++
++    private static String normalized (String name)
++    {
++        return (name == null) ? "" : name.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
++    }
++
++    /** Score Reader: the voice or instrument a part's name says, if it says one we know. */
++    private static String roleOf (String normalized)
++    {
++        for (String role : ROLES) {
++            if (normalized.contains(role)) {
++                return role;
++            }
++        }
++
++        return null;
++    }
++
++    /** Score Reader: words in part names that tell parts apart, the more specific first. */
++    private static final String[] ROLES = {
++            "soprano", "alto", "tenor", "bass", "baritone", "organ", "piano", "keyboard",
++            "violin", "viola", "cello", "flute", "oboe", "clarinet", "trumpet", "horn"};
++
+     //----------//
+     // dispatch //
+     //----------//
+@@ -301,17 +436,30 @@ public class PartCollation
+                     continue;
+                 }
+ 
++                // Score Reader: staves that open with different clefs are not the same part
++                final String clefs = clefsOf(partRef);
++                if (!clefsAgree(clefs, record.clefs)) {
++                    logger.debug("    Clef incompatibility");
++                    continue;
++                }
++
+                 // Check candidate name
++                // Score Reader: OCR often half-reads a name ("Voice", "r", "sorrumos"), and a name
++                // used to stop a part from joining any part named otherwise or not named at all.
++                // Now names keep parts apart only when both are read and clearly disagree.
+                 final String name = partRef.getName();
+                 if ((name != null) //
+-                        && !name.equalsIgnoreCase(logical.getName()) //
+-                        && !name.equalsIgnoreCase(logical.getAbbreviation())) {
++                        && namesDisagree(name, logical.getName()) //
++                        && namesDisagree(name, logical.getAbbreviation())) {
+                     logger.debug("    Name incompatibility");
+                     continue;
+                 }
+ 
+                 logger.debug("    Success");
+                 record.partRefs.add(partRef);
++                if (record.clefs == null) {
++                    record.clefs = clefs;
++                }
+ 
+                 // Use name of affiliate part to define abbreviation of logical?
+                 final String resAbbrev = logical.getAbbreviation();
+@@ -469,6 +617,9 @@ public class PartCollation
+         /** Affiliated candidate parts. */
+         final List<PartRef> partRefs = new ArrayList<>();
+ 
++        /** Score Reader: the clefs its staves open with (see clefsOf), once known. */
++        String clefs;
++
+         public Record (LogicalPart logical)
+         {
+             this.logical = logical;
 diff --git a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
 index 080c091..63a8596 100644
 --- a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
@@ -567,7 +785,7 @@ index 080c091..63a8596 100644
  
                  // Tempo text indication?
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
-index bfbeda9..8362f9c 100644
+index bfbeda9..454a3dc 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/Book.java
 @@ -589,7 +589,9 @@ public class Book
@@ -610,7 +828,25 @@ index bfbeda9..8362f9c 100644
      //---------------//
      // getValidStubs //
      //---------------//
-@@ -2014,7 +2038,7 @@ public class Book
+@@ -1910,9 +1934,16 @@ public class Book
+      */
+     public boolean reachBookStep (final OmrStep target,
+                                   final boolean force,
+-                                  final List<SheetStub> theStubs,
++                                  final List<SheetStub> allStubs,
+                                   final boolean swap)
+     {
++        // Score Reader: a sheet left out (see skipFailed) stays out. Leaving it out undoes its
++        // steps, so it used to be read again by every later book step (3 times before the
++        // export), failing each time: seconds on the desktop, minutes in the browser.
++        final List<SheetStub> theStubs = Boolean.getBoolean("scorereader.skipFailedPages")
++                ? allStubs.stream().filter(SheetStub::isValid).toList()
++                : allStubs;
++
+         try {
+             logger.debug("reachStep {} force:{} stubs:{} swap:{}", target, force, theStubs, swap);
+             final OmrStep least = getLeastStep(theStubs);
+@@ -2014,7 +2045,7 @@ public class Book
                                  // Exception raised on stub
                                  // Let processing continue for the other stubs
                                  logger.warn("Error processing stub");
@@ -619,7 +855,7 @@ index bfbeda9..8362f9c 100644
                              } finally {
                                  stub.printWatch(false);
                                  if (swap) {
-@@ -2042,12 +2066,15 @@ public class Book
+@@ -2042,12 +2073,15 @@ public class Book
                              // Exception raised on stub
                              // Let processing continue for the other stubs
                              logger.warn("Error processing stub {}", ex.getMessage(), ex);
@@ -844,6 +1080,22 @@ index 3779932..5bdc070 100644
      }
  
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
+index d00ccf5..0f5148b 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
+@@ -1815,7 +1815,10 @@ public class Measure
+     public void purgeVoices ()
+     {
+         for (Iterator<Voice> it = voices.iterator(); it.hasNext();) {
+-            if (it.next().getFirstChord() == null) {
++            // Score Reader: a null voice too (a hymnal page read in the browser had one, and the
++            // whole page was lost to a NullPointerException here)
++            final Voice voice = it.next();
++            if ((voice == null) || (voice.getFirstChord() == null)) {
+                 it.remove();
+             }
+         }
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
 index 69c2f0f..7f4c3be 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
@@ -891,7 +1143,7 @@ index b7f0cf3..87af6fc 100644
      //----------------//
 diff --git a/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
 new file mode 100644
-index 0000000..e51c525
+index 0000000..48e6db2
 --- /dev/null
 +++ b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
 @@ -0,0 +1,207 @@
