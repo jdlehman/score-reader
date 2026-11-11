@@ -10,6 +10,9 @@ export const READING = [
   // it, and Audiveris dropped such lines, or kept only their straight part (see NOTES.md)
   'org.audiveris.omr.sheet.grid.LinesRetriever.maxSlopeDiff=0.1',
   'org.audiveris.omr.sheet.grid.LinesRetriever.maxFilamentRotation=0.2',
+  // a staff may be 15 staff spaces long, not 30: a last system of one short bar is shorter than
+  // 30, and Audiveris dropped it whole (Erlkönig, Ständchen)
+  'org.audiveris.omr.sheet.grid.LinesRetriever.minStaffLength=15',
 ]
 
 /** Settings only the browser needs. */

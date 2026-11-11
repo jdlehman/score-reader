@@ -772,7 +772,7 @@ index cfbf72a..6476bb8 100644
          {
              this.logical = logical;
 diff --git a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
-index 080c091..63a8596 100644
+index 080c091..855a88a 100644
 --- a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
 +++ b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
 @@ -1545,7 +1545,7 @@ public class PartwiseBuilder
@@ -784,6 +784,31 @@ index 080c091..63a8596 100644
                  final Metronome metronome = factory.createMetronome();
  
                  // Tempo text indication?
+@@ -3715,10 +3715,15 @@ public class PartwiseBuilder
+             }
+ 
+             // Sort by time offset, and for same offset, ensure START (LEFT) comes before STOP (RIGHT)
++            // Score Reader: a chord the rhythm step could not time has no offset; it goes last
++            // (flushed at the measure end), where it threw and lost the whole measure's notes
+             Collections.sort(
+                     events,
+                     (w1,
+                      w2) -> {
++                        if ((w1.timeOffset == null) || (w2.timeOffset == null)) {
++                            return Boolean.compare(w1.timeOffset == null, w2.timeOffset == null);
++                        }
+                         int cmp = w1.timeOffset.compareTo(w2.timeOffset);
+                         if (cmp != 0) {
+                             return cmp;
+@@ -3744,7 +3749,7 @@ public class PartwiseBuilder
+                 while (it.hasNext()) {
+                     TimedWedge event = it.next();
+ 
+-                    if (event.timeOffset.compareTo(timeOffset) <= 0) {
++                    if ((event.timeOffset != null) && (event.timeOffset.compareTo(timeOffset) <= 0)) {
+                         processWedge(event.wedge, event.side, event.referenceNote);
+                     } else {
+                         it.previous();
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Book.java b/app/src/main/java/org/audiveris/omr/sheet/Book.java
 index bfbeda9..454a3dc 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Book.java
@@ -1117,6 +1142,116 @@ index 1bb36a3..bb77e78 100644
                  measure.purgeVoices();
                  measure.sortVoices();
                  measure.renameVoices();
+diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/KeyInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/KeyInter.java
+index 8865f63..946ba7b 100644
+--- a/app/src/main/java/org/audiveris/omr/sig/inter/KeyInter.java
++++ b/app/src/main/java/org/audiveris/omr/sig/inter/KeyInter.java
+@@ -1094,6 +1094,8 @@ public class KeyInter
+     public static void lookupCandidates (SystemInfo system)
+     {
+         final double maxPitchDiff = constants.maxPitchDiff.getValue();
++        final List<KeyInter> builtKeys = new ArrayList<>();
++        final List<AlterInter> nearHead = new ArrayList<>(); // lone signs refused for a head nearby
+ 
+         // Only AlterInter instances with shape SHARP, FLAT or NATURAL
+         // No DOUBLE_SHARP or DOUBLE_FLAT
+@@ -1138,11 +1140,38 @@ public class KeyInter
+                     final List<AlterInter> members = staffAlters.subList(
+                             i,
+                             i + Math.abs(keyConfig.fifths));
+-                    buildKey(keyConfig, members);
++                    builtKeys.add(buildKey(keyConfig, members));
+                     i += members.size() - 1;
++                } else if (checkConfiguration(false, staffAlters.subList(i, i + 1), true) != null) {
++                    nearHead.add(staffAlters.get(i));
+                 }
+             }
+         }
++
++        // Score Reader: a key change is drawn on every staff of the system, so a lone sign that
++        // was taken for an accidental (a head close after it) is a key too when another staff
++        // of the system has that key change right above or below it. A one-flat or one-sharp
++        // change printed without cancelling naturals was read as a key on the voice staff and
++        // as accidentals on the piano staves, whose chords follow it closely.
++        final double maxColumnDx = system.getSheet().getScale().toPixels(constants.maxKeyColumnDx);
++
++        for (AlterInter alter : nearHead) {
++            final KeyConfig keyConfig = checkConfiguration(false, List.of(alter), true);
++
++            if ((keyConfig == null) || alter.isRemoved()) {
++                continue;
++            }
++
++            final int x = alter.getCenter().x;
++            final boolean column = builtKeys.stream().anyMatch(
++                    key -> (key.getStaff() != alter.getStaff())
++                            && Objects.equals(key.fifths, keyConfig.fifths)
++                            && (Math.abs(key.getCenter().x - x) <= maxColumnDx));
++
++            if (column) {
++                buildKey(keyConfig, List.of(alter));
++            }
++        }
+     }
+ 
+     //--------------------//
+@@ -1157,6 +1186,16 @@ public class KeyInter
+      */
+     private static KeyConfig checkConfiguration (boolean isManual,
+                                                  List<AlterInter> alters)
++    {
++        return checkConfiguration(isManual, alters, false);
++    }
++
++    /**
++     * As above; with ignoreHead, a lone sign is not refused for a head close after it.
++     */
++    private static KeyConfig checkConfiguration (boolean isManual,
++                                                 List<AlterInter> alters,
++                                                 boolean ignoreHead)
+     {
+         final AlterInter firstAlter = alters.get(0);
+         final Shape firstShape = firstAlter.getShape();
+@@ -1254,7 +1293,7 @@ public class KeyInter
+ 
+         // In the case of an isolated alter, we check for lack of head nearby,
+         // because the isolated alter might just be an accidental
+-        if (nb == 1) {
++        if ((nb == 1) && !ignoreHead) {
+             final HeadInter head = firstAlter.getAlteredHead();
+             if (head != null) {
+                 // Check horizontal gap to chord bounds
+@@ -1284,8 +1323,8 @@ public class KeyInter
+      *
+      * @param keyAlters the alters of the future key
+      */
+-    private static void buildKey (KeyConfig keyConfig,
+-                                  List<AlterInter> keyAlters)
++    private static KeyInter buildKey (KeyConfig keyConfig,
++                                      List<AlterInter> keyAlters)
+     {
+         logger.debug("buildKey on {}", Inters.ids(keyAlters));
+         final int size = keyAlters.size();
+@@ -1329,6 +1368,8 @@ public class KeyInter
+         members.forEach(m -> sig.addEdge(key, m, new Containment()));
+ 
+         logger.info("Key built {}", key);
++
++        return key;
+     }
+ 
+     //-------------------------//
+@@ -1428,6 +1469,10 @@ public class KeyInter
+                 0.5,
+                 "Maximum abscissa gap between two key signs");
+ 
++        private final Fraction maxKeyColumnDx = new Fraction(
++                1.0,
++                "Maximum abscissa shift between one key change on the staves of a system");
++
+         private final Constant.Ratio minOverlapIou = new Constant.Ratio(
+                 0.4,
+                 "Minimum IOU to detect overlap between Alter candidates");
 diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
 index b7f0cf3..87af6fc 100644
 --- a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java

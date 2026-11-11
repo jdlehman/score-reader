@@ -13,9 +13,9 @@
  "gute-nacht/gute-nacht-p04": {
   "read": true,
   "movements": 1,
-  "notes": 0.942,
-  "extra": 30,
-  "inPart": 0.942,
+  "notes": 1,
+  "extra": 1,
+  "inPart": 1,
   "parts": 2,
   "answerParts": 2,
   "measures": 22,
@@ -35,23 +35,23 @@
  "pages/lieder-schubert-erlkoenig": {
   "read": true,
   "movements": 1,
-  "notes": 0.75,
+  "notes": 0.8537735849056604,
   "extra": 0,
-  "inPart": 0.75,
+  "inPart": 0.8537735849056604,
   "parts": 2,
   "answerParts": 2,
-  "measures": 11,
+  "measures": 12,
   "answerBars": 12
  },
  "pages/lieder-staendchen": {
   "read": true,
   "movements": 1,
-  "notes": 0.9114583333333334,
+  "notes": 1,
   "extra": 0,
-  "inPart": 0.9114583333333334,
+  "inPart": 1,
   "parts": 2,
   "answerParts": 2,
-  "measures": 11,
+  "measures": 12,
   "answerBars": 12
  },
  "scans/beethoven9-typeset-p165": {
@@ -165,12 +165,12 @@
  "extra/photo-synthetic/lieder-staendchen-photo-moderate": {
   "read": true,
   "movements": 1,
-  "notes": 0.90625,
+  "notes": 0.9947916666666666,
   "extra": 0,
-  "inPart": 0.90625,
+  "inPart": 0.9947916666666666,
   "parts": 2,
   "answerParts": 2,
-  "measures": 11,
+  "measures": 12,
   "answerBars": 12
  },
  "extra/scans/mendelssohn-hor-mein-bitten-p10": {
@@ -366,9 +366,9 @@
  "pages/lieder-lindenbaum": {
   "read": true,
   "movements": 1,
-  "notes": 0.7962962962962963,
+  "notes": 0.9537037037037037,
   "extra": 0,
-  "inPart": 0.7962962962962963,
+  "inPart": 0.9537037037037037,
   "parts": 2,
   "answerParts": 2,
   "measures": 12,
@@ -491,9 +491,9 @@
  "extra/photo-synthetic/lieder-lindenbaum-photo-moderate": {
   "read": true,
   "movements": 1,
-  "notes": 0.7962962962962963,
+  "notes": 0.9537037037037037,
   "extra": 0,
-  "inPart": 0.7962962962962963,
+  "inPart": 0.9537037037037037,
   "parts": 2,
   "answerParts": 2,
   "measures": 12,
@@ -503,5 +503,265 @@
   "read": true,
   "movements": 1,
   "parts": 5
+ },
+ "extra/multi-page/gute-nacht/p01": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.2,
+  "extra": 115,
+  "inPart": 0.08235294117647059,
+  "parts": 4,
+  "answerParts": 2,
+  "measures": 14,
+  "answerBars": 26
+ },
+ "extra/multi-page/gute-nacht/p03": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.1609403254972875,
+  "extra": 52,
+  "inPart": 0.07414104882459313,
+  "parts": 4,
+  "answerParts": 2,
+  "measures": 6,
+  "answerBars": 27
+ },
+ "extra/orchestral/hallelujah-p-1": {
+  "read": true,
+  "movements": 1,
+  "parts": 4
+ },
+ "extra/photo-synthetic/beethoven-p229-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "parts": 21
+ },
+ "extra/photo-synthetic/chorale-bwv269-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.05042016806722689,
+  "extra": -2,
+  "inPart": 0.05042016806722689,
+  "parts": 1,
+  "answerParts": 4,
+  "measures": 1,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/chorale-bwv303-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/divisi-bwv227-1-photo-hard": {
+  "read": false,
+  "movements": 0
+ },
+ "extra/photo-synthetic/divisi-bwv227-3-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9681528662420382,
+  "extra": 0,
+  "inPart": 0.9681528662420382,
+  "parts": 5,
+  "answerParts": 5,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/hallelujah-imslp-p1-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "parts": 3
+ },
+ "extra/photo-synthetic/hallelujah-satb-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.981651376146789,
+  "extra": 0,
+  "inPart": 0.981651376146789,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/lieder-fruehling-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.04878048780487805,
+  "extra": 18,
+  "inPart": 0.024390243902439025,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 2,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-gute-nacht-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-lindenbaum-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.08796296296296297,
+  "extra": 16,
+  "inPart": 0.08796296296296297,
+  "parts": 3,
+  "answerParts": 2,
+  "measures": 2,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-staendchen-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/scans/hallelujah-imslp12244": {
+  "read": true,
+  "movements": 1,
+  "parts": 1
+ },
+ "extra/multi-page/gute-nacht/p02": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.18107667210440456,
+  "extra": 108,
+  "inPart": 0.08972267536704731,
+  "parts": 4,
+  "answerParts": 2,
+  "measures": 11,
+  "answerBars": 30
+ },
+ "extra/multi-page/gute-nacht/p04": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.244,
+  "extra": 62,
+  "inPart": 0.114,
+  "parts": 4,
+  "answerParts": 2,
+  "measures": 17,
+  "answerBars": 22
+ },
+ "extra/orchestral/hallelujah-fullscore": {
+  "read": true,
+  "movements": 1,
+  "parts": 4
+ },
+ "extra/orchestral/hallelujah-p-2": {
+  "read": true,
+  "movements": 1,
+  "parts": 4
+ },
+ "extra/photo-synthetic/beethoven-p229-photo-hard": {
+  "read": false,
+  "movements": 0
+ },
+ "extra/photo-synthetic/chorale-bwv269-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9915966386554622,
+  "extra": 0,
+  "inPart": 0.9915966386554622,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/chorale-bwv303-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.14644351464435146,
+  "extra": 42,
+  "inPart": 0.13389121338912133,
+  "parts": 3,
+  "answerParts": 4,
+  "measures": 10,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/divisi-bwv227-1-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9747899159663865,
+  "extra": 0,
+  "inPart": 0.9747899159663865,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/divisi-bwv227-3-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.18471337579617833,
+  "extra": 3,
+  "inPart": 0.18471337579617833,
+  "parts": 5,
+  "answerParts": 5,
+  "measures": 2,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/hallelujah-imslp-p1-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "parts": 1
+ },
+ "extra/photo-synthetic/hallelujah-satb-photo-hard": {
+  "read": false,
+  "movements": 0
+ },
+ "extra/photo-synthetic/lieder-fruehling-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.975609756097561,
+  "extra": 0,
+  "inPart": 0.975609756097561,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-gute-nacht-photo-hard": {
+  "read": false,
+  "movements": 0
+ },
+ "extra/photo-synthetic/lieder-lindenbaum-photo-mild": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9537037037037037,
+  "extra": 0,
+  "inPart": 0.9537037037037037,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-staendchen-photo-hard": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.09375,
+  "extra": 27,
+  "inPart": 0.09375,
+  "parts": 1,
+  "answerParts": 2,
+  "measures": 3,
+  "answerBars": 12
  }
 }
