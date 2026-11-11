@@ -12,6 +12,9 @@
 //   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
 //   PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with other settings;
 //   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
+//   ENGINE=teavm reads with Audiveris in WebAssembly (teavm/node/read.mjs), from the grey pixels the
+//     page would hand it (test/grey.py), against the desktop's baseline; PDFs are left out (the page
+//     draws them with PDF.js). Needs teavm/build.sh first; never saved as the baseline.
 //
 // Needs ./setup.sh and ./build.sh first (the Audiveris jars and our patched classes in .work/).
 // A case is an image or a PDF. Next to it, <name>.json is its answer (every pitched note, by
@@ -29,6 +32,11 @@ const WORK = join(ROOT, '.work')
 const OUT = join(WORK, 'corpus', process.env.RUN ?? 'last')
 const BASELINE = join(ROOT, 'test', 'corpus', 'baseline.json')
 const JOBS = Number(process.env.JOBS ?? 2)
+const TEAVM = process.env.ENGINE === 'teavm'
+if (TEAVM && process.env.SAVE) {
+  console.error('The baseline is the desktop\'s: ENGINE=teavm compares with it, and is never saved.')
+  process.exit(2)
+}
 const filters = process.argv.slice(2)
 
 const INPUT = /\.(png|jpe?g|tiff?|pdf)$/i
@@ -101,13 +109,38 @@ async function read(batch) {
   return { dir, seconds: Math.round((Date.now() - started) / 1000) }
 }
 
-/** The .mxl files Audiveris wrote for one case: one, or one per movement. */
+/**
+ * Reads one case with Audiveris in WebAssembly, as the page would: its image made grey as the
+ * page makes it (test/grey.py), then teavm/node/read.mjs, into OUT/batch-<n>/.
+ */
+async function readWasm(batch) {
+  const [c] = batch
+  const dir = join(OUT, `batch-${batch.index}`)
+  rmSync(dir, { recursive: true, force: true })
+  mkdirSync(dir, { recursive: true })
+  const radix = join(dir, basename(c.input, extname(c.input)))
+  const started = Date.now()
+  let log = ''
+  try {
+    await promisify(execFile)('python3', ['-I', join(ROOT, 'test', 'grey.py'), c.input, radix])
+    const r = await promisify(execFile)(process.execPath, ['--experimental-wasm-exnref', join(ROOT, 'teavm', 'node', 'read.mjs'), radix + '.musicxml', radix + '.grey', radix + '.json'],
+      { maxBuffer: 1 << 28, timeout: 30 * 60_000, env: { ...process.env, OCR: '' } })
+    log = r.stdout + r.stderr
+  } catch (e) {
+    log = (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message
+  }
+  rmSync(radix + '.grey', { force: true })
+  writeFileSync(join(dir, 'log.txt'), log)
+  return { dir, seconds: Math.round((Date.now() - started) / 1000) }
+}
+
+/** The MusicXML files Audiveris wrote for one case (.mxl; .musicxml from WebAssembly): one, or one per movement. */
 function reads(dir, c) {
   const radix = basename(c.input, extname(c.input))
   const where = [join(dir, radix), dir]
   for (const d of where) {
     if (!existsSync(d)) continue
-    const files = readdirSync(d).filter(f => f.endsWith('.mxl') && (f === radix + '.mxl' || f.startsWith(radix + '.mvt'))).sort()
+    const files = readdirSync(d).filter(f => /\.(mxl|musicxml)$/.test(f) && (f === radix + '.mxl' || f === radix + '.musicxml' || f.startsWith(radix + '.mvt'))).sort()
     if (files.length) return files.map(f => join(d, f))
   }
   return []
@@ -138,6 +171,7 @@ const all = [
   ...(process.env.EXTRA ? cases(resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)), 'extra/') : []),
 ].filter((c, i, list) => !c.name.startsWith('extra/') || !list.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input))).filter(c => !filters.length || filters.some(f => c.name.includes(f)))
   .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
+  .filter(c => !TEAVM || !/\.pdf$/i.test(c.input))
 if (process.env.LIST) {
   for (const c of all) console.log(c.answer ? 'answer ' : '       ', c.name)
   process.exit(0)
@@ -153,9 +187,11 @@ if (!all.length) {
 // (multi-page/*/p01.png) go in different batches: in one they overwrote each other's read.
 mkdirSync(OUT, { recursive: true })
 const results = {}
-const batches = Array.from({ length: Math.max(Math.min(JOBS, all.length), Math.ceil(all.length / 10)) }, (_, index) => Object.assign([], { index }))
+// (WebAssembly: a case a process, a book each)
+const batches = TEAVM ? [] : Array.from({ length: Math.max(Math.min(JOBS, all.length), Math.ceil(all.length / 10)) }, (_, index) => Object.assign([], { index }))
 const file = c => basename(c.input, extname(c.input))
-all.forEach((c, i) => {
+if (TEAVM) all.forEach((c, index) => batches.push(Object.assign([c], { index })))
+else all.forEach((c, i) => {
   const free = batches.map((_, k) => batches[(i + k) % batches.length]).find(b => !b.some(o => file(o) === file(c)))
   const batch = free ?? Object.assign([], { index: batches.length })
   if (!free) batches.push(batch)
@@ -173,7 +209,7 @@ if (process.env.REUSE) {
   runs = batches.map(b => ({ dir: join(OUT, `batch-${b.index}`), seconds: null }))
 } else {
   writeFileSync(manifest, JSON.stringify(Object.fromEntries(batches.flatMap(b => b.map(c => [c.name, b.index]))), null, 1))
-  runs = await pool(batches, JOBS, read)
+  runs = await pool(batches, JOBS, TEAVM ? readWasm : read)
 }
 console.error(`read ${all.length} cases in ${Math.round((Date.now() - t0) / 1000)} s`)
 
