@@ -74,7 +74,7 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   LilyPond's, and matched them too badly to keep: the Cantique (MuseScore) lost nearly all of
   them, p13 78%, now 99%; p01 73%, now 100% (with the tuplets above). Leland for all heads
   read the Cantique as well but cost BWV 227 and the Hallelujah wrong notes, so only whole notes.
-  Not in the TeaVM build yet: it has pre-rendered templates for Bravura only.
+  Not in the TeaVM build: it has pre-rendered templates for Bravura only.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
@@ -184,6 +184,20 @@ right, against 133 from the PDF itself. So the page makes a page of drawn shapes
 at half coverage, as Audiveris would draw it (129 right); a page with images, a scan, keeps its
 greys, as Audiveris keeps an image's.
 
+## Audiveris in WebAssembly (teavm/, ?engine=teavm)
+
+robbie-muse's TeaVM port, imported and built here (teavm/README.md). The page sends the grey pages
+to a worker; the words are read on the page between a page's two calls into Audiveris (up to
+TEXTS, and the rest), so each page is read once. The port as it came read every page twice to get
+its words, and gave every later OCR call the whole page's text.
+
+In Chrome, against CheerpJ on the same pages:
+- Lindenbaum (1 page): 55 s; notes, rhythm and words the same.
+- Gute Nacht (4 PNGs): 5.9 against 7.2 minutes; all 210 bars' notes the same; words the same on
+  pages 1-2, better on 3-4 (79% and 75% of the answer's syllables, against 77% and 64%).
+- The IMSLP Hallelujah scan (a 3-page PDF): 7 minutes.
+The download is the 15 MB wasm, against CheerpJ's runtime and 45 MB of jars.
+
 ## FastMath (java/org/scorereader)
 
 Java 25's Math.abs, min, max, rint, floor, ceil, sqrt and hypot use raw-bit conversions or
@@ -211,6 +225,8 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
     node test/profile.mjs HEADS 25      # where a step spends its time, on .work/page.png
     npm run corpus                      # read test/corpus/ with desktop Audiveris, score it (see its README)
+    teavm/build.sh                      # Audiveris in WebAssembly (./build.sh runs it too)
+    ENGINE=teavm npm run corpus         # read the corpus with it instead, against the desktop's scores
     EXTRA='&fast=0' node test/profile.mjs HEADS 25   # the same without FastMath
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
