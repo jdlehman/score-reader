@@ -3,23 +3,23 @@
   "read": true,
   "movements": 1,
   "notes": 1,
-  "extra": 22,
+  "extra": 0,
   "inPart": 1,
   "parts": 2,
   "answerParts": 2,
   "measures": 26,
-  "answerBars": 25
+  "answerBars": 26
  },
  "gute-nacht/gute-nacht-p04": {
   "read": true,
   "movements": 1,
-  "notes": 0.9092664092664092,
+  "notes": 0.942,
   "extra": 30,
-  "inPart": 0.9092664092664092,
+  "inPart": 0.942,
   "parts": 2,
   "answerParts": 2,
   "measures": 22,
-  "answerBars": 23
+  "answerBars": 22
  },
  "pages/lieder-fruehling": {
   "read": true,
@@ -132,9 +132,9 @@
  "extra/photo-synthetic/chorale-bwv269-photo-moderate": {
   "read": true,
   "movements": 1,
-  "notes": 0.9243697478991597,
-  "extra": 8,
-  "inPart": 0.9243697478991597,
+  "notes": 0.9915966386554622,
+  "extra": 0,
+  "inPart": 0.9915966386554622,
   "parts": 4,
   "answerParts": 4,
   "measures": 12,
@@ -181,20 +181,20 @@
  "gute-nacht/gute-nacht-p02": {
   "read": true,
   "movements": 1,
-  "notes": 0.9653543307086614,
+  "notes": 1,
   "extra": 0,
-  "inPart": 0.9653543307086614,
+  "inPart": 1,
   "parts": 2,
   "answerParts": 2,
   "measures": 30,
-  "answerBars": 31
+  "answerBars": 30
  },
  "pages/lieder-brahms-wiegenlied": {
   "read": true,
   "movements": 1,
-  "notes": 0.9806451612903225,
-  "extra": 3,
-  "inPart": 0.9806451612903225,
+  "notes": 0.9935483870967742,
+  "extra": 1,
+  "inPart": 0.9935483870967742,
   "parts": 2,
   "answerParts": 2,
   "measures": 12,
@@ -246,13 +246,13 @@
  "extra/multi-page/hallelujah/p03": {
   "read": true,
   "movements": 1,
-  "notes": 0.705,
+  "notes": 1,
   "extra": 0,
-  "inPart": 0.705,
+  "inPart": 1,
   "parts": 4,
   "answerParts": 4,
   "measures": 6,
-  "answerBars": 12
+  "answerBars": 6
  },
  "extra/multi-page/hallelujah/p06": {
   "read": true,
@@ -279,9 +279,9 @@
  "extra/pages/chorale-bwv269": {
   "read": true,
   "movements": 1,
-  "notes": 0.9243697478991597,
-  "extra": 8,
-  "inPart": 0.9243697478991597,
+  "notes": 0.9915966386554622,
+  "extra": 0,
+  "inPart": 0.9915966386554622,
   "parts": 4,
   "answerParts": 4,
   "measures": 12,
@@ -312,9 +312,9 @@
  "extra/photo-synthetic/chorale-bwv303-photo-moderate": {
   "read": true,
   "movements": 1,
-  "notes": 0.9330543933054394,
-  "extra": 16,
-  "inPart": 0.9330543933054394,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
   "parts": 4,
   "answerParts": 4,
   "measures": 14,
@@ -345,12 +345,12 @@
   "read": true,
   "movements": 1,
   "notes": 1,
-  "extra": 18,
+  "extra": 0,
   "inPart": 1,
   "parts": 2,
   "answerParts": 2,
   "measures": 27,
-  "answerBars": 26
+  "answerBars": 27
  },
  "pages/lieder-faure-apres-un-reve": {
   "read": true,
@@ -377,13 +377,13 @@
  "pages/lieder-schumann-widmung": {
   "read": true,
   "movements": 1,
-  "notes": 0.9037267080745341,
+  "notes": 0.9765100671140939,
   "extra": 0,
-  "inPart": 0.9037267080745341,
+  "inPart": 0.9765100671140939,
   "parts": 2,
   "answerParts": 2,
   "measures": 11,
-  "answerBars": 12
+  "answerBars": 11
  },
  "scans/beethoven9-p229-229": {
   "read": true,
@@ -409,13 +409,13 @@
  "extra/multi-page/hallelujah/p04": {
   "read": true,
   "movements": 1,
-  "notes": 1,
-  "extra": 55,
-  "inPart": 1,
+  "notes": 0.9680851063829787,
+  "extra": 2,
+  "inPart": 0.9680851063829787,
   "parts": 4,
   "answerParts": 4,
   "measures": 17,
-  "answerBars": 11
+  "answerBars": 17
  },
  "extra/multi-page/hallelujah/p07": {
   "read": true,
@@ -431,9 +431,9 @@
  "extra/pages/chorale-bwv248-05": {
   "read": true,
   "movements": 1,
-  "notes": 0.9235294117647059,
-  "extra": 13,
-  "inPart": 0.9235294117647059,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
   "parts": 4,
   "answerParts": 4,
   "measures": 12,
@@ -442,9 +442,9 @@
  "extra/pages/chorale-bwv303": {
   "read": true,
   "movements": 1,
-  "notes": 0.9330543933054394,
-  "extra": 16,
-  "inPart": 0.9330543933054394,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
   "parts": 4,
   "answerParts": 4,
   "measures": 14,
