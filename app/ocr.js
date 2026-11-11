@@ -12,6 +12,63 @@ const LEGACY = 0
 /** Audiveris tells Tesseract its images are 70 dpi (TesseractOrder's typicalImageResolution). */
 const DPI = 70
 
+/**
+ * The characters Audiveris splits lyric words at (LyricItemInter.isSeparator:
+ * HYPHEN '-', ELISION_CHAR U+203F, EXTENSIONS '_' U+2013 U+2014). Tesseract
+ * joins hyphenated syllables into one word ("Hal—le—lu—jah,"), and Audiveris
+ * only re-splits such a word when the line already carries the Lyrics role
+ * (TextBuilder.recomposeLines -> TextLine.splitWords with bySyllable=isLyrics);
+ * lines it has not classified as lyrics keep the joined word, which then
+ * attaches as a single syllable and loses the rest (on Hallelujah p.1, 53 of
+ * 150 separators sat in such lines and cost 52 of 208 syllables). Splitting
+ * here, where the per-character boxes are known, recovers them: the same
+ * split measured 75.0% -> 100.0% lyric recall on Hallelujah p.1 and
+ * 73.4% -> 85.9% on the hymn (the rest there is misreading, not joining).
+ */
+export const LYRIC_SEPARATORS = new Set(['-', '‿', '_', '–', '—'])
+
+/**
+ * Split one tesseract.js word at lyric separators, using its symbols for the
+ * piece boxes; separator symbols are dropped (Audiveris drops them too).
+ * Returns the pieces ({ text, bbox, symbols }) or null when the word should
+ * be emitted as-is: no separator, fewer than two pieces (a leading or
+ * trailing separator, e.g. "Hal—", which Audiveris already splits), or the
+ * symbols do not concatenate to the word text (then the boxes cannot be
+ * trusted, so the word is left whole rather than guessed).
+ */
+export function splitWordAtSeparators(word) {
+  const text = word.text.replace(/\s+/g, '')
+  if (!text || ![...text].some(ch => LYRIC_SEPARATORS.has(ch))) return null
+  const symbols = (word.symbols ?? [])
+    .map(s => ({ text: s.text.replace(/\s+/g, ''), bbox: s.bbox }))
+    .filter(s => s.text)
+  if (symbols.map(s => s.text).join('') !== text) return null
+  const pieces = []
+  let current = []
+  for (const symbol of symbols) {
+    if (LYRIC_SEPARATORS.has(symbol.text)) {
+      if (current.length) {
+        pieces.push(current)
+        current = []
+      }
+    } else {
+      current.push(symbol)
+    }
+  }
+  if (current.length) pieces.push(current)
+  if (pieces.length < 2) return null
+  return pieces.map(symbols => ({
+    text: symbols.map(s => s.text).join(''),
+    bbox: {
+      x0: Math.min(...symbols.map(s => s.bbox.x0)),
+      y0: Math.min(...symbols.map(s => s.bbox.y0)),
+      x1: Math.max(...symbols.map(s => s.bbox.x1)),
+      y1: Math.max(...symbols.map(s => s.bbox.y1)),
+    },
+    symbols,
+  }))
+}
+
 let worker = null
 /** The canonical spec ('deu', or 'deu+eng') the current worker was created for, if any. */
 let workerLanguage = null
@@ -123,10 +180,14 @@ export async function readText(grey, width, height, pageSegMode, languages) {
         for (const word of line.words) {
           const text = word.text.replace(/\s+/g, '')
           if (!text) continue
-          out.push(`W ${box(word.bbox)} ${Math.round(word.confidence)} ${text}`)
-          for (const symbol of word.symbols ?? []) {
-            const s = symbol.text.replace(/\s+/g, '')
-            if (s) out.push(`C ${box(symbol.bbox)} ${s}`)
+          const pieces = splitWordAtSeparators(word)
+          const emit = pieces ?? [{ text, bbox: word.bbox, symbols: word.symbols ?? [] }]
+          for (const piece of emit) {
+            out.push(`W ${box(piece.bbox)} ${Math.round(word.confidence)} ${piece.text}`)
+            for (const symbol of piece.symbols) {
+              const s = symbol.text.replace(/\s+/g, '')
+              if (s) out.push(`C ${box(symbol.bbox)} ${s}`)
+            }
           }
         }
       }

@@ -9,7 +9,7 @@
     "e2e": "node test/e2e.mjs",
     "e2e:check": "node test/e2e-check.mjs",
     "corpus": "node test/corpus.mjs",
-    "test": "node --test test/preflight.test.mjs test/language.test.mjs test/score.test.mjs"
+    "test": "node --test test/preflight.test.mjs test/language.test.mjs test/score.test.mjs test/ocr-split.test.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/deu": "1.0.0",
