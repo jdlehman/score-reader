@@ -13,28 +13,25 @@ const LEGACY = 0
 const DPI = 70
 
 /**
- * The characters Audiveris splits lyric words at (LyricItemInter.isSeparator:
- * HYPHEN '-', ELISION_CHAR U+203F, EXTENSIONS '_' U+2013 U+2014). Tesseract
- * joins hyphenated syllables into one word ("Hal—le—lu—jah,"), and Audiveris
- * only re-splits such a word when the line already carries the Lyrics role
- * (TextBuilder.recomposeLines -> TextLine.splitWords with bySyllable=isLyrics);
- * lines it has not classified as lyrics keep the joined word, which then
- * attaches as a single syllable and loses the rest (on Hallelujah p.1, 53 of
- * 150 separators sat in such lines and cost 52 of 208 syllables). Splitting
- * here, where the per-character boxes are known, recovers them: the same
- * split measured 75.0% -> 100.0% lyric recall on Hallelujah p.1 and
- * 73.4% -> 85.9% on the hymn (the rest there is misreading, not joining).
+ * The characters Audiveris splits lyric words at (LyricItemInter.isSeparator: '-', U+203F, '_',
+ * U+2013, U+2014). Tesseract joins hyphenated syllables into one word ("Hal—le—lu—jah,"), and
+ * Audiveris splits such a word only in a line it already takes for lyrics (TextLine.splitWords);
+ * elsewhere the word stays whole and attaches to one note, and the other syllables are lost (52 of
+ * 208 on Hallelujah p.1).
  */
 export const LYRIC_SEPARATORS = new Set(['-', '‿', '_', '–', '—'])
 
 /**
- * Split one tesseract.js word at lyric separators, using its symbols for the
- * piece boxes; separator symbols are dropped (Audiveris drops them too).
- * Returns the pieces ({ text, bbox, symbols }) or null when the word should
- * be emitted as-is: no separator, fewer than two pieces (a leading or
- * trailing separator, e.g. "Hal—", which Audiveris already splits), or the
- * symbols do not concatenate to the word text (then the boxes cannot be
- * trusted, so the word is left whole rather than guessed).
+ * Split one tesseract.js word after each separator that a syllable follows, keeping the separator
+ * on the syllable before it: "Hal—le—lu—jah," becomes "Hal—", "le—", "lu—", "jah,". Each syllable
+ * then reaches a note of its own, and its separator still says it goes on: in a line Audiveris
+ * takes for lyrics it splits that off as a hyphen, which makes the syllables begin, middle and end
+ * ones (LyricItemInter.defineSyllabicType), so the score keeps "Hal-le-lu-jah" one word. (Dropping
+ * the separators made every syllable a word of its own; giving them words of their own lost most
+ * of Hallelujah p.1's syllables in the browser, 45% against 75% unsplit.) Returns the pieces
+ * ({ text, bbox, symbols }), or null to leave the word as it is: no separator with a syllable
+ * after it, a piece with no letter in it (not lyrics), or symbols that don't spell the word (so
+ * their boxes can't be trusted).
  */
 export function splitWordAtSeparators(word) {
   const text = word.text.replace(/\s+/g, '')
@@ -44,19 +41,20 @@ export function splitWordAtSeparators(word) {
     .filter(s => s.text)
   if (symbols.map(s => s.text).join('') !== text) return null
   const pieces = []
-  let current = []
+  let piece = []
   for (const symbol of symbols) {
-    if (LYRIC_SEPARATORS.has(symbol.text)) {
-      if (current.length) {
-        pieces.push(current)
-        current = []
-      }
-    } else {
-      current.push(symbol)
+    const separator = LYRIC_SEPARATORS.has(symbol.text)
+    const last = piece[piece.length - 1]
+    // a new syllable starts after a separator that follows a syllable
+    if (!separator && last && LYRIC_SEPARATORS.has(last.text) && piece.some(s => !LYRIC_SEPARATORS.has(s.text))) {
+      pieces.push(piece)
+      piece = []
     }
+    piece.push(symbol)
   }
-  if (current.length) pieces.push(current)
-  if (pieces.length < 2) return null
+  pieces.push(piece)
+  // syllables have letters: OCR also reads a triplet bracket as "|—3—|", and a date as "1639-1699"
+  if (pieces.length < 2 || !pieces.every(p => p.some(s => /\p{L}/u.test(s.text)))) return null
   return pieces.map(symbols => ({
     text: symbols.map(s => s.text).join(''),
     bbox: {
