@@ -33,3 +33,27 @@ test('parts swapped halfway find every note but not in one part', () => {
   assert.equal(r.notes, 1)
   assert.ok(r.inPart < 0.7, `inPart ${r.inPart}`)
 })
+
+// reads that look complete by pitch but aren't (an adversarial review of this scorer)
+test('padding every bar with wrong notes costs precision', () => {
+  const r = score(answer, xml([upper.map(m => [...m, 60, 61, 62]), lower.map(m => [...m, 36])]))
+  assert.equal(r.notes, 1)
+  assert.equal(r.precision, 12 / 28)
+})
+
+test('a measure read twice costs precision', () => {
+  const r = score(answer, xml([upper.flatMap(m => [m, m]), lower.flatMap(m => [m, m])]))
+  assert.equal(r.notes, 1)
+  assert.equal(r.precision, 0.5)
+})
+
+test('two parts read as one are not both in their part', () => {
+  const r = score(answer, xml([upper.map((m, i) => [...m, ...lower[i]])]))
+  assert.equal(r.notes, 1)
+  assert.equal(r.inPart, 8 / 12)
+})
+
+test('a part out of step with the others loses its notes', () => {
+  const r = score(answer, xml([upper, [[], ...lower.slice(0, 3)]]))
+  assert.ok(r.notes <= 9 / 12, `notes ${r.notes}`)
+})
