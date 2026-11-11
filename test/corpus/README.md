@@ -30,6 +30,14 @@ Drawn with Verovio from the OpenScore Lieder Corpus (github.com/OpenScore/Lieder
 | lieder-schubert-erlkoenig | Schubert, "Erlkönig", D.328, bars 13–24 | lc29062370 |
 | lieder-wolf-verborgenheit | Wolf, "Verborgenheit", Mörike-Lieder no. 12 | lc29477528 |
 | gute-nacht-p01 … p04 | Schubert, "Gute Nacht", the whole song on 4 pages (bars per page in each answer's `bars_global`) | lc5015378 |
+| grace-staendchen | Schubert, "Ständchen", bars 13–24: grace notes (left out of the answer, as everywhere) | |
+| octave-verborgenheit | Wolf, "Verborgenheit", bars 13–24: an 8va line over the piano (the answer has the notes as they sound) | lc29477528 |
+
+And from the OpenScore Orchestra Corpus (github.com/MarkGotham/Hauptstimme, scores **CC0 1.0**):
+
+| Page | Piece |
+|---|---|
+| orchestral-beethoven9-finale | Beethoven, Symphony No. 9, finale, bars 286–293: 36 parts, chorus and full orchestra, on one page |
 
 ## Real pages without answers (`scans/`)
 
@@ -43,6 +51,8 @@ From IMSLP, one page each, drawn at 300 dpi.
 | faure-agnus-p80 | Fauré, Requiem Op. 48, Agnus Dei | IMSLP #30151 | Public domain |
 | mozart-kyrie-p20 | Mozart, Requiem K. 626, Kyrie | IMSLP #26746 | Public domain |
 | hallelujah-imslp-p-1 | Handel, "Hallelujah", piano-reduction scan | IMSLP #12244 | Public domain |
+| cantique-schoen-p02, -p09 | Fauré, Cantique de Jean Racine Op. 11, first edition (Schoen, 1876): organ introduction; choir and organ | IMSLP #26819 | Public domain |
+| hymnal-am1874-p213 | Hymns Ancient and Modern, Appendix (1874), Hymn 289: a tune with 11 verses printed below it | Internet Archive `ancienthym00chur` | Public domain |
 
 ## Kept out of git
 
@@ -50,6 +60,8 @@ The test set has more, which can't be copied freely; `EXTRA=<folder>` reads them
 copy. Bach chorales and BWV 227 pages (music in the public domain, but the encodings are
 "PDF © 2004 Margaret Greentree, used by permission", for testing only); Handel's "Hallelujah"
 from cafe-puccini.dk (CC BY-NC-SA 4.0); BWV 227 from CPDL #42494 (CC BY-NC); Mendelssohn, "Hör
-mein Bitten" (CC BY-NC-SA 4.0). These are the SATB pages with answers, so a change to how parts
+mein Bitten" (CC BY-NC-SA 4.0); Fauré's Cantique de Jean Racine, the whole piece on 13 pages
+with answers (Skinner 2022, Choral Public Domain Library License); Foster's "Jeanie" with chord
+names and a drum page (music21's corpus, for testing). These are the SATB pages with answers, so a change to how parts
 are read should be checked with `EXTRA` too. The test set's synthetic phone photos are left out
 for size (about 4 MB each).

@@ -57,3 +57,10 @@ test('a part out of step with the others loses its notes', () => {
   const r = score(answer, xml([upper, [[], ...lower.slice(0, 3)]]))
   assert.ok(r.notes <= 9 / 12, `notes ${r.notes}`)
 })
+
+test('unpitched (drum) notes are not scored', () => {
+  const drums = { bars: 1, parts: [{ notes: [{ bar: 1, unpitched: true, display_step: 'E' }] }] }
+  assert.equal(score(drums, xml([[[60]]])).notes, null)
+  const mixed = { bars: 1, parts: [{ notes: [{ bar: 1, midi: 60 }, { bar: 1, unpitched: true }] }] }
+  assert.equal(score(mixed, xml([[[60]]])).notes, 1)
+})
