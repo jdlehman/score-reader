@@ -2,7 +2,8 @@
 // Drive the built page (dist/) in Chrome: choose files, wait, save the download and screenshots.
 //   node test/e2e.mjs <out name> <file>...   (with npm run serve running; results in .work/e2e/)
 //   MINUTES=n gives up after n minutes (default 20); the page's console goes to .work/e2e/<name>.log
-//   URL=... reads on another copy of the site, such as the published one
+//   URL=... reads on another copy of the site, such as the published one (add ?engine=teavm to read
+//   with Audiveris in WebAssembly)
 //   LANG_OF_WORDS=deu (or fra, ita, spa, lat) picks the language of the words first
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -55,7 +56,7 @@ const state = await tab.evaluate(() => ({
 }))
 if (state.done) {
   const [download] = await Promise.all([tab.waitForEvent('download'), tab.click('#downloads a')])
-  await download.saveAs(join(out, `${name}.mxl`))
+  await download.saveAs(join(out, `${name}.${download.suggestedFilename().split('.').pop()}`)) // .mxl, or .musicxml from ?engine=teavm
 }
 console.log(JSON.stringify({ name, seconds, finished, ...state, errors }, null, 1))
 await browser.close()

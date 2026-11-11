@@ -66,3 +66,8 @@ is Tesseract's, Apache License 2.0 (https://github.com/tesseract-ocr/tessdata), 
 
 Built with CheerpJ (https://cheerpj.com), loaded from Leaning Technologies' servers under its
 community licence for non-commercial open-source projects. CheerpJ is not part of Score Reader.
+
+With ?engine=teavm, the page reads with the same Audiveris and libraries compiled to WebAssembly
+(teavm/) by TeaVM 0.16.0 (https://teavm.org), Apache License 2.0, Copyright Alexey Andreev and
+others, whose class library and runtime (teavm/runtime.mjs) are compiled in with it, with the fixes
+to them in the source (teavm/fork/).

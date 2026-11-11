@@ -1,7 +1,7 @@
 #!/bin/sh
 # Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 # Build the site into dist/: the page, the licences, Audiveris's jars (patched, and rewritten to
-# call FastMath), and the source of the copyleft libraries.
+# call FastMath), Audiveris in WebAssembly (teavm/), and the source of the copyleft libraries.
 #   ./build.sh        (needs .work/ from ./setup.sh, and npm install for PDF.js)
 #   ./build.sh page   rebuilds only the page, keeping the jars in dist/
 set -e
@@ -24,6 +24,9 @@ else
     $SRC/sheet/rhythm/MeasureRhythm.java $SRC/sheet/rhythm/StackRhythm.java $SRC/sheet/note/NoteHeadsBuilder.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
+  # Audiveris in WebAssembly, for ?engine=teavm (teavm/README.md)
+  teavm/build.sh
+
   # FastMath, and every jar rewritten to call it (patched classes first, so they win)
   rm -rf .work/fastclasses .work/fast && mkdir -p .work/fastclasses
   "$J/javac" -d .work/fastclasses java/org/scorereader/FastMath.java java/org/scorereader/Rewrite.java
@@ -41,7 +44,11 @@ else
   cp .work/sources/*.jar dist/source/
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/style.css app/*.svg app/*.png dist/
+if [ -f .work/teavm/out/classes.wasm ]; then
+  rm -rf dist/teavm && mkdir -p dist/teavm
+  cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
+fi
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt
