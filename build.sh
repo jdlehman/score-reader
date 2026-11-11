@@ -20,7 +20,7 @@ else
     $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
     $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
     $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java \
-    $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Voices.java $SRC/sig/inter/KeyInter.java 2>&1 | grep -v '^Note:' || true
+    $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Voices.java $SRC/sig/inter/KeyInter.java $SRC/sheet/clef/ClefBuilder.java $SRC/sig/inter/OctaveShiftInter.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
   # FastMath, and every jar rewritten to call it (patched classes first, so they win)

@@ -772,10 +772,35 @@ index cfbf72a..6476bb8 100644
          {
              this.logical = logical;
 diff --git a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
-index 080c091..855a88a 100644
+index 080c091..66d6e45 100644
 --- a/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
 +++ b/app/src/main/java/org/audiveris/omr/score/PartwiseBuilder.java
-@@ -1545,7 +1545,7 @@ public class PartwiseBuilder
+@@ -771,17 +771,16 @@ public class PartwiseBuilder
+ 
+         for (OctaveShiftInter os : octaveShiftNumbers.keySet()) {
+             if (os.getStaff() == staff) {
++                // Score Reader: an end of the line linked to no chord (its hook past the last
++                // chord) is the line's own end; skipping such a line left every note under it
++                // an octave off
++                final Rectangle bounds = os.getBounds();
+                 final AbstractChordInter first = os.getChord(LEFT);
+-                if (first == null) {
+-                    continue;
+-                }
+-
+                 final AbstractChordInter last = os.getChord(RIGHT);
+-                if (last == null) {
+-                    continue;
+-                }
++                final int left = (first != null) ? first.getCenter().x : bounds.x;
++                final int right = (last != null) ? last.getCenter().x : (bounds.x + bounds.width);
+ 
+-                if (center.x >= first.getCenter().x && center.x <= last.getCenter().x) {
++                if (center.x >= left && center.x <= right) {
+                     return os.getShift();
+                 }
+             }
+@@ -1545,7 +1544,7 @@ public class PartwiseBuilder
                      (location.getY() < current.note.getCenter().y) ? AboveBelow.ABOVE
                              : AboveBelow.BELOW);
              // Metronome?
@@ -784,7 +809,7 @@ index 080c091..855a88a 100644
                  final Metronome metronome = factory.createMetronome();
  
                  // Tempo text indication?
-@@ -3715,10 +3715,15 @@ public class PartwiseBuilder
+@@ -3715,10 +3714,15 @@ public class PartwiseBuilder
              }
  
              // Sort by time offset, and for same offset, ensure START (LEFT) comes before STOP (RIGHT)
@@ -800,7 +825,7 @@ index 080c091..855a88a 100644
                          int cmp = w1.timeOffset.compareTo(w2.timeOffset);
                          if (cmp != 0) {
                              return cmp;
-@@ -3744,7 +3749,7 @@ public class PartwiseBuilder
+@@ -3744,7 +3748,7 @@ public class PartwiseBuilder
                  while (it.hasNext()) {
                      TimedWedge event = it.next();
  
@@ -952,6 +977,108 @@ index 3efeee8..5b1eb0c 100644
 +
      //------------//
      // getPicture //
+     //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java b/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
+index 00f766d..2e9a1d3 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
+@@ -153,6 +153,9 @@ public class ClefBuilder
+     /** Inner clef area. */
+     private Rectangle innerRect;
+ 
++    /** Score Reader: the parts of the last lookup, to find an octave sign apart from its clef. */
++    private List<Glyph> lastParts = Collections.emptyList();
++
+     /** Shape classifier to use. */
+     private final Classifier classifier = ShapeClassifier.getInstance();
+ 
+@@ -219,6 +222,7 @@ public class ClefBuilder
+ 
+         // Register the remaining clef candidates
+         if (!bestMap.isEmpty()) {
++            lookForOctave(bestMap);
+             registerClefs(bestMap.values());
+         }
+     }
+@@ -358,10 +362,79 @@ public class ClefBuilder
+ 
+         system.registerGlyphs(parts, null);
+         logger.debug("{} parts: {}", this, parts.size());
++        lastParts = parts;
+ 
+         return parts;
+     }
+ 
++    //---------------//
++    // lookForOctave //
++    //---------------//
++    /**
++     * Score Reader: a treble clef with a small "8" apart from it, just below (a tenor's clef,
++     * as LilyPond draws it), is an octave clef. The classifier knows the 8 only
++     * joined to the clef: apart, the clef alone graded better as a plain G clef, and every
++     * tenor note was read an octave high.
++     *
++     * @param bestMap (input/output) best clef per kind, its treble clef perhaps replaced
++     */
++    private void lookForOctave (Map<ClefKind, ClefInter> bestMap)
++    {
++        final ClefInter clef = bestMap.get(ClefKind.TREBLE);
++
++        if ((clef == null) || (clef.getShape() != Shape.G_CLEF) || (clef.getGlyph() == null)) {
++            return;
++        }
++
++        // The clef's own body: the heaviest part within its glyph
++        final Rectangle glyphBox = clef.getGlyph().getBounds();
++        Glyph body = null;
++
++        for (Glyph part : lastParts) {
++            if (glyphBox.contains(part.getBounds())
++                    && ((body == null) || (part.getWeight() > body.getWeight()))) {
++                body = part;
++            }
++        }
++
++        if (body == null) {
++            return;
++        }
++
++        final double il = staff.getSpecificInterline();
++        final Rectangle bodyBox = body.getBounds();
++
++        for (Glyph part : lastParts) {
++            if (part == body) {
++                continue;
++            }
++
++            final Rectangle box = part.getBounds();
++            final double cx = box.getCenterX();
++            final boolean sized = (box.height >= 0.4 * il) && (box.height <= 1.3 * il)
++                    && (box.width >= 0.25 * il) && (box.width <= 1.0 * il);
++            final boolean centered = (cx > bodyBox.x) && (cx < (bodyBox.x + bodyBox.width));
++
++            if (!sized || !centered) {
++                continue;
++            }
++
++            // Below only: above a soprano's clef, a tempo mark or a bar number was taken for an
++            // 8 (four pages read an octave high), and a treble clef 8va is rare in choral music
++            final int below = box.y - (bodyBox.y + bodyBox.height); // gap under the body
++            final Shape shape = ((below >= -0.2 * il) && (below <= 1.0 * il)) ? G_CLEF_8VB : null;
++
++            if (shape != null) {
++                logger.debug("Staff#{} octave sign {} for {}", staff.getId(), part, clef);
++                bestMap.put(
++                        ClefKind.TREBLE,
++                        ClefInter.createValid(clef.getGlyph(), shape, clef.getGrade(), staff));
++
++                return;
++            }
++        }
++    }
++
+     //------------//
+     // purgeClefs //
      //------------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java b/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
 index 3779932..5bdc070 100644
@@ -1278,6 +1405,147 @@ index b7f0cf3..87af6fc 100644
      //----------------//
      // hasParentheses //
      //----------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/OctaveShiftInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/OctaveShiftInter.java
+index e8cd5fd..55eae71 100644
+--- a/app/src/main/java/org/audiveris/omr/sig/inter/OctaveShiftInter.java
++++ b/app/src/main/java/org/audiveris/omr/sig/inter/OctaveShiftInter.java
+@@ -21,12 +21,14 @@
+ // </editor-fold>
+ package org.audiveris.omr.sig.inter;
+ 
++import org.audiveris.omr.constant.Constant;
+ import org.audiveris.omr.constant.ConstantSet;
+ import org.audiveris.omr.glyph.Glyph;
+ import org.audiveris.omr.glyph.Shape;
+ import org.audiveris.omr.math.PointUtil;
+ import org.audiveris.omr.sheet.Part;
+ import org.audiveris.omr.sheet.Scale;
++import org.audiveris.omr.sheet.Picture;
+ import org.audiveris.omr.sheet.Sheet;
+ import org.audiveris.omr.sheet.Staff;
+ import org.audiveris.omr.sheet.StaffManager;
+@@ -63,6 +65,8 @@ import org.audiveris.omr.util.WrappedBoolean;
+ import org.slf4j.Logger;
+ import org.slf4j.LoggerFactory;
+ 
++import ij.process.ByteProcessor;
++
+ import java.awt.Point;
+ import java.awt.Rectangle;
+ import java.awt.font.TextLayout;
+@@ -902,12 +906,89 @@ public class OctaveShiftInter
+         final OctaveShiftInter os = new OctaveShiftInter(glyph, shape, null, grade);
+         final Scale scale = staff.getSystem().getSheet().getScale();
+         final int lineLg = scale.toPixels(DEFAULT_LINE_LENGTH);
+-        os.line = new Line2D.Double(center, new Point(center.x + lineLg, center.y));
++        // Score Reader: follow the dashed line on the page; it was always 3 interlines long,
++        // so only the first chord or two under an 8va line were moved an octave
++        final int traced = traceLine(glyph, staff);
++        final int xEnd = Math.max(center.x + lineLg, traced);
++        os.line = new Line2D.Double(center, new Point(xEnd, center.y));
+         os.setStaff(staff);
+ 
+         return os;
+     }
+ 
++    //-----------//
++    // traceLine //
++    //-----------//
++    /**
++     * Score Reader: follow the dashed line drawn right of an octave sign, in the band of rows
++     * around the sign (engravers draw it level with the sign's top, middle or bottom), and
++     * report the abscissa of its last dash, or -1 if no dashed line is there.
++     * The row with the most dashes wins, so a beam, slur or word crossing the band does not.
++     *
++     * @param glyph the octave sign (the "8" alone)
++     * @param staff its staff
++     * @return the right end of the line, or -1
++     */
++    private static int traceLine (Glyph glyph,
++                                  Staff staff)
++    {
++        try {
++            final Sheet sheet = staff.getSystem().getSheet();
++            final ByteProcessor img = sheet.getPicture().getSource(Picture.SourceKey.NO_STAFF);
++            final int il = sheet.getScale().getInterline();
++            final Rectangle box = glyph.getBounds();
++            final int maxGap = (int) Math.rint(constants.maxDashGap.getValue() * il);
++            final int maxDash = (int) Math.rint(constants.maxDashLength.getValue() * il);
++            final int xStart = box.x + box.width;
++            final int xLimit = Math.min(img.getWidth() - 1,
++                    staff.getAbscissa(HorizontalSide.RIGHT) + il);
++            int bestEnd = -1;
++            int bestDashes = 0;
++
++            for (int y = box.y - (il / 3); y <= (box.y + box.height + (il / 3)); y++) {
++                if ((y < 0) || (y >= img.getHeight())) {
++                    continue;
++                }
++
++                int dashes = 0;
++                int lastInk = -1;
++                int run = 0;
++                int gap = 0;
++
++                for (int x = xStart; x <= xLimit; x++) {
++                    if (img.get(x, y) == 0) {
++                        if (run++ == 0) {
++                            dashes++;
++                        }
++
++                        if (run > maxDash) {
++                            break; // something solid: not a dash
++                        }
++
++                        lastInk = x;
++                        gap = 0;
++                    } else {
++                        run = 0;
++
++                        if (++gap > maxGap) {
++                            break;
++                        }
++                    }
++                }
++
++                if (dashes > bestDashes) {
++                    bestDashes = dashes;
++                    bestEnd = lastInk;
++                }
++            }
++
++            return (bestDashes >= constants.minDashes.getValue()) ? bestEnd : -1;
++        } catch (Exception ex) {
++            logger.warn("Could not trace octave line of {}", glyph, ex);
++            return -1;
++        }
++    }
++
+     //~ Inner Classes ------------------------------------------------------------------------------
+ 
+     //-----------//
+@@ -919,6 +1000,21 @@ public class OctaveShiftInter
+         private final Scale.Fraction minGapFromStaff = new Scale.Fraction(
+                 2.0,
+                 "Minimum vertical gap from upper or lower staff");
++
++        private final Constant.Double maxDashGap = new Constant.Double(
++                "interline",
++                1.2,
++                "Maximum gap between two dashes of an octave line");
++
++        private final Constant.Double maxDashLength = new Constant.Double(
++                "interline",
++                2.0,
++                "Maximum length of one dash of an octave line");
++
++        private final Constant.Integer minDashes = new Constant.Integer(
++                "dashes",
++                4,
++                "Minimum dashes to take a line right of an octave sign as its line");
+     }
+ 
+     //--------//
 diff --git a/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
 new file mode 100644
 index 0000000..48e6db2
