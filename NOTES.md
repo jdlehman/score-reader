@@ -57,6 +57,24 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   dashes wins; a run longer than 2 staff spaces is not a dash. Wolf's "Verborgenheit", an 8va
   over three bars of the piano: 92%, now 100%. The export also takes a line with no chord at
   an end to its own end (`PartwiseBuilder.getOctaveShift`), where it skipped the line.
+- A measure whose voices don't fit is read again looking for tuplets not drawn
+  (`StackRhythm.doProcess`, with `MeasureRhythm(measure, implicitTuplets)`). Engravings draw the
+  3 over the first triplets and then stop; Audiveris read the rest as plain eighths, found the
+  measure too long, and dropped the chords it had no time for. Audiveris's own switch for this
+  (`ProcessingSwitches.implicitTuplets`) looks in every measure, and that upset the voices of
+  some that fit (Widmung bar 10 came out a beat late); only measures that fail now. Frühling's
+  rhythm 46% to 95%, Erlkönig's notes 85% to 100%, the Cantique's rhythm up 5 to 18 points a
+  page; with the whole notes below, the corpus went from 92% of notes to 94%, and rhythm from
+  79% to 81% (25 pages better, 5 a little worse). It can still squeeze a measure
+  that failed for another reason: on the Verborgenheit 8va page a false half note made bar 4
+  too long, and its eighths became triplets to make room (rhythm 99% to 92%). Nothing found
+  tells those apart yet (a drawn 3 on the page doesn't: that page has two).
+- Whole notes are matched with Leland's template as well as Bravura's, the better kept
+  (`NoteHeadsBuilder`, `wholeCatalog`). Bravura's whole note is wider than MuseScore's or
+  LilyPond's, and matched them too badly to keep: the Cantique (MuseScore) lost nearly all of
+  them, p13 78%, now 99%; p01 73%, now 100% (with the tuplets above). Leland for all heads
+  read the Cantique as well but cost BWV 227 and the Hallelujah wrong notes, so only whole notes.
+  Not in the TeaVM build yet: it has pre-rendered templates for Bravura only.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at

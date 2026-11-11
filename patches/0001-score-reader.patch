@@ -1232,6 +1232,82 @@ index 3779932..5bdc070 100644
      }
  
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/note/NoteHeadsBuilder.java b/app/src/main/java/org/audiveris/omr/sheet/note/NoteHeadsBuilder.java
+index b6d0d34..b874fb7 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/note/NoteHeadsBuilder.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/note/NoteHeadsBuilder.java
+@@ -186,6 +186,13 @@ public class NoteHeadsBuilder
+     /** The <b>properly scaled</b> templates to use, based on <b>current</b> staff. */
+     private Catalog catalog;
+ 
++    /**
++     * score-reader: whole notes are matched with Leland's too, the better kept. Bravura's whole
++     * note is wider than many engravings' (MuseScore's, LilyPond's), and matched them too badly
++     * to keep: Faure's Cantique lost nearly every one.
++     */
++    private Catalog wholeCatalog;
++
+     /** The competing interpretations for the system. */
+     private List<Inter> systemCompetitors;
+ 
+@@ -350,6 +357,9 @@ public class NoteHeadsBuilder
+             watch.start("Staff #" + staff.getId() + " catalog");
+             final int pointSize = staff.getHeadPointSize();
+             catalog = TemplateFactory.getInstance().getCatalog(family, pointSize);
++            wholeCatalog = (family != MusicFamily.Leland)
++                    ? TemplateFactory.getInstance().getCatalog(MusicFamily.Leland, pointSize)
++                    : null;
+ 
+             final List<HeadInter> ch = new ArrayList<>(); // Created Heads, for this staff
+ 
+@@ -1764,6 +1774,10 @@ public class NoteHeadsBuilder
+             // Then try (all variants for) the shape and keep the best dist
+             double dist = template.evaluate(x, y, anchor, distances);
+ 
++            if ((shape == Shape.WHOLE_NOTE) && (wholeCatalog != null)) {
++                dist = Math.min(dist, wholeCatalog.getTemplate(shape).evaluate(x, y, anchor, distances));
++            }
++
+             // Trick to boost cross heads
+             if (shape == Shape.NOTEHEAD_CROSS) {
+                 dist *= (1 - constants.crossBoost.getValue());
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureRhythm.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureRhythm.java
+index c3bae0d..68ffb1c 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureRhythm.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureRhythm.java
+@@ -122,6 +122,22 @@ public class MeasureRhythm
+      * @param measure the measure to process
+      */
+     public MeasureRhythm (Measure measure)
++    {
++        this(
++                measure,
++                measure.getStack().getSystem().getSheet().getStub().getProcessingSwitches()
++                        .getValue(ProcessingSwitch.implicitTuplets));
++    }
++
++    /**
++     * Creates a new <code>MeasureRhythm</code> object, with or without implicit tuplets
++     * whatever the sheet's switch says.
++     *
++     * @param measure         the measure to process
++     * @param implicitTuplets true to look for tuplets not drawn
++     */
++    public MeasureRhythm (Measure measure,
++                          boolean implicitTuplets)
+     {
+         this.measure = measure;
+ 
+@@ -130,8 +146,7 @@ public class MeasureRhythm
+         final Scale scale = sheet.getScale();
+         voiceDistance = part.isMerged() ? new VoiceDistance.Merged(scale)
+                 : new VoiceDistance.Separated(scale);
+-        implicitTuplets = sheet.getStub().getProcessingSwitches().getValue(
+-                ProcessingSwitch.implicitTuplets);
++        this.implicitTuplets = implicitTuplets;
+         tupletGenerator = implicitTuplets ? new TupletGenerator(measure) : null;
+     }
+ 
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
 index 69c2f0f..7f4c3be 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
@@ -1251,6 +1327,35 @@ index 69c2f0f..7f4c3be 100644
              measure.addInter(inter);
  
              if (inter instanceof TupletInter tupletInter) {
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
+index 4c062c1..77a2d5e 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
+@@ -22,6 +22,7 @@
+ package org.audiveris.omr.sheet.rhythm;
+ 
+ import org.audiveris.omr.math.Rational;
++import org.audiveris.omr.sheet.ProcessingSwitch;
+ import org.audiveris.omr.sheet.Staff;
+ import org.audiveris.omr.sig.inter.AbstractChordInter;
+ 
+@@ -124,7 +125,15 @@ public class StackRhythm
+ 
+         // Process measure by measure
+         for (Measure measure : stack.getMeasures()) {
+-            final boolean measureOk = new MeasureRhythm(measure).process();
++            boolean measureOk = new MeasureRhythm(measure).process();
++
++            // score-reader: a measure whose voices don't fit may hold tuplets not drawn (an
++            // engraving draws the 3 over the first triplets only): try again looking for them.
++            // Only then: looking for them in every measure upsets the voices of some that fit.
++            if (!measureOk && !measure.getStack().getSystem().getSheet().getStub()
++                    .getProcessingSwitches().getValue(ProcessingSwitch.implicitTuplets)) {
++                measureOk = new MeasureRhythm(measure, true).process();
++            }
+ 
+             if (!measureOk) {
+                 measure.setAbnormal(true);
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
 index 1bb36a3..bb77e78 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
