@@ -195,13 +195,13 @@ const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8'
 const pct = x => (x == null ? '   -' : `${Math.round(100 * x)}%`.padStart(4))
 const worse = []
 const better = []
-console.log('case'.padEnd(44), 'notes inPart  prec lyrics parts extra')
+console.log('case'.padEnd(44), 'notes inPart  prec rhythm lyrics parts extra')
 for (const [name, r] of Object.entries(results).sort()) {
   const b = baseline[name]
   let mark = ''
   if (b) {
-    // worse: fewer notes found, fewer in their part, or more notes that aren't there
-    const keys = ['notes', 'inPart', 'precision']
+    // worse: fewer notes found, fewer in their part, more notes that aren't there, or fewer on time
+    const keys = ['notes', 'inPart', 'precision', 'rhythm']
     const both = keys.filter(k => b[k] != null) // a baseline from before a score was counted
     const drop = both.some(k => b[k] - (r[k] ?? 0) > 0.01) || (b.read && !r.read)
     const gain = !drop && (both.some(k => (r[k] ?? 0) - b[k] > 0.01) || (!b.read && r.read))
@@ -209,11 +209,13 @@ for (const [name, r] of Object.entries(results).sort()) {
     else if (gain) better.push(name), (mark = '  better')
   }
   const parts = r.read ? `${r.parts}${r.answerParts ? '/' + r.answerParts : ''}` : 'not read'
-  console.log(name.padEnd(44), pct(r.notes), ' ', pct(r.inPart), ' ', pct(r.precision), ' ', pct(r.lyrics), ' ', parts.padEnd(5), String(r.extra ?? '').padStart(4), mark)
+  console.log(name.padEnd(44), pct(r.notes), ' ', pct(r.inPart), ' ', pct(r.precision), '  ', pct(r.rhythm), ' ', pct(r.lyrics), ' ', parts.padEnd(5), String(r.extra ?? '').padStart(4), mark)
 }
 const scored = Object.values(results).filter(r => r.notes != null)
 const mean = k => scored.reduce((s, r) => s + (r[k] ?? 0), 0) / (scored.length || 1)
-console.log(`\n${Object.values(results).filter(r => r.read).length}/${all.length} read; with answers: notes ${pct(mean('notes'))}, in part ${pct(mean('inPart'))}, precision ${pct(mean('precision'))} (mean of ${scored.length})`)
+const timed = scored.filter(r => r.rhythm != null)
+const rhythm = timed.length ? `, rhythm ${pct(timed.reduce((s, r) => s + r.rhythm, 0) / timed.length)} (mean of ${timed.length})` : ''
+console.log(`\n${Object.values(results).filter(r => r.read).length}/${all.length} read; with answers: notes ${pct(mean('notes'))}, in part ${pct(mean('inPart'))}, precision ${pct(mean('precision'))} (mean of ${scored.length})${rhythm}`)
 if (Object.keys(baseline).length) console.log(`against the baseline: ${better.length} better, ${worse.length} worse${worse.length ? ': ' + worse.join(', ') : ''}`)
 writeFileSync(join(OUT, 'results.json'), JSON.stringify(results, null, 1))
 if (process.env.SAVE) {

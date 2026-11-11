@@ -15,8 +15,11 @@
 //   there. Low when parts are jumbled across systems, or two parts were read as one.
 // - parts: how many parts the read has, against the answer.
 // - lyrics: the answer's syllables found in order in the paired part.
-// Not counted: rhythm. A note in the right bar at the wrong beat, or held the wrong time, counts
-// as found. Pitch alone is weak evidence: another chorale's read scores 30-65% against a chorale.
+// - rhythm: the answer's notes found in the right bar and starting at the right time in it (in
+//   quarter notes from the bar's start), whatever part they landed in; for answers whose notes
+//   have onsets. A note found at the wrong beat counts in notes but not here. Pitch alone is weak
+//   evidence (another chorale's read scores 30-65% of notes against a chorale); this is stronger.
+// Not counted: how long notes are held.
 import { inflateRawSync } from 'node:zlib'
 
 const STEPS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -54,7 +57,10 @@ export function musicXmlText(bytes) {
 
 const tag = (xml, name) => xml.match(new RegExp(`<${name}\\b[^>]*>([^<]*)</${name}>`))?.[1]
 
-/** Parts of a MusicXML score: { id, name, measures: [{ notes: [{ midi, lyric }] }] } (pitched notes only). */
+/**
+ * Parts of a MusicXML score: { id, name, measures: [{ notes: [{ midi, lyric, onset }] }] }, pitched
+ * notes only. onset: where the note starts, in quarter notes from the start of its measure.
+ */
 export function parseMusicXml(xml) {
   const names = new Map()
   for (const m of xml.matchAll(/<score-part\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/score-part>/g)) {
@@ -63,20 +69,34 @@ export function parseMusicXml(xml) {
   const parts = []
   for (const p of xml.matchAll(/<part\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/part>/g)) {
     const measures = []
+    let divisions = 1 // per quarter note; set by <attributes>, kept from measure to measure
     for (const m of p[2].matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/g)) {
       const notes = []
-      for (const n of m[1].matchAll(/<note\b[^>]*>([\s\S]*?)<\/note>/g)) {
-        const body = n[1]
-        if (/<rest\b/.test(body) || /<grace\b/.test(body)) continue
-        const pitch = body.match(/<pitch>([\s\S]*?)<\/pitch>/)?.[1]
-        if (!pitch) continue
-        const step = tag(pitch, 'step')
-        const octave = Number(tag(pitch, 'octave'))
-        const alter = Number(tag(pitch, 'alter') ?? 0)
-        if (!(step in STEPS) || !Number.isFinite(octave)) continue
-        // a tied-on note is the same note held: the answer counts it as a note too
-        const lyric = body.match(/<lyric\b[^>]*>[\s\S]*?<text>([^<]*)<\/text>/)?.[1]
-        notes.push({ midi: 12 * (octave + 1) + STEPS[step] + Math.round(alter), lyric })
+      let at = 0 // where the next note starts, in divisions
+      let last = 0 // where the last note started: a <chord/> note starts there too
+      for (const e of m[1].matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+        const [, kind, body] = e
+        const duration = Number(tag(body, 'duration') ?? 0) || 0
+        if (kind === 'attributes') divisions = Number(tag(body, 'divisions')) || divisions
+        else if (kind === 'backup') at -= duration
+        else if (kind === 'forward') at += duration
+        else if (/<grace\b/.test(body)) continue // takes no time, and isn't counted
+        else {
+          const chord = /<chord\s*\/>/.test(body)
+          const onset = chord ? last : at
+          if (!chord) at += duration
+          last = onset
+          if (/<rest\b/.test(body)) continue
+          const pitch = body.match(/<pitch>([\s\S]*?)<\/pitch>/)?.[1]
+          if (!pitch) continue
+          const step = tag(pitch, 'step')
+          const octave = Number(tag(pitch, 'octave'))
+          const alter = Number(tag(pitch, 'alter') ?? 0)
+          if (!(step in STEPS) || !Number.isFinite(octave)) continue
+          // a tied-on note is the same note held: the answer counts it as a note too
+          const lyric = body.match(/<lyric\b[^>]*>[\s\S]*?<text>([^<]*)<\/text>/)?.[1]
+          notes.push({ midi: 12 * (octave + 1) + STEPS[step] + Math.round(alter), lyric, onset: onset / divisions })
+        }
       }
       measures.push({ notes })
     }
@@ -106,6 +126,16 @@ const answerBars = notes => {
   for (const n of notes) bars.set(n.bar, [...(bars.get(n.bar) ?? []), n.midi])
   return bars
 }
+
+/** Pitch-and-onset keys by bar number of some answer notes. */
+const timedBars = notes => {
+  const bars = new Map()
+  for (const n of notes) bars.set(n.bar, [...(bars.get(n.bar) ?? []), timed(n)])
+  return bars
+}
+
+/** A note as pitch and onset, for rhythm: onsets to a 96th of a quarter (triplets, 32nds). */
+const timed = n => `${n.midi}@${Math.round(n.onset * 96)}`
 
 /**
  * Lines up the read's measures with the answer's bars, in order, finding the most notes (all
@@ -187,7 +217,7 @@ export function score(answer, readXml) {
   const readTotal = parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.length, 0), 0)
   if (!total) {
     // nothing pitched to score (a drum page): only whether it was read, and its parts
-    return { notes: null, precision: null, extra: readTotal, inPart: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
+    return { notes: null, precision: null, extra: readTotal, inPart: null, rhythm: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
   }
   const count = answer.bars ?? Math.max(...answer.parts.flatMap(p => p.notes.map(n => n.bar)))
   // one line-up for the whole read: measure i of every part stands for the same answer bar
@@ -197,6 +227,13 @@ export function score(answer, readXml) {
   const measureOf = align(allBars, stacks, count)
   let notes = 0
   for (const [bar, want] of allBars) notes += common(want, stacks[measureOf.get(bar)] ?? [])
+  // rhythm: the same, but each note must start where the answer's does (answers with onsets only)
+  const onTime = answer.parts.flatMap(p => p.notes.filter(n => Number.isFinite(n.onset)))
+  let rhythm = 0
+  for (const [bar, want] of timedBars(onTime)) {
+    const i = measureOf.get(bar)
+    if (i != null) rhythm += common(want, parts.flatMap(rp => (rp.measures[i]?.notes ?? []).map(timed)))
+  }
   // each answer part with a read part of its own: the pairing that finds the most notes
   const gain = answer.parts.map(ap => {
     const bars = answerBars(ap.notes)
@@ -221,6 +258,7 @@ export function score(answer, readXml) {
     precision: readTotal ? notes / readTotal : total ? 0 : 1,
     extra: readTotal - notes,
     inPart: total ? inPart / total : 1,
+    rhythm: onTime.length ? rhythm / onTime.length : null,
     parts: parts.length,
     answerParts: answer.parts.length,
     lyrics: lyricsTotal ? lyricsFound / lyricsTotal : null,
