@@ -10,6 +10,8 @@ import { deflateSync } from 'node:zlib';
 import Tesseract from 'tesseract.js';
 
 const DPI = 70;
+/** Where tesseract.js keeps the language data it downloads (not the current folder). */
+const CACHE = new URL('../../.work/tessdata-cache', import.meta.url).pathname;
 const LEGACY = 0;
 
 let worker = null;
@@ -69,11 +71,12 @@ async function startOcr(spec) {
         worker = await Tesseract.createWorker(langs.length === 1 ? langs[0] : langs, LEGACY, {
             legacyCore: true,
             legacyLang: true,
+            cachePath: CACHE,
         });
     } catch (e) {
         if (want !== 'eng') {
             console.warn(`Tesseract data for '${want}' could not load, falling back to English:`, e.message);
-            worker = await Tesseract.createWorker('eng', LEGACY, { legacyCore: true, legacyLang: true });
+            worker = await Tesseract.createWorker('eng', LEGACY, { legacyCore: true, legacyLang: true, cachePath: CACHE });
             workerSpec = 'eng';
             return worker;
         }

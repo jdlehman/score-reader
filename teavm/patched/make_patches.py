@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Copy Audiveris 5.11 sources and apply TeaVM-0.16.0 patches.
 
-Reads from the read-only clone at ~/workspace/score-reader-spikes/repo/.work/audiveris/
-and writes patched copies to ~/workspace/score-reader-spikes/teavm-wasm/teavm/patched/src/
-(never touches the repo).
+Reads Audiveris's source with score-reader's patch applied (.work/audiveris, from ./setup.sh;
+AUDIVERIS_SRC to read another) and writes the patched copies to .work/teavm/patched-src
+(TEAVM_PATCHED_SRC to write elsewhere). teavm/build.sh runs it.
 
 Patches (each marked TEAVM in the source):
   WellKnowns:      hard-code OS (no System.getenv/getProperty), dummy class container,
@@ -43,10 +43,11 @@ Patches (each marked TEAVM in the source):
                    in HEADS template building. Desktop-neutral (verified
                    pixel-identical on desktop before any Node run, §16).
 """
-import pathlib, re, shutil, sys
+import os, pathlib, re, shutil, sys
 
-REPO = pathlib.Path.home() / "workspace/score-reader-spikes/repo/.work/audiveris/app/src/main/java"
-OUT = pathlib.Path(__file__).resolve().parent / "src"
+ROOT = pathlib.Path(__file__).resolve().parents[2]  # the score-reader checkout
+REPO = pathlib.Path(os.environ.get("AUDIVERIS_SRC", ROOT / ".work/audiveris/app/src/main/java"))
+OUT = pathlib.Path(os.environ.get("TEAVM_PATCHED_SRC", ROOT / ".work/teavm/patched-src"))
 
 FILES = [
     "org/audiveris/omr/WellKnowns.java",
@@ -194,6 +195,24 @@ write(FILES[0], text)
 text = (REPO / FILES[1]).read_text()
 text = sub(text, 'new UserHolder(\n            WellKnowns.CONFIG_FOLDER.resolve(USER_FILE_NAME));',
            'new UserHolder(null); // TEAVM: no user.properties file')
+# score-reader settings (app/settings.js READING): the page passes them as -constant name=value,
+# which reach addConstant through Main.getCli(); TeaVM has no CLI, so TeavmMain fills this map
+# before reading and addConstant consults it the same way.
+text = sub(text, '''    protected final ConcurrentHashMap<String, Constant> constants = new ConcurrentHashMap<>();''',
+           '''    protected final ConcurrentHashMap<String, Constant> constants = new ConcurrentHashMap<>();
+
+    /** TEAVM: constant values set by TeavmMain, as -constant would set them (no CLI here). */
+    public static final java.util.Map<String, String> TEAVM_CONSTANTS = new java.util.HashMap<>();''')
+text = sub(text, '''        // Value set at CLI level?
+        CLI cli = Main.getCli();''', '''        // TEAVM: value set by TeavmMain (in place of the CLI)?
+        String teavmValue = TEAVM_CONSTANTS.get(qName);
+
+        if (teavmValue != null) {
+            return teavmValue;
+        }
+
+        // Value set at CLI level?
+        CLI cli = Main.getCli();''')
 write(FILES[1], text)
 
 # ------------------------------------------------------------------- Constant
@@ -925,9 +944,27 @@ COPY_ASIS = [
     "org/audiveris/omr/sig/inter/MetronomeInter.java",
     "org/audiveris/omr/text/BrowserOCR.java",
     "org/audiveris/omr/util/Table.java",
+    # score-reader 6e8dd5c: parts matched by clef, and a null measure skipped in RHYTHMS
+    "org/audiveris/omr/score/PartCollation.java",
+    "org/audiveris/omr/sheet/rhythm/Voices.java",
+    # score-reader 54e61ff, 737e122: one-sign key changes, the tenor clef with a separate 8,
+    # octave lines followed on the page
+    "org/audiveris/omr/sig/inter/KeyInter.java",
+    "org/audiveris/omr/sheet/clef/ClefBuilder.java",
+    "org/audiveris/omr/sig/inter/OctaveShiftInter.java",
 ]
 for rel in COPY_ASIS:
     write(rel, copy_src(rel))
+
+# score-reader matches whole notes with Leland's template as well as Bravura's (NoteHeadsBuilder
+# wholeCatalog). TeaVM has pre-rendered templates for Bravura only (ROUND 12) and its stub font
+# draws nothing, so a Leland template would be blank: Bravura's alone here, as before, until
+# Leland's whole note is pre-rendered too.
+text = copy_src("org/audiveris/omr/sheet/note/NoteHeadsBuilder.java")
+text = sub(text, """            wholeCatalog = (family != MusicFamily.Leland)
+                    ? TemplateFactory.getInstance().getCatalog(MusicFamily.Leland, pointSize)
+                    : null;""", """            wholeCatalog = null; // TEAVM: no pre-rendered Leland templates (see make_patches.py)""")
+write("org/audiveris/omr/sheet/note/NoteHeadsBuilder.java", text)
 print("All round-3 copies applied.")
 
 # ============================================================ ROUND 4 =======
@@ -1014,7 +1051,7 @@ text = replace_method_re(text, r"public void storeBookInfo \(Path root\)",
     "public void storeBookInfo (Path root)\n    {\n        // TEAVM: no JAXB in WASM\n    }")
 text = replace_method_re(text, r"public void close \(Integer sheetNumber\)",
     "public void close (Integer sheetNumber)\n    {\n        // TEAVM: no GUI/closing in WASM\n    }")
-text = replace_method_re(text, r"public boolean reachBookStep \(final OmrStep target,\s*\n\s*final boolean force,\s*\n\s*final List<SheetStub> theStubs,\s*\n\s*final boolean swap\)",
+text = replace_method_re(text, r"public boolean reachBookStep \(final OmrStep target,\s*\n\s*final boolean force,\s*\n\s*final List<SheetStub> (?:theStubs|allStubs),\s*\n\s*final boolean swap\)",  # score-reader main renamed theStubs -> allStubs
     "public boolean reachBookStep (final OmrStep target,\n                                  final boolean force,\n                                  final List<SheetStub> theStubs,\n                                  final boolean swap)\n    {\n        return false; // TEAVM: book steps not driven in WASM demo\n    }")
 text = replace_method_re(text, r"public void resetTo \(OmrStep step\)",
     "public void resetTo (OmrStep step)\n    {\n        // TEAVM: no reset in WASM demo\n    }")
@@ -2009,6 +2046,12 @@ text = (OUT / "org/audiveris/omr/text/BrowserOCR.java").read_text()
 text = sub(text,
            "import java.util.TreeSet;",
            "import java.util.TreeSet;\n\nimport org.teavm.jso.JSBody;\n\nimport java.util.Base64;")
+# score-reader main lists six languages here already (its language picker); older patches
+# list only "eng". Either way the TeaVM version is a plain TreeSet of the six.
+text = re.sub(r'    private static final SortedSet<String> LANGUAGES = Collections.unmodifiableSortedSet\(\r?\n'
+              r'            new TreeSet<>\(List.of\((?:"eng"|"deu", "eng", "fra", "ita", "lat", "spa")\)\)\);',
+              '    private static final SortedSet<String> LANGUAGES = Collections.unmodifiableSortedSet(\n'
+              '            new TreeSet<>(List.of("eng")));', text, count=1)
 text = sub(text,
            '''    private static final SortedSet<String> LANGUAGES = Collections.unmodifiableSortedSet(
             new TreeSet<>(List.of("eng")));''',
@@ -4736,20 +4779,14 @@ write("org/audiveris/omr/sheet/rhythm/TupletsBuilder.java", text)
 print("  TupletsBuilder DIAG44B (§38)")
 
 text = copy_src("org/audiveris/omr/sheet/rhythm/StackRhythm.java")
-text = sub(text, """        // Process measure by measure
-        for (Measure measure : stack.getMeasures()) {
-            final boolean measureOk = new MeasureRhythm(measure).process();
-
-            if (!measureOk) {
+# score-reader (implicit tuplets as a fallback) changed this loop: measureOk is no longer final,
+# and a failed measure is tried again looking for tuplets not drawn before it is marked abnormal
+text = sub(text, """            if (!measureOk) {
                 measure.setAbnormal(true);
             }
 
             stackOk &= measureOk;
-        }""", """        // Process measure by measure
-        for (Measure measure : stack.getMeasures()) {
-            final boolean measureOk = new MeasureRhythm(measure).process();
-
-            if (!measureOk) {
+        }""", """            if (!measureOk) {
                 measure.setAbnormal(true);
             }
 
@@ -5901,6 +5938,23 @@ text = sub(text, """            System.out.println("DIAG51 refine staff=" + getI
                     + "-" + range.getStop());""")
 write("org/audiveris/omr/sheet/key/KeyBuilder.java", text)
 print("  KeyBuilder DIAG51 null-safe range prints (§45)")
+
+# ============================================================ ROUND 51 (strict mode)
+# TeaVM strict mode (Spike -Dteavm.strict=true) checks casts, and TeaVM 0.16's own
+# Class.getAnnotation path (TClass.getDeclaredAnnotations) fails such a check: the first
+# BINARY step dies with a ClassCastException in RunTableFactory.MyAdapter.isThreadSafe, which
+# reads @ThreadSafe off the pixel filter's class. The answer only picks RunsRetriever's
+# sequential or parallel loop, and TeaVM runs executors inline on one thread, so both loops
+# produce the same runs: answer "not thread safe" (the sequential loop) without the lookup.
+text = copy_src("org/audiveris/omr/run/RunTableFactory.java")
+text = replace_method(text, r"public boolean isThreadSafe \(\)", """public boolean isThreadSafe ()
+        {
+            // TEAVM: no annotation lookup (fails TeaVM's strict-mode cast checks); executors
+            // run inline on one thread here, so the sequential loop gives the same runs
+            return false;
+        }""")
+write("org/audiveris/omr/run/RunTableFactory.java", text)
+print("  RunTableFactory.isThreadSafe without annotations (ROUND 51, strict mode)")
 
 # ============================================================ ROUND 49 (§43: clean build)
 # Strip ALL DIAG prints (DIAG14 through DIAG48) from the freshly

@@ -1,5 +1,0 @@
-// Downloads TeaVM's compiler and what it needs into lib/ (see teavm/README.md).
-plugins { id 'java' }
-repositories { mavenCentral() }
-dependencies { runtimeOnly 'org.teavm:teavm-cli:0.14.1' }
-tasks.register('lib', Copy) { from configurations.runtimeClasspath; into 'lib' }
