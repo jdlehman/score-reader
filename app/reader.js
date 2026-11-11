@@ -5,6 +5,7 @@
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
 import { imagesToPdf, pdfToPdf } from './pdf.js'
+import { BROWSER, READING, asArgs } from './settings.js'
 
 /** Audiveris's steps for each page, with roughly how long each takes (seconds, first page). */
 const STEPS = [
@@ -252,14 +253,7 @@ async function read(files) {
     const classpath = (await (await fetch('jars/classpath.txt')).text()).trim().split('\n').map(j => '/app' + jars + j).join(':')
     cheerpjRunMain('Audiveris', classpath,
       '-batch',
-      '-constant', 'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // its Tesseract is native: the page reads the text
-      '-constant', 'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
-      // one piece, one score: Audiveris starts a new movement at each indented system, and hymnals indent many
-      '-constant', 'org.audiveris.omr.sheet.ProcessingSwitches.indentations=false',
-      // staff lines may tilt more against the page, and bend more: scans of a book and photos warp
-      // it, and Audiveris dropped such lines, or kept only their straight part (see NOTES.md)
-      '-constant', 'org.audiveris.omr.sheet.grid.LinesRetriever.maxSlopeDiff=0.1',
-      '-constant', 'org.audiveris.omr.sheet.grid.LinesRetriever.maxFilamentRotation=0.2',
+      ...asArgs([...BROWSER, ...READING]), // see settings.js
       '-transcribe', '-export', '-output', OUTPUT, INPUT,
     ).then(code => finished(code !== 0))
     const failure = await done

@@ -1,0 +1,507 @@
+{
+ "gute-nacht/gute-nacht-p01": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 22,
+  "inPart": 1,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 26,
+  "answerBars": 25
+ },
+ "gute-nacht/gute-nacht-p04": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9092664092664092,
+  "extra": 30,
+  "inPart": 0.9092664092664092,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 22,
+  "answerBars": 23
+ },
+ "pages/lieder-fruehling": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.975609756097561,
+  "extra": 0,
+  "inPart": 0.975609756097561,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-schubert-erlkoenig": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.75,
+  "extra": 0,
+  "inPart": 0.75,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 11,
+  "answerBars": 12
+ },
+ "pages/lieder-staendchen": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9114583333333334,
+  "extra": 0,
+  "inPart": 0.9114583333333334,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 11,
+  "answerBars": 12
+ },
+ "scans/beethoven9-typeset-p165": {
+  "read": false,
+  "movements": 0
+ },
+ "scans/hallelujah-imslp-p-1": {
+  "read": true,
+  "movements": 1,
+  "parts": 1
+ },
+ "extra/multi-page/hallelujah/p02": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 0.9634703196347032,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 11,
+  "answerBars": 11
+ },
+ "extra/multi-page/hallelujah/p05": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9343065693430657,
+  "extra": 0,
+  "inPart": 0.9343065693430657,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 10,
+  "answerBars": 10
+ },
+ "extra/multi-page/hallelujah/p08": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/pages/chorale-bwv248-33": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/pages/chorale-bwv371": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.981042654028436,
+  "extra": 4,
+  "inPart": 0.981042654028436,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/pages/divisi-bwv227-3": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 5,
+  "answerParts": 5,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/chorale-bwv269-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9243697478991597,
+  "extra": 8,
+  "inPart": 0.9243697478991597,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/divisi-bwv227-3-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 5,
+  "answerParts": 5,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/lieder-fruehling-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.967479674796748,
+  "extra": 0,
+  "inPart": 0.967479674796748,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/photo-synthetic/lieder-staendchen-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.90625,
+  "extra": 0,
+  "inPart": 0.90625,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 11,
+  "answerBars": 12
+ },
+ "extra/scans/mendelssohn-hor-mein-bitten-p10": {
+  "read": true,
+  "movements": 1,
+  "parts": 14
+ },
+ "gute-nacht/gute-nacht-p02": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9653543307086614,
+  "extra": 0,
+  "inPart": 0.9653543307086614,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 30,
+  "answerBars": 31
+ },
+ "pages/lieder-brahms-wiegenlied": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9806451612903225,
+  "extra": 3,
+  "inPart": 0.9806451612903225,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-gute-nacht": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-schumann-monat-mai": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9395604395604396,
+  "extra": 0,
+  "inPart": 0.9395604395604396,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-wolf-verborgenheit": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9768211920529801,
+  "extra": 3,
+  "inPart": 0.9768211920529801,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "scans/faure-agnus-p80": {
+  "read": true,
+  "movements": 1,
+  "parts": 23
+ },
+ "scans/mozart-kyrie-p20": {
+  "read": true,
+  "movements": 1,
+  "parts": 12
+ },
+ "extra/multi-page/hallelujah/p03": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.705,
+  "extra": 0,
+  "inPart": 0.705,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 6,
+  "answerBars": 12
+ },
+ "extra/multi-page/hallelujah/p06": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9490445859872612,
+  "extra": 0,
+  "inPart": 0.9490445859872612,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 10,
+  "answerBars": 10
+ },
+ "extra/multi-page/hallelujah/p09": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9540229885057471,
+  "extra": 0,
+  "inPart": 0.9540229885057471,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 4,
+  "answerBars": 5
+ },
+ "extra/pages/chorale-bwv269": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9243697478991597,
+  "extra": 8,
+  "inPart": 0.9243697478991597,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/pages/chorale-bwv397": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 0,
+  "inPart": 1,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 13,
+  "answerBars": 13
+ },
+ "extra/pages/hallelujah-satb": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9954128440366973,
+  "extra": 0,
+  "inPart": 0.9954128440366973,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/chorale-bwv303-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9330543933054394,
+  "extra": 16,
+  "inPart": 0.9330543933054394,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/hallelujah-imslp-p1-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "parts": 1
+ },
+ "extra/photo-synthetic/lieder-gute-nacht-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9865470852017937,
+  "extra": 2,
+  "inPart": 0.9865470852017937,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/scans/divisi-bwv227-ii": {
+  "read": true,
+  "movements": 1,
+  "parts": 5
+ },
+ "gute-nacht/gute-nacht-p03": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 18,
+  "inPart": 1,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 27,
+  "answerBars": 26
+ },
+ "pages/lieder-faure-apres-un-reve": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9935483870967742,
+  "extra": 0,
+  "inPart": 0.9935483870967742,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-lindenbaum": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.7962962962962963,
+  "extra": 0,
+  "inPart": 0.7962962962962963,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "pages/lieder-schumann-widmung": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9037267080745341,
+  "extra": 0,
+  "inPart": 0.9037267080745341,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 11,
+  "answerBars": 12
+ },
+ "scans/beethoven9-p229-229": {
+  "read": true,
+  "movements": 1,
+  "parts": 21
+ },
+ "scans/faure-sanctus-p50": {
+  "read": true,
+  "movements": 1,
+  "parts": 23
+ },
+ "extra/multi-page/hallelujah/p01": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9954128440366973,
+  "extra": 0,
+  "inPart": 0.9954128440366973,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/multi-page/hallelujah/p04": {
+  "read": true,
+  "movements": 1,
+  "notes": 1,
+  "extra": 55,
+  "inPart": 1,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 17,
+  "answerBars": 11
+ },
+ "extra/multi-page/hallelujah/p07": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9716312056737588,
+  "extra": 2,
+  "inPart": 0.9716312056737588,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 9,
+  "answerBars": 9
+ },
+ "extra/pages/chorale-bwv248-05": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9235294117647059,
+  "extra": 13,
+  "inPart": 0.9235294117647059,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/pages/chorale-bwv303": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9330543933054394,
+  "extra": 16,
+  "inPart": 0.9330543933054394,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/pages/divisi-bwv227-1": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9831932773109243,
+  "extra": 0,
+  "inPart": 0.9831932773109243,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/beethoven-p229-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "parts": 21
+ },
+ "extra/photo-synthetic/divisi-bwv227-1-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9831932773109243,
+  "extra": 0,
+  "inPart": 0.9831932773109243,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 8,
+  "answerBars": 8
+ },
+ "extra/photo-synthetic/hallelujah-satb-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.9174311926605505,
+  "extra": 3,
+  "inPart": 0.9128440366972477,
+  "parts": 4,
+  "answerParts": 4,
+  "measures": 14,
+  "answerBars": 14
+ },
+ "extra/photo-synthetic/lieder-lindenbaum-photo-moderate": {
+  "read": true,
+  "movements": 1,
+  "notes": 0.7962962962962963,
+  "extra": 0,
+  "inPart": 0.7962962962962963,
+  "parts": 2,
+  "answerParts": 2,
+  "measures": 12,
+  "answerBars": 12
+ },
+ "extra/scans/divisi-bwv227-vi": {
+  "read": true,
+  "movements": 1,
+  "parts": 5
+ }
+}
