@@ -34,6 +34,16 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   tesseract.js) it failed the same way, with the line number CheerpJ doesn't give. (CheerpJ's
   stack names the wrong frame here: it pointed at `Measure.purgeVoices`, and a guard there was
   no help.)
+- The MusicXML export no longer loses a whole measure when a hairpin's chord has no time
+  (`PartwiseBuilder.WedgeIterators`). When the rhythm step can't time a chord (a voice "too
+  long"), sorting the measure's hairpin starts and stops threw, and the export left the measure
+  out of that part: two piano bars of "Der Lindenbaum", 80% of its notes read, now 95%.
+- A one-sign key change is a key on every staff of the system (`KeyInter.lookupCandidates`).
+  Audiveris takes a lone ♭ or ♯ with a note close after it for that note's accidental. A change
+  to one flat drawn without cancelling naturals (Gute Nacht, page 4) was read as a key on the
+  voice staff and as accidentals on the piano staves, whose chords follow it closely: the piano
+  kept the old key for 7 bars (94%, now 100%). Now such a sign is a key when another staff of the
+  system has that key change within a staff space of it.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
@@ -130,6 +140,9 @@ Italian, Spanish or Latin, one a score.
   unchanged (one staff end moves a pixel).
 - `ProcessingSwitches.indentations=false`: no new movement at each indented system. Hymnals
   indent many, and a 5-page hymn came back as 11 movements.
+- `LinesRetriever.minStaffLength=15` (Audiveris: 30 staff spaces): a song's last system can
+  be one short bar, under 30 staff spaces long, and Audiveris dropped its staves before
+  looking at them ("Erlkönig" 75% of notes, now 85%; "Ständchen" 91%, now 100%).
 
 ## Pages as Audiveris draws them (app/pdf.js)
 

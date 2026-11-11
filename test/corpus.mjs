@@ -83,7 +83,7 @@ async function read(batch) {
   const started = Date.now()
   let log = ''
   try {
-    const r = await promisify(execFile)(java, args, { maxBuffer: 1 << 28, timeout: 30 * 60_000 })
+    const r = await promisify(execFile)(java, args, { maxBuffer: 1 << 28, timeout: (10 + 5 * batch.length) * 60_000 }) // minutes: a hard photo can take 4
     log = r.stdout + r.stderr
   } catch (e) {
     log = (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message
