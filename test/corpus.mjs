@@ -65,6 +65,15 @@ function cases(dir, prefix = '') {
 const java = join(WORK, 'jdk', readdirSync(join(WORK, 'jdk')).find(d => d.startsWith('jdk')), 'Contents', 'Home', 'bin', 'java')
 const classpath = [resolve(process.env.PATCHED ?? join(WORK, 'patched.jar')), ...readFileSync(join(WORK, 'classpath.txt'), 'utf8').trim().split(':').map(j => join(ROOT, j.replace(/^\/app\//, '')))].join(':')
 
+/** Runs work(item) for every item, at most `jobs` at once; the results in the items' order. */
+async function pool(items, jobs, work) {
+  const out = []
+  let next = 0
+  const worker = async () => { while (next < items.length) { const i = next++; out[i] = await work(items[i]) } }
+  await Promise.all(Array.from({ length: Math.min(jobs, items.length) }, worker))
+  return out
+}
+
 /** Reads some cases in one Java process (one book each), each into OUT/<name>/. */
 async function read(batch) {
   const dir = join(OUT, `batch-${batch.index}`)
@@ -138,15 +147,34 @@ if (!all.length) {
   process.exit(1)
 }
 
-// read: JOBS Java processes, each working through its share of the cases
+// read: JOBS Java processes at once, each working through a batch of at most about 10 cases
+// (Audiveris's memory grows from one book to the next: a batch of 37 with the hard photos ran out
+// of its 3 GB). Audiveris names a read after its image, so two cases with one file name
+// (multi-page/*/p01.png) go in different batches: in one they overwrote each other's read.
 mkdirSync(OUT, { recursive: true })
 const results = {}
-const batches = Array.from({ length: Math.min(JOBS, all.length) }, (_, index) => Object.assign([], { index }))
-all.forEach((c, i) => batches[i % batches.length].push(c))
+const batches = Array.from({ length: Math.max(Math.min(JOBS, all.length), Math.ceil(all.length / 10)) }, (_, index) => Object.assign([], { index }))
+const file = c => basename(c.input, extname(c.input))
+all.forEach((c, i) => {
+  const free = batches.map((_, k) => batches[(i + k) % batches.length]).find(b => !b.some(o => file(o) === file(c)))
+  const batch = free ?? Object.assign([], { index: batches.length })
+  if (!free) batches.push(batch)
+  batch.push(c)
+})
 const t0 = Date.now()
-const runs = process.env.REUSE
-  ? batches.map(b => ({ dir: join(OUT, `batch-${b.index}`), seconds: null }))
-  : await Promise.all(batches.map(read))
+// which batch read each case, kept with the run: REUSE scores those reads again
+const manifest = join(OUT, 'batches.json')
+let runs
+if (process.env.REUSE) {
+  const was = JSON.parse(readFileSync(manifest, 'utf8'))
+  for (const b of batches) b.length = 0
+  for (const c of all) if (was[c.name] != null) (batches[was[c.name]] ??= Object.assign([], { index: was[c.name] })).push(c)
+  for (let i = 0; i < batches.length; i++) batches[i] ??= Object.assign([], { index: i })
+  runs = batches.map(b => ({ dir: join(OUT, `batch-${b.index}`), seconds: null }))
+} else {
+  writeFileSync(manifest, JSON.stringify(Object.fromEntries(batches.flatMap(b => b.map(c => [c.name, b.index]))), null, 1))
+  runs = await pool(batches, JOBS, read)
+}
 console.error(`read ${all.length} cases in ${Math.round((Date.now() - t0) / 1000)} s`)
 
 for (const [i, batch] of batches.entries()) {
@@ -167,22 +195,25 @@ const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8'
 const pct = x => (x == null ? '   -' : `${Math.round(100 * x)}%`.padStart(4))
 const worse = []
 const better = []
-console.log('case'.padEnd(44), 'notes inPart lyrics parts extra')
+console.log('case'.padEnd(44), 'notes inPart  prec lyrics parts extra')
 for (const [name, r] of Object.entries(results).sort()) {
   const b = baseline[name]
   let mark = ''
   if (b) {
-    const drop = (b.notes ?? 0) - (r.notes ?? 0) > 0.01 || (b.inPart ?? 0) - (r.inPart ?? 0) > 0.01 || (b.read && !r.read)
-    const gain = (r.notes ?? 0) - (b.notes ?? 0) > 0.01 || (r.inPart ?? 0) - (b.inPart ?? 0) > 0.01 || (!b.read && r.read)
+    // worse: fewer notes found, fewer in their part, or more notes that aren't there
+    const keys = ['notes', 'inPart', 'precision']
+    const both = keys.filter(k => b[k] != null) // a baseline from before a score was counted
+    const drop = both.some(k => b[k] - (r[k] ?? 0) > 0.01) || (b.read && !r.read)
+    const gain = !drop && (both.some(k => (r[k] ?? 0) - b[k] > 0.01) || (!b.read && r.read))
     if (drop) worse.push(name), (mark = '  WORSE')
     else if (gain) better.push(name), (mark = '  better')
   }
   const parts = r.read ? `${r.parts}${r.answerParts ? '/' + r.answerParts : ''}` : 'not read'
-  console.log(name.padEnd(44), pct(r.notes), ' ', pct(r.inPart), ' ', pct(r.lyrics), ' ', parts.padEnd(5), String(r.extra ?? '').padStart(4), mark)
+  console.log(name.padEnd(44), pct(r.notes), ' ', pct(r.inPart), ' ', pct(r.precision), ' ', pct(r.lyrics), ' ', parts.padEnd(5), String(r.extra ?? '').padStart(4), mark)
 }
 const scored = Object.values(results).filter(r => r.notes != null)
 const mean = k => scored.reduce((s, r) => s + (r[k] ?? 0), 0) / (scored.length || 1)
-console.log(`\n${Object.values(results).filter(r => r.read).length}/${all.length} read; with answers: notes ${pct(mean('notes'))}, in part ${pct(mean('inPart'))} (mean of ${scored.length})`)
+console.log(`\n${Object.values(results).filter(r => r.read).length}/${all.length} read; with answers: notes ${pct(mean('notes'))}, in part ${pct(mean('inPart'))}, precision ${pct(mean('precision'))} (mean of ${scored.length})`)
 if (Object.keys(baseline).length) console.log(`against the baseline: ${better.length} better, ${worse.length} worse${worse.length ? ': ' + worse.join(', ') : ''}`)
 writeFileSync(join(OUT, 'results.json'), JSON.stringify(results, null, 1))
 if (process.env.SAVE) {

@@ -4,15 +4,19 @@
 //
 // What is counted:
 // - notes: the answer's notes found in the read, bar by bar (same bar, same pitch), whatever part
-//   they landed in. Each read part's measures are lined up with the answer's bars in order, the
-//   pairing that finds the most notes (dynamic programming), so a dropped or extra measure costs
-//   only itself.
-// - extra: notes in the read that the answer doesn't have.
-// - inPart: each answer part paired with the read part that holds most of its notes, as a singer
-//   would pick "my part" in Sectional; the share of the answer's notes found there. Low when
-//   parts are jumbled across systems even if every note was read.
+//   they landed in. The read's measures are lined up with the answer's bars in order, all parts
+//   together (measure i is the same moment in every part, as a player reads it), the pairing
+//   that finds the most notes (dynamic programming): a dropped or extra measure costs only
+//   itself, but a part out of step with the others costs its notes.
+// - precision: the share of the read's notes that are in the answer; extra: how many are not.
+//   Notes padded in, or measures read twice, cost here.
+// - inPart: each answer part paired with a read part of its own (the pairing that finds the most
+//   notes), as a singer would pick "my part" in Sectional; the share of the answer's notes found
+//   there. Low when parts are jumbled across systems, or two parts were read as one.
 // - parts: how many parts the read has, against the answer.
 // - lyrics: the answer's syllables found in order in the paired part.
+// Not counted: rhythm. A note in the right bar at the wrong beat, or held the wrong time, counts
+// as found. Pitch alone is weak evidence: another chorale's read scores 30-65% against a chorale.
 import { inflateRawSync } from 'node:zlib'
 
 const STEPS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -104,32 +108,61 @@ const answerBars = notes => {
 }
 
 /**
- * Lines up a read part's measures with the answer's bars, in order, finding the most notes:
- * returns, for each read measure, the answer bar it stands for (or none), and the notes found.
+ * Lines up the read's measures with the answer's bars, in order, finding the most notes (all
+ * parts together: measure i is the same moment in every part, as a player reads it). Returns, for
+ * each answer bar, the read measure index that stands for it (or none).
  */
-function align(bars, part, count) {
-  const numbers = Array.from({ length: count }, (_, i) => i + 1)
-  const m = part.measures.length
-  const n = numbers.length
+function align(bars, stacks, count) {
+  const m = stacks.length
+  const n = count
+  const gain = (i, j) => common(bars.get(j) ?? [], stacks[i - 1])
   // best[i][j]: most notes found pairing the first i measures with the first j bars
   const best = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
   for (let i = 1; i <= m; i++) {
-    const pitches = part.measures[i - 1].notes.map(x => x.midi)
-    for (let j = 1; j <= n; j++) {
-      const pair = best[i - 1][j - 1] + common(bars.get(numbers[j - 1]) ?? [], pitches)
-      best[i][j] = Math.max(pair, best[i - 1][j], best[i][j - 1])
-    }
+    for (let j = 1; j <= n; j++) best[i][j] = Math.max(best[i - 1][j - 1] + gain(i, j), best[i - 1][j], best[i][j - 1])
   }
-  const barOf = new Array(m).fill(null)
+  const measureOf = new Map()
   for (let i = m, j = n; i > 0 && j > 0;) {
-    const pitches = part.measures[i - 1].notes.map(x => x.midi)
-    if (best[i][j] === best[i - 1][j - 1] + common(bars.get(numbers[j - 1]) ?? [], pitches) && best[i][j] > best[i - 1][j] && best[i][j] > best[i][j - 1]) {
-      barOf[i - 1] = numbers[j - 1]
+    if (best[i][j] === best[i - 1][j - 1] + gain(i, j) && best[i][j] > best[i - 1][j] && best[i][j] > best[i][j - 1]) {
+      measureOf.set(j, i - 1)
       i--, j--
     } else if (best[i][j] === best[i - 1][j]) i--
     else j--
   }
-  return { barOf, found: best[m][n] }
+  return measureOf
+}
+
+/**
+ * Pairs answer parts with read parts, each read part with one answer part at most, for the most
+ * notes in all: gain[a][r] is how many of answer part a's notes read part r holds. Returns, for
+ * each answer part, its read part's index or -1.
+ */
+function assign(gain) {
+  const a = gain.length
+  const r = gain[0]?.length ?? 0
+  if (a > 12) {
+    // too many to try every pairing: greedy, the biggest first
+    const pairs = gain.flatMap((row, i) => row.map((g, j) => [g, i, j])).sort((x, y) => y[0] - x[0])
+    const of = new Array(a).fill(-1)
+    const taken = new Set()
+    for (const [, i, j] of pairs) if (of[i] < 0 && !taken.has(j)) (of[i] = j), taken.add(j)
+    return of
+  }
+  // best[mask]: most notes with the answer parts in mask paired, read parts taken in order
+  let best = new Map([[0, { total: 0, of: new Array(a).fill(-1) }]])
+  for (let j = 0; j < r; j++) {
+    const next = new Map(best)
+    for (const [mask, s] of best) {
+      for (let i = 0; i < a; i++) {
+        if (mask & (1 << i)) continue
+        const total = s.total + gain[i][j]
+        const key = mask | (1 << i)
+        if (!next.has(key) || next.get(key).total < total) next.set(key, { total, of: s.of.map((x, k) => (k === i ? j : x)) })
+      }
+    }
+    best = next
+  }
+  return [...best.values()].reduce((x, y) => (y.total > x.total ? y : x)).of
 }
 
 const syllable = s => (s ?? '').toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '')
@@ -151,48 +184,41 @@ export function score(answer, readXml) {
   const total = answer.parts.reduce((s, p) => s + p.notes.length, 0)
   const readTotal = parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.length, 0), 0)
   const count = answer.bars ?? Math.max(...answer.parts.flatMap(p => p.notes.map(n => n.bar)))
-  // all parts together: each read part lined up with all the answer's notes, then every read
-  // note pooled under the bar its measure stands for
+  // one line-up for the whole read: measure i of every part stands for the same answer bar
+  const pitches = (rp, i) => (i == null ? [] : (rp.measures[i]?.notes ?? []).map(x => x.midi))
+  const stacks = Array.from({ length: Math.max(0, ...parts.map(p => p.measures.length)) }, (_, i) => parts.flatMap(rp => pitches(rp, i)))
   const allBars = answerBars(answer.parts.flatMap(p => p.notes))
-  const pooled = new Map()
-  for (const rp of parts) {
-    const { barOf } = align(allBars, rp, count)
-    rp.measures.forEach((m, i) => {
-      if (barOf[i] != null) pooled.set(barOf[i], [...(pooled.get(barOf[i]) ?? []), ...m.notes.map(x => x.midi)])
-    })
-  }
+  const measureOf = align(allBars, stacks, count)
   let notes = 0
-  for (const [bar, pitches] of allBars) notes += common(pitches, pooled.get(bar) ?? [])
-  // each answer part with the read part that holds most of its notes
+  for (const [bar, want] of allBars) notes += common(want, stacks[measureOf.get(bar)] ?? [])
+  // each answer part with a read part of its own: the pairing that finds the most notes
+  const gain = answer.parts.map(ap => {
+    const bars = answerBars(ap.notes)
+    return parts.map(rp => [...bars].reduce((s, [bar, want]) => s + common(want, pitches(rp, measureOf.get(bar))), 0))
+  })
+  const of = assign(gain)
   let inPart = 0
   let lyricsTotal = 0
   let lyricsFound = 0
-  for (const ap of answer.parts) {
-    const bars = answerBars(ap.notes)
-    let pick = null
-    let pickN = -1
-    for (const rp of parts) {
-      const { found } = align(bars, rp, count)
-      if (found > pickN) [pick, pickN] = [rp, found]
-    }
-    inPart += Math.max(0, pickN)
+  answer.parts.forEach((ap, a) => {
+    const pick = parts[of[a]]
+    if (pick) inPart += gain[a][of[a]]
     const want = ap.notes.map(n => syllable(n.lyric)).filter(Boolean)
     lyricsTotal += want.length
     if (pick && want.length) {
       const got = pick.measures.flatMap(m => m.notes.map(n => syllable(n.lyric))).filter(Boolean)
       lyricsFound += lcs(want, got)
     }
-  }
-  // a note found in its own part is found: the two line-ups are worked out apart, and can differ
-  notes = Math.max(notes, inPart)
+  })
   return {
     notes: total ? notes / total : 1,
+    precision: readTotal ? notes / readTotal : total ? 0 : 1,
     extra: readTotal - notes,
     inPart: total ? inPart / total : 1,
     parts: parts.length,
     answerParts: answer.parts.length,
     lyrics: lyricsTotal ? lyricsFound / lyricsTotal : null,
-    measures: parts[0]?.measures.length ?? 0,
+    measures: stacks.length,
     answerBars: count,
   }
 }
