@@ -44,6 +44,19 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   voice staff and as accidentals on the piano staves, whose chords follow it closely: the piano
   kept the old key for 7 bars (94%, now 100%). Now such a sign is a key when another staff of the
   system has that key change within a staff space of it.
+- A treble clef with a small "8" apart from it, just below, is a tenor's octave clef
+  (`ClefBuilder.lookForOctave`). LilyPond draws it so, and the classifier knows the 8 only
+  joined to the clef: apart, the clef alone graded better as a plain treble clef, and every
+  tenor note was read an octave high (BWV 227, 24 pages: 76% of notes, now 97-100% a page).
+  Below only: looking above too took a tempo mark or bar number over a soprano's clef for an
+  8 (four pages a soprano read an octave high).
+- An 8va or 8vb line is as long as it is drawn (`OctaveShiftInter.create`, `traceLine`).
+  Audiveris made every octave line 3 staff spaces long, so only the first chord or two under
+  it were moved an octave: the dashed line is now followed on the page, in the rows around
+  the 8 (engravers draw it level with the sign's top, middle or bottom). The row with the most
+  dashes wins; a run longer than 2 staff spaces is not a dash. Wolf's "Verborgenheit", an 8va
+  over three bars of the piano: 92%, now 100%. The export also takes a line with no chord at
+  an end to its own end (`PartwiseBuilder.getOctaveShift`), where it skipped the line.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
