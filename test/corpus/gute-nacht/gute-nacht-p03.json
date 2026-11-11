@@ -1,16 +1,20 @@
 {
  "page": "gute-nacht-p03",
- "title": "Schubert Gute Nacht, Verovio p.3, measures 57-82",
+ "title": "Schubert Gute Nacht, Verovio p.3, measures 57-83 (page breaks corrected 2026-11-11: as Verovio drew the pages, not as the file asks)",
  "bars_global": [
   57,
-  82
+  83
  ],
- "bars": 26,
+ "bars": 27,
+ "beats": 2,
+ "beat_type": 4,
+ "total_notes": 553,
+ "total_lyrics": 66,
  "parts": [
   {
    "id": "P1",
    "name": "Singstimme",
-   "note_count": 76,
+   "note_count": 78,
    "notes": [
     {
      "bar": 1,
@@ -695,13 +699,31 @@
      "voice": 1,
      "staff": 1,
      "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "quarter",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "Nacht,"
+    },
+    {
+     "bar": 27,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": "da"
     }
    ]
   },
   {
    "id": "P2",
    "name": "Pianoforte",
-   "note_count": 459,
+   "note_count": 475,
    "notes": [
     {
      "bar": 1,
@@ -4833,12 +4855,154 @@
      "voice": 5,
      "staff": 2,
      "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "D5",
+     "midi": 74,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "16th",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "B4",
+     "midi": 71,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "C5",
+     "midi": 73,
+     "type": "eighth",
+     "voice": 1,
+     "staff": 1,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "E3",
+     "midi": 52,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "E3",
+     "midi": 52,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
+    },
+    {
+     "bar": 27,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "eighth",
+     "voice": 5,
+     "staff": 2,
+     "lyric": null
     }
    ]
   }
  ],
- "beats": 2,
- "beat_type": 4,
  "beats_by_bar": {
   "1": 2,
   "2": 2,
@@ -4865,8 +5029,7 @@
   "23": 2,
   "24": 2,
   "25": 2,
-  "26": 2
- },
- "total_notes": 535,
- "total_lyrics": 64
+  "26": 2,
+  "27": 2
+ }
 }

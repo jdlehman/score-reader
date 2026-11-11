@@ -1,14 +1,14 @@
 {
  "page": "lieder-schumann-widmung",
- "title": "Schumann, Widmung Op.25 no.1, bars 1-12",
+ "title": "Schumann, Widmung Op.25 no.1, bars 1-11 (corrected 2026-11-11: the page shows 11 bars)",
  "beats": 3,
  "beat_type": 2,
- "bars": 12,
+ "bars": 11,
  "parts": [
   {
    "id": "P1",
    "name": "Voice",
-   "note_count": 55,
+   "note_count": 49,
    "notes": [
     {
      "bar": 2,
@@ -450,67 +450,13 @@
      "voice": 1,
      "staff": 1,
      "lyric": "wig"
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": "mei"
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": "nen"
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "eighth",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "B4",
-     "midi": 70,
-     "type": "half",
-     "voice": 1,
-     "staff": 1,
-     "lyric": "Kum"
-    },
-    {
-     "bar": 12,
-     "pitch": "B4",
-     "midi": 70,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": "mer"
     }
    ]
   },
   {
    "id": "P2",
    "name": "Piano",
-   "note_count": 267,
+   "note_count": 249,
    "notes": [
     {
      "bar": 1,
@@ -2752,172 +2698,10 @@
      "voice": 6,
      "staff": 2,
      "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "half",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "B4",
-     "midi": 70,
-     "type": "half",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "B4",
-     "midi": 70,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "C5",
-     "midi": 72,
-     "type": "quarter",
-     "voice": 1,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "A3",
-     "midi": 56,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "C4",
-     "midi": 60,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E4",
-     "midi": 63,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "A4",
-     "midi": 68,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "A3",
-     "midi": 56,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "B3",
-     "midi": 58,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "D4",
-     "midi": 61,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E4",
-     "midi": 63,
-     "type": "16th",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E4",
-     "midi": 63,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "D4",
-     "midi": 61,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 1,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "G3",
-     "midi": 55,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E3",
-     "midi": 51,
-     "type": "eighth",
-     "voice": 5,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E3",
-     "midi": 51,
-     "type": "half",
-     "voice": 6,
-     "staff": 2,
-     "lyric": null
-    },
-    {
-     "bar": 12,
-     "pitch": "E3",
-     "midi": 51,
-     "type": "whole",
-     "voice": 6,
-     "staff": 2,
-     "lyric": null
     }
    ]
   }
  ],
- "total_notes": 322,
- "total_lyrics": 49
+ "total_notes": 298,
+ "total_lyrics": 45
 }
