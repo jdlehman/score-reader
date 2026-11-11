@@ -1080,22 +1080,6 @@ index 3779932..5bdc070 100644
      }
  
      //------------//
-diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
-index d00ccf5..0f5148b 100644
---- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
-+++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Measure.java
-@@ -1815,7 +1815,10 @@ public class Measure
-     public void purgeVoices ()
-     {
-         for (Iterator<Voice> it = voices.iterator(); it.hasNext();) {
--            if (it.next().getFirstChord() == null) {
-+            // Score Reader: a null voice too (a hymnal page read in the browser had one, and the
-+            // whole page was lost to a NullPointerException here)
-+            final Voice voice = it.next();
-+            if ((voice == null) || (voice.getFirstChord() == null)) {
-                 it.remove();
-             }
-         }
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
 index 69c2f0f..7f4c3be 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/MeasureStack.java
@@ -1115,6 +1099,24 @@ index 69c2f0f..7f4c3be 100644
              measure.addInter(inter);
  
              if (inter instanceof TupletInter tupletInter) {
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
+index 1bb36a3..bb77e78 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
+@@ -427,6 +427,13 @@ public abstract class Voices
+             for (MeasureStack stack : system.getStacks()) {
+                 final Measure measure = stack.getMeasureAt(part);
+ 
++                if (measure == null) {
++                    // Score Reader: a stack can lack a measure for a part (a hymnal page whose
++                    // system has partial barline columns), which lost the whole page here
++                    prevMeasure = null;
++                    continue;
++                }
++
+                 measure.purgeVoices();
+                 measure.sortVoices();
+                 measure.renameVoices();
 diff --git a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java b/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java
 index b7f0cf3..87af6fc 100644
 --- a/app/src/main/java/org/audiveris/omr/sig/inter/MetronomeInter.java

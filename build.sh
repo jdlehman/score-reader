@@ -20,7 +20,7 @@ else
     $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
     $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
     $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java \
-    $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Measure.java 2>&1 | grep -v '^Note:' || true
+    $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Voices.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
   # FastMath, and every jar rewritten to call it (patched classes first, so they win)
@@ -40,7 +40,7 @@ else
   cp .work/sources/*.jar dist/source/
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/style.css app/*.svg app/*.png dist/
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt

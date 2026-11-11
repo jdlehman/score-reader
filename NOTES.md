@@ -4,7 +4,7 @@ Audiveris 5.11 runs unchanged on CheerpJ 5.0's Java 25 runtime, with these setti
 One clean page (gen-02-open from midi_studio's recognition test) reads in about 100 s, against
 19 s natively, and the result is the same (100% of notes).
 
-## Settings (app/reader.js)
+## Settings (app/reader.js, app/settings.js)
 
 - `env`: HOME and XDG folders (Audiveris needs a home).
 - `sun.java2d.uiScale=1`: skips a screen-scaling check that loads JNA.
@@ -27,9 +27,13 @@ One clean page (gen-02-open from midi_studio's recognition test) reads in about 
   step read it again (3 times before the export), failing each time. That took seconds on the
   desktop and about 4 minutes a time in the browser, where a 5-page hymnal with 2 bad pages
   never finished.
-- `Measure.purgeVoices` drops a null voice as well as an empty one. A hymnal page read in the
-  browser had one and was lost to a NullPointerException (the same page reads on the desktop;
-  where the null comes from is still to find).
+- `Voices.refineSystem` skips a part that has no measure in a stack. A hymnal page (choirs joined
+  by a thin line left of their brackets, partial bar lines) had such a stack, and the whole page
+  was lost to a NullPointerException; now it reads, 4 parts. Desktop Audiveris read that page only
+  because its own OCR changed the layout a little; with OCR off (as the browser reads, through
+  tesseract.js) it failed the same way, with the line number CheerpJ doesn't give. (CheerpJ's
+  stack names the wrong frame here: it pointed at `Measure.purgeVoices`, and a guard there was
+  no help.)
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
@@ -113,7 +117,7 @@ Italian, Spanish or Latin, one a score.
   as "Grii- Be, sché- ne Mﬁl-"; German data reads it right, and French data reads French the
   same way (`test/language.test.mjs`). Without accents the words come out alike.
 
-## Settings for scans of books (app/reader.js)
+## Settings for scans of books (app/settings.js)
 
 - `LinesRetriever.maxSlopeDiff=0.1` (Audiveris: 0.025) and `maxFilamentRotation=0.2` (0.1): a
   staff line may tilt this much more than the page, and bend this much along its length. A
@@ -162,6 +166,7 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     npm run serve &                     # static server with ranges, port 8787
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
     node test/profile.mjs HEADS 25      # where a step spends its time, on .work/page.png
+    npm run corpus                      # read test/corpus/ with desktop Audiveris, score it (see its README)
     EXTRA='&fast=0' node test/profile.mjs HEADS 25   # the same without FastMath
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
