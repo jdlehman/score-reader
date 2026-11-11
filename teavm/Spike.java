@@ -36,6 +36,8 @@ public class Spike {
         tool.setClassLoader(new URLClassLoader(urls.toArray(URL[]::new), Spike.class.getClassLoader()));
         tool.setLog(new ConsoleTeaVMToolLog(false));
         tool.setOptimizationLevel(TeaVMOptimizationLevel.SIMPLE);
+        tool.setDebugInformationGenerated(true);
+        tool.setWasmDebugInfoLevel(org.teavm.backend.wasm.WasmDebugInfoLevel.FULL);
         try {
             tool.generate();
         } catch (Exception e) {

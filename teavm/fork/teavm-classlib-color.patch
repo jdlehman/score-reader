@@ -1,0 +1,47 @@
+diff --git a/classlib/src/main/java/org/teavm/classlib/java/awt/TColor.java b/classlib/src/main/java/org/teavm/classlib/java/awt/TColor.java
+index 140bad7..73ac8cf 100644
+--- a/classlib/src/main/java/org/teavm/classlib/java/awt/TColor.java
++++ b/classlib/src/main/java/org/teavm/classlib/java/awt/TColor.java
+@@ -25,6 +25,26 @@ public class TColor {
+     public static final TColor BLACK = new TColor(0, 0, 0);
+     public static final TColor WHITE = new TColor(255, 255, 255);
+ 
++    // TEAVM §19: the JDK standard colour constants, missing from the
++    // classlib. Values are the JDK ones (also the values the shim
++    // java.awt.Color already declares — but the classlib wins over the
++    // shim, so the shim's copies are shadowed and ineffective here).
++    // Reachable so far: MAGENTA (ShapeSymbol.buildImage debug colour)
++    // and RED/BLUE (HeadLinker/ShapeSymbol paint paths); the rest are
++    // added now so the next step (SYMBOLS) does not trip the same
++    // one-at-a-time failure.
++    public static final TColor RED = new TColor(255, 0, 0);
++    public static final TColor GREEN = new TColor(0, 255, 0);
++    public static final TColor BLUE = new TColor(0, 0, 255);
++    public static final TColor YELLOW = new TColor(255, 255, 0);
++    public static final TColor CYAN = new TColor(0, 255, 255);
++    public static final TColor MAGENTA = new TColor(255, 0, 255);
++    public static final TColor ORANGE = new TColor(255, 200, 0);
++    public static final TColor PINK = new TColor(255, 175, 175);
++    public static final TColor GRAY = new TColor(128, 128, 128);
++    public static final TColor LIGHT_GRAY = new TColor(192, 192, 192);
++    public static final TColor DARK_GRAY = new TColor(64, 64, 64);
++
+     public TColor(int r, int g, int b) {
+         this(r, g, b, 255);
+     }
+@@ -52,6 +72,15 @@ public class TColor {
+         this.a = (value >> 24) & 0xFF;
+     }
+ 
++    // TEAVM §19: JDK Color(int rgba, boolean hasAlpha). Reachable from
++    // ShapeSymbol.computeCentroidOffset: new Color(image.getRGB(x, y), true).
++    public TColor(int rgba, boolean hasAlpha) {
++        this.r = (rgba >> 16) & 0xFF;
++        this.g = (rgba >> 8) & 0xFF;
++        this.b = rgba & 0xFF;
++        this.a = hasAlpha ? ((rgba >> 24) & 0xFF) : 255;
++    }
++
+     public int getRed() {
+         return r;
+     }

@@ -1,0 +1,67 @@
+diff --git a/classlib/src/main/java/org/teavm/classlib/java/util/TArrayList.java b/classlib/src/main/java/org/teavm/classlib/java/util/TArrayList.java
+index 66bce7c..289bc3e 100644
+--- a/classlib/src/main/java/org/teavm/classlib/java/util/TArrayList.java
++++ b/classlib/src/main/java/org/teavm/classlib/java/util/TArrayList.java
+@@ -177,6 +177,62 @@ public class TArrayList<E> extends TAbstractList<E> implements TCloneable, TSeri
+         ++modCount;
+     }
+ 
++    // TEAVM §33: the JDK's ArrayList overrides retainAll/removeAll with a
++    // batchRemove that scans the backing array by index and never creates
++    // an iterator. TeaVM's TArrayList inherited the iterator-based
++    // TAbstractCollection.retainAll, so list.retainAll(list.subList(0, i))
++    // — legal JDK code, used in nine places in Audiveris
++    // (HiLoPeakFinder.findPeaks, ScaleBuilder, ClefBuilder, KeyBuilder x5,
++    // KeyExtractor) — threw ConcurrentModificationException under TeaVM:
++    // the outer iterator's remove() bumps modCount, and the inner subList
++    // iterator used by contains() then fails its check. This port of
++    // OpenJDK ArrayList.batchRemove fixes all nine sites at once and
++    // matches the JDK's semantics exactly, including for a self-subList
++    // argument (modCount is untouched until the end, so no iterator ever
++    // observes a concurrent modification).
++    @Override
++    public boolean retainAll(TCollection<?> c) {
++        Objects.requireNonNull(c);
++        return batchRemove(c, true);
++    }
++
++    @Override
++    public boolean removeAll(TCollection<?> c) {
++        Objects.requireNonNull(c);
++        return batchRemove(c, false);
++    }
++
++    private boolean batchRemove(TCollection<?> c, boolean complement) {
++        int r = 0;
++        int w = 0;
++        boolean modified = false;
++        try {
++            for (; r < size; r++) {
++                if (c.contains(array[r]) == complement) {
++                    array[w++] = array[r];
++                }
++            }
++        } finally {
++            // Preserve behavioral compatibility with AbstractCollection,
++            // even if c.contains() throws.
++            if (r != size) {
++                for (int i = r; i < size; i++) {
++                    array[w++] = array[i];
++                }
++            }
++            if (w != size) {
++                // clear to let GC do its work
++                for (int i = w; i < size; i++) {
++                    array[i] = null;
++                }
++                modCount += size - w;
++                size = w;
++                modified = true;
++            }
++        }
++        return modified;
++    }
++
+     @Override
+     public boolean addAll(int index, TCollection<? extends E> c) {
+         checkIndexForAdd(index);

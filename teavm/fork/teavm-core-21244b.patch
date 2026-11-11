@@ -1,0 +1,31 @@
+diff --git a/core/src/main/java/org/teavm/backend/wasm/transformation/CoroutineTransformation.java b/core/src/main/java/org/teavm/backend/wasm/transformation/CoroutineTransformation.java
+index 6123e05..1582492 100644
+--- a/core/src/main/java/org/teavm/backend/wasm/transformation/CoroutineTransformation.java
++++ b/core/src/main/java/org/teavm/backend/wasm/transformation/CoroutineTransformation.java
+@@ -255,7 +255,7 @@ public class CoroutineTransformation {
+             process(start);
+             if (!typeInference.typeStack.isEmpty() || inputTypes.isEmpty()) {
+                 block.setType(functionTypes.get(new WasmSignature(List.copyOf(typeInference.typeStack),
+-                        List.copyOf(inputTypes))).asBlock());
++                        mapToNullableTypes(inputTypes))).asBlock());
+             }
+         }
+ 
+@@ -273,7 +273,7 @@ public class CoroutineTransformation {
+             }
+             var wrapper = new WasmBlock(false);
+             if (!outputTypes.isEmpty() || inputTypes.isEmpty()) {
+-                wrapper.setType(functionTypes.get(new WasmSignature(outputTypes, List.copyOf(inputTypes)))
++                wrapper.setType(functionTypes.get(new WasmSignature(outputTypes, mapToNullableTypes(inputTypes)))
+                         .asBlock());
+             }
+             typeInference.typeStack.remove(typeInference.typeStack.size() - 1);
+@@ -297,7 +297,7 @@ public class CoroutineTransformation {
+                 var thenWrapper = new WasmBlock(false);
+                 if (!inputTypes.isEmpty() || !typesAfterConditionCheck.isEmpty()) {
+                     thenWrapper.setType(functionTypes.get(new WasmSignature(typesAfterConditionCheck,
+-                            List.copyOf(inputTypes))).asBlock());
++                            mapToNullableTypes(inputTypes))).asBlock());
+                 }
+                 moveAllPreviousTo(conditional, thenWrapper.getBody());
+                 WasmInstructionUtil.negate(thenWrapper.getBody().getLast());

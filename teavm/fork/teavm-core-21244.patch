@@ -1,0 +1,171 @@
+diff --git a/core/src/main/java/org/teavm/backend/wasm/model/instruction/WasmTypeInference.java b/core/src/main/java/org/teavm/backend/wasm/model/instruction/WasmTypeInference.java
+index edeac49..0b76735 100644
+--- a/core/src/main/java/org/teavm/backend/wasm/model/instruction/WasmTypeInference.java
++++ b/core/src/main/java/org/teavm/backend/wasm/model/instruction/WasmTypeInference.java
+@@ -48,7 +48,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+         if (type != null) {
+             popN(type.getInputTypes().size());
+             depthBeforeLastInstructionOut = typeStack.size();
+-            typeStack.addAll(type.getOutputTypes());
++            typeStack.addAll(mapToNullableTypes(type.getOutputTypes()));
+         } else {
+             depthBeforeLastInstructionOut = typeStack.size();
+         }
+@@ -61,7 +61,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+         if (type != null) {
+             popN(type.getInputTypes().size());
+             depthBeforeLastInstructionOut = typeStack.size();
+-            typeStack.addAll(type.getOutputTypes());
++            typeStack.addAll(mapToNullableTypes(type.getOutputTypes()));
+         } else {
+             depthBeforeLastInstructionOut = typeStack.size();
+         }
+@@ -80,10 +80,12 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+             depthBeforeLastInstructionOut = typeStack.size();
+         } else if (!typeStack.isEmpty()) {
+             depthBeforeLastInstructionOut = typeStack.size() - 1;
+-            var top = typeStack.get(typeStack.size() - 1);
+-            var ref = (WasmType.Reference) top;
+-            if (ref.isNullable()) {
+-                typeStack.set(typeStack.size() - 1, ref.asNonNull());
++            if (!forceNullable) {
++                var top = typeStack.get(typeStack.size() - 1);
++                var ref = (WasmType.Reference) top;
++                if (ref.isNullable()) {
++                    typeStack.set(typeStack.size() - 1, ref.asNonNull());
++                }
+             }
+         }
+     }
+@@ -93,9 +95,9 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+         pop();
+         depthBeforeLastInstructionOut = typeStack.size();
+         if (instruction.getCondition() == WasmCastCondition.SUCCESS) {
+-            typeStack.add(instruction.getSourceType());
++            typeStack.add(mapToNullable(instruction.getSourceType()));
+         } else {
+-            typeStack.add(instruction.getTargetType());
++            typeStack.add(mapToNullable(instruction.getTargetType()));
+         }
+     }
+ 
+@@ -144,7 +146,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     @Override
+     public void visit(WasmNullConstant instruction) {
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getType());
++        typeStack.add(mapToNullable(instruction.getType()));
+     }
+ 
+     @Override
+@@ -157,7 +159,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     @Override
+     public void visit(WasmGetLocal instruction) {
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getLocal().getType());
++        typeStack.add(mapToNullable(instruction.getLocal().getType()));
+     }
+ 
+     @Override
+@@ -170,7 +172,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     public void visit(WasmTeeLocal instruction) {
+         pop();
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getLocal().getType());
++        typeStack.add(mapToNullable(instruction.getLocal().getType()));
+     }
+ 
+     @Override
+@@ -257,21 +259,21 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+         var function = instruction.getFunction();
+         popN(function.getType().getParameterTypes().size());
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.addAll(function.getType().getReturnTypes());
++        typeStack.addAll(mapToNullableTypes(function.getType().getReturnTypes()));
+     }
+ 
+     @Override
+     public void visit(WasmIndirectCall instruction) {
+         popN(instruction.getType().getParameterTypes().size() + 1);
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.addAll(instruction.getType().getReturnTypes());
++        typeStack.addAll(mapToNullableTypes(instruction.getType().getReturnTypes()));
+     }
+ 
+     @Override
+     public void visit(WasmCallReference instruction) {
+         popN(instruction.getType().getParameterTypes().size() + 1);
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.addAll(instruction.getType().getReturnTypes());
++        typeStack.addAll(mapToNullableTypes(instruction.getType().getReturnTypes()));
+     }
+ 
+     @Override
+@@ -355,7 +357,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     public void visit(WasmTry instruction) {
+         depthBeforeLastInstructionOut = typeStack.size();
+         if (instruction.getType() != null) {
+-            typeStack.add(instruction.getType());
++            typeStack.add(mapToNullable(instruction.getType()));
+         }
+     }
+ 
+@@ -376,7 +378,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     public void visit(WasmCast instruction) {
+         pop();
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getTargetType());
++        typeStack.add(mapToNullable(instruction.getTargetType()));
+     }
+ 
+     @Override
+@@ -431,21 +433,21 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     public void visit(WasmArrayNewDefault instruction) {
+         pop();
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getType().getReference());
++        typeStack.add(mapToNullable(instruction.getType().getReference()));
+     }
+ 
+     @Override
+     public void visit(WasmArrayNewFixed instruction) {
+         popN(instruction.getSize());
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getType().getReference());
++        typeStack.add(mapToNullable(instruction.getType().getReference()));
+     }
+ 
+     @Override
+     public void visit(WasmArrayGet instruction) {
+         popN(2);
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getType().getElementType().asUnpackedType());
++        typeStack.add(mapToNullable(instruction.getType().getElementType().asUnpackedType()));
+     }
+ 
+     @Override
+@@ -470,7 +472,7 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+     @Override
+     public void visit(WasmFunctionReference instruction) {
+         depthBeforeLastInstructionOut = typeStack.size();
+-        typeStack.add(instruction.getFunction().getType().getReference());
++        typeStack.add(mapToNullable(instruction.getFunction().getType().getReference()));
+     }
+ 
+     @Override
+@@ -505,4 +507,15 @@ public class WasmTypeInference implements WasmInstructionVisitor {
+         }
+         return type;
+     }
++
++    private List<WasmType> mapToNullableTypes(List<? extends WasmType> types) {
++        if (!forceNullable) {
++            return List.copyOf(types);
++        }
++        var result = new ArrayList<WasmType>();
++        for (var type : types) {
++            result.add(mapToNullable(type));
++        }
++        return result;
++    }
+ }
