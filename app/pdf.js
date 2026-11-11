@@ -68,7 +68,7 @@ export async function pdfToPdf(bytes, onPage) {
       canvas.width = canvas.height = 0
       page.cleanup()
     }
-    return { bytes: writePdf(pages), checks: pages.map(p => p.check) }
+    return { bytes: writePdf(pages), pages: greys(pages), checks: pages.map(p => p.check) }
   } finally {
     task.destroy() // and the worker with it
   }
@@ -103,12 +103,15 @@ export async function imagesToPdf(files, onPage) {
     pages.push(await greyPage(w, h, g.getImageData(0, 0, w, h).data))
     canvas.width = canvas.height = 0 // let go of the pixels now, not when collected
   }
-  return { bytes: writePdf(pages), checks: pages.map(p => p.check) }
+  return { bytes: writePdf(pages), pages: greys(pages), checks: pages.map(p => p.check) }
 }
+
+/** The pages' grey pixels, as the WebAssembly reader takes them (teavm.js): what the PDF holds. */
+const greys = pages => pages.map(({ w, h, grey }) => ({ w, h, grey }))
 
 /**
  * A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel,
- * deflated. A page that isn't crisp (a photo or a scan) also gets a quick look (preflight.js);
+ * as is (grey) and deflated (data). A page that isn't crisp (a photo or a scan) also gets a quick look (preflight.js);
  * drawn pages, from notation software, don't need one.
  */
 export async function greyPage(w, h, rgba, crisp = false) {
@@ -117,7 +120,7 @@ export async function greyPage(w, h, rgba, crisp = false) {
     const v = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
     grey[i] = crisp ? (v < 128 ? 0 : 255) : v
   }
-  return { w, h, data: await deflate(grey), check: crisp ? null : preflight(grey, w, h) }
+  return { w, h, grey, data: await deflate(grey), check: crisp ? null : preflight(grey, w, h) }
 }
 
 /** zlib-wrapped deflate, which is what a PDF's FlateDecode reads. */

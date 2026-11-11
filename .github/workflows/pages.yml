@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      # Audiveris's source and release jars, the JDK and the libraries' source: about 300 MB to fetch otherwise
+      # Audiveris's source and release jars, the JDK, the libraries' source and TeaVM: about 340 MB to fetch otherwise
       - uses: actions/cache@v6
         with:
           path: |
@@ -35,6 +35,7 @@ jobs:
             .work/lib
             .work/jdk
             .work/sources
+            .work/teavm-lib
           key: work-${{ hashFiles('setup.sh', 'patches/**') }}
       - run: ./setup.sh
       # only PDF.js is needed to build, and none of the packages' install scripts

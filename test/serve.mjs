@@ -6,17 +6,18 @@ import { createServer } from 'node:http'
 import { extname, join, normalize } from 'node:path'
 
 const root = join(import.meta.dirname, '..')
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.jar': 'application/java-archive', '.png': 'image/png', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.json': 'application/json', '.css': 'text/css', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml' }
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.jar': 'application/java-archive', '.png': 'image/png', '.jpg': 'image/jpeg', '.pdf': 'application/pdf', '.json': 'application/json', '.css': 'text/css', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml', '.wasm': 'application/wasm' }
 const port = Number(process.argv[2] ?? 8787)
 
 createServer((req, res) => {
-  let path = normalize(join(root, decodeURIComponent(new URL(req.url, 'http://x').pathname)))
+  const { pathname } = new URL(req.url, 'http://x')
+  let path = normalize(join(root, decodeURIComponent(pathname)))
   if (!path.startsWith(root)) return res.writeHead(403).end()
   let size
   try {
     let st = statSync(path)
     // a folder: its index.html if it has one (CheerpJ probes for folders; those get 404)
-    if (st.isDirectory() && req.url.endsWith('/')) {
+    if (st.isDirectory() && pathname.endsWith('/')) {
       path = join(path, 'index.html')
       st = statSync(path)
     }

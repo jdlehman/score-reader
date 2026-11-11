@@ -1,6 +1,7 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the score as a PDF,
-// follows its log for progress, and offers the MusicXML it writes.
+// follows its log for progress, and offers the MusicXML it writes. With ?engine=teavm, it reads with
+// Audiveris built into WebAssembly instead (teavm-worker.js), which needs no CheerpJ.
 
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
@@ -38,6 +39,19 @@ const LATER = 0.6 // later pages take this much of the first one's time (Java ha
 /** Where Audiveris finds the score, and what it names its output after. */
 const INPUT = '/str/score.pdf'
 const OUTPUT_NAME = 'score'
+/** Which Audiveris reads: CheerpJ's Java, or the WebAssembly build (teavm/README.md), still on trial. */
+const ENGINE = new URLSearchParams(location.search).get('engine') === 'teavm' ? 'teavm' : 'cheerpj'
+/** The WebAssembly build writes plain MusicXML; Audiveris on CheerpJ, compressed MusicXML (.mxl). */
+const MUSICXML = 'application/vnd.recordare.musicxml+xml'
+/** CheerpJ's loader, from its maker's servers: only when it reads. */
+const cheerpjLoaded = ENGINE === 'cheerpj' && new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = 'https://cjrtnc.leaningtech.com/5.0/loader.js'
+  script.onload = resolve
+  script.onerror = () => reject(new Error('CheerpJ couldn’t be loaded (are you online?)'))
+  document.head.append(script)
+})
+if (cheerpjLoaded) cheerpjLoaded.catch(() => {}) // said when a read needs it
 /**
  * Where this read's MusicXML goes: a folder of its own. CheerpJ keeps what Java writes in /files
  * between visits, so a fixed folder still held an earlier read's score, which was offered when a
@@ -206,11 +220,13 @@ async function read(files) {
     show('pick')
     return
   }
+  if (ENGINE === 'teavm') return readInWasm(input, timer)
   $('status').textContent = 'Starting the reader (it downloads about 45 MB the first time)…'
 
   try {
     let finished
     const done = new Promise(resolve => { finished = resolve })
+    await cheerpjLoaded
     await cheerpjInit({
       version: 25,
       status: 'none',
@@ -273,6 +289,60 @@ async function read(files) {
   }
 }
 
+/**
+ * Read with Audiveris in WebAssembly, in a worker (teavm-worker.js): the pages' grey pixels go to
+ * it, the words it asks for are read here (ocr.js, as for CheerpJ), and MusicXML comes back.
+ */
+async function readInWasm(input, timer) {
+  $('status').textContent = 'Starting the reader (it downloads about 15 MB the first time)…'
+  progress.pages = input.pages.length
+  const worker = new Worker(new URL('teavm-worker.js', import.meta.url), { type: 'module' })
+  try {
+    const { scores, failed } = await new Promise((resolve, reject) => {
+      worker.onmessage = ({ data }) => {
+        if (data.log !== undefined) onLine(data.log)
+        else if (data.step) stepStarts(...data.step)
+        else if (data.ocr) {
+          const { grey, width, height, pageSegMode, languages } = data.ocr
+          readText(grey, width, height, pageSegMode, resolveOcrLanguage(languages, ocrLanguage))
+            .catch(e => {
+              console.warn('Tesseract failed, so this text is left out:', e)
+              return ''
+            })
+            .then(text => worker.postMessage({ id: data.id, text }))
+        } else if (data.done) resolve(data.done)
+        else if (data.error) reject(new Error(data.error))
+      }
+      worker.onerror = e => reject(new Error(e.message || 'the reader stopped'))
+      worker.postMessage({ pages: input.pages, constants: READING, languages: ocrLanguage }, input.pages.map(p => p.grey.buffer))
+    })
+    for (const n of failed) progress.failedPages.add(n)
+    clearInterval(timer)
+    render()
+    if (!scores.length) return fail('Audiveris couldn’t find music it could read. Check the file is sheet music with five-line staves, and try a clearer scan or the original PDF.')
+    finish(input, scores.map(xml => new Blob([xml], { type: MUSICXML })))
+  } catch (e) {
+    clearInterval(timer)
+    console.error(e)
+    fail('Something went wrong in the reader: ' + (e.message || e) + '. Reload the page to try again.')
+  } finally {
+    worker.terminate()
+  }
+}
+
+/** A step of a page starts, as the WebAssembly reader says (page 0: writing the MusicXML). */
+function stepStarts(page, id) {
+  if (page === 0) {
+    progress.phase = 'export'
+    $('status').textContent = 'Writing the MusicXML file…'
+  } else if (STEP.has(id)) {
+    progress.phase = 'pages'
+    progress.page = page
+    progress.step = id
+    progress.stepAt = performance.now()
+  }
+}
+
 /** The MusicXML files Audiveris wrote: one, or one per movement. */
 async function outputs(radix) {
   const blob = async path => {
@@ -306,9 +376,10 @@ function finish(input, results) {
   const box = $('downloads')
   results.forEach((blob, i) => {
     const a = document.createElement('a')
+    const ext = blob.type === MUSICXML ? 'musicxml' : 'mxl'
     a.className = 'button primary'
-    a.href = URL.createObjectURL(new Blob([blob], { type: 'application/vnd.recordare.musicxml' }))
-    a.download = results.length === 1 ? `${input.title}.mxl` : `${input.title} (${i + 1}).mxl`
+    a.href = URL.createObjectURL(blob.type === MUSICXML ? blob : new Blob([blob], { type: 'application/vnd.recordare.musicxml' }))
+    a.download = results.length === 1 ? `${input.title}.${ext}` : `${input.title} (${i + 1}).${ext}`
     a.textContent = results.length === 1 ? `Download ${a.download}` : `Download movement ${i + 1}`
     box.append(a)
   })
