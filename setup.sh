@@ -1,7 +1,8 @@
 #!/bin/sh
 # Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-# Make .work/, which ./build.sh needs: Audiveris 5.11.0's source with our patch applied, the jars
-# of its release, their class path, a Temurin JDK 25, and the source of the copyleft libraries.
+# Make .work/, which ./build.sh and teavm/build.sh need: Audiveris 5.11.0's source with our patch applied, the jars
+# of its release, their class path, a Temurin JDK 25, the source of the copyleft libraries, and
+# TeaVM (for the browser build, teavm/build.sh).
 #   ./setup.sh   (on macOS or Linux; needs git and curl, and dpkg-deb on Linux)
 # Each part is skipped if it is already there.
 set -e
@@ -86,4 +87,52 @@ if [ ! -d .work/sources ]; then
   done
   mv .work/sources.tmp .work/sources
   echo "sources: $(ls .work/sources | wc -l | tr -d ' ') libraries"
+fi
+
+# 6. TeaVM 0.16.0, which builds Audiveris for the browser (teavm/build.sh): its jars and the libraries
+# its compiler uses, and the source of the classes teavm/fork/ fixes. With each file's SHA-256: the
+# browser build is made from these.
+if [ ! -d .work/teavm-lib ]; then
+  mkdir -p .work/teavm-lib.tmp
+  set -- \
+    org/ow2/asm/asm/9.10.1/asm-9.10.1 ed825d10ab1399c8c0cb669e688cf0c8c82629b4c8399b58352b68e92ca10fcb \
+    org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1 dede75a21306b65974ecd8f87114ff6970f09fb794157a4ca09ab25c888c2bfc \
+    org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1 6d0abefb7cbf972ea16edb37ec14835372505063a45f976ab7ea889ed9497895 \
+    org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1 3dfb0d5b6a106cd40b5b250e39935fbf2f927f4477546a5369a3ac609cf0506b \
+    org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1 1bb99d091fba2597dc6d51193e9bbcf0d8447e7ed96bd8f0198b18152f09655c \
+    com/carrotsearch/hppc/0.10.0/hppc-0.10.0 edc83b336476a2b06f7c17d09b17e98bb07678daf968c9825cc14275bdf20a26 \
+    joda-time/joda-time/2.12.2/joda-time-2.12.2 8d4d807adc8e92a83913d9ccd61e634b4907c78d88f3016d06b3b3d2b4795a02 \
+    com/jcraft/jzlib/1.1.3/jzlib-1.1.3 89b1360f407381bf61fde411019d8cbd009ebb10cff715f3669017a031027560 \
+    org/mozilla/rhino/1.9.1/rhino-1.9.1 12dbb224cea124a5d32968722e8eb161c967bf15f3c9a795d1b05592b1147975 \
+    org/teavm/teavm-classlib/0.16.0/teavm-classlib-0.16.0 329fd2a9cfb3afb453070cb97c12adb5c0ee7b0d943b357188d7dbf9c6bf3dd5 \
+    org/teavm/teavm-core/0.16.0/teavm-core-0.16.0 c94539912c1b951fa741aecfcb6b4acad75c2e2360dc8859b1edd0c44175608a \
+    org/teavm/teavm-extension-apis/0.16.0/teavm-extension-apis-0.16.0 9e867f3760b1c8d86cdb18ec70e429c23fd933021c8c3bb0cc0b727eac3202c0 \
+    org/teavm/teavm-extension-spi/0.16.0/teavm-extension-spi-0.16.0 e280bbc31e8d26de2915954990e260871462c146418c7b901249502a1994dde5 \
+    org/teavm/teavm-extension-spi-util/0.16.0/teavm-extension-spi-util-0.16.0 d94e8d4478c4186d18b657cb67654851d38b9f51d372dc7e7e54e0f3a24347c9 \
+    org/teavm/teavm-interop/0.16.0/teavm-interop-0.16.0 5c8511d71ae6f6d2ca913130393b64a959303e521727b2d9c1a9b1e14519216f \
+    org/teavm/teavm-jso/0.16.0/teavm-jso-0.16.0 58b337b93924106bf819c45890c7c231a0c740145afe77795f1e0f099f621d71 \
+    org/teavm/teavm-jso-apis/0.16.0/teavm-jso-apis-0.16.0 32d28e39957a41404f53a14c2447d980c7b5074a92414d0972014f448a46fcb2 \
+    org/teavm/teavm-jso-impl/0.16.0/teavm-jso-impl-0.16.0 12688d04e7d2d73036adacd72b74fd8fb44f10283004075fbe68706ccb223b75 \
+    org/teavm/teavm-metaprogramming-api/0.16.0/teavm-metaprogramming-api-0.16.0 00f053ad35ff78312e48eebbf4e1c6cf5f7a1e759b2432ba0b60d6f111bb3bdd \
+    org/teavm/teavm-metaprogramming-impl/0.16.0/teavm-metaprogramming-impl-0.16.0 616d30aa28f7b0180a61c2289b11c77bf84c715bd79f255e1e42400edb5b6d70 \
+    org/teavm/teavm-platform/0.16.0/teavm-platform-0.16.0 999d369ab15aa83c17987d048ba59560759169891de7e13a5a1c2bd93dd060a8 \
+    org/teavm/teavm-relocated-libs-asm/0.16.0/teavm-relocated-libs-asm-0.16.0 59deba713805038fb9ceb76f002e3ae0e9660ec9815875917f08e0a235b7b1a2 \
+    org/teavm/teavm-relocated-libs-asm-analysis/0.16.0/teavm-relocated-libs-asm-analysis-0.16.0 8ce092f26dc44cffbfd6a23067b0ae43e32f9ddb29efd6e4eed93095a454b04a \
+    org/teavm/teavm-relocated-libs-asm-commons/0.16.0/teavm-relocated-libs-asm-commons-0.16.0 b877abd3af4f9ae2650aa0cb3577fcbdd66a9a1a1181d545d5f1f20070ea5924 \
+    org/teavm/teavm-relocated-libs-asm-tree/0.16.0/teavm-relocated-libs-asm-tree-0.16.0 e0bd21e6734b1f060c0553c66fe20292f49d146858aec1f1ecfe21f6417885f6 \
+    org/teavm/teavm-relocated-libs-asm-util/0.16.0/teavm-relocated-libs-asm-util-0.16.0 c69ce1813eaa66643361b70b3f07c13ca924185280c237c832774a2f85eaf431 \
+    org/teavm/teavm-relocated-libs-hppc/0.16.0/teavm-relocated-libs-hppc-0.16.0 7b82fedf747e0bf5d7a50acece86a8a684901e469165a3c5621c653128df4cd6 \
+    org/teavm/teavm-relocated-libs-rhino/0.16.0/teavm-relocated-libs-rhino-0.16.0 ea776a11f0233ba9e3fd12faf81cca2101b42443d0d22084e2627898fd7ee76e \
+    org/teavm/teavm-tooling/0.16.0/teavm-tooling-0.16.0 8335feb227d299bf51ba3862e84eb3a2723ff2e9840a885a7537f6454d44ee31 \
+    org/teavm/teavm-classlib/0.16.0/teavm-classlib-0.16.0-sources da6f83c1436c87a9ad683b6143aaa9c172b08c3974c9a7d5741a479d0d60092e \
+    org/teavm/teavm-core/0.16.0/teavm-core-0.16.0-sources 687cabf23e0d17a15be30fbc070809c2931714340aca224120fe31579f95519b \
+    end
+  while [ "$1" != end ]; do
+    f=".work/teavm-lib.tmp/$(basename "$1").jar"
+    curl -fsSL -o "$f" "https://repo1.maven.org/maven2/$1.jar"
+    check "$f" "$2"
+    shift 2
+  done
+  mv .work/teavm-lib.tmp .work/teavm-lib
+  echo "teavm: $(ls .work/teavm-lib | wc -l | tr -d ' ') jars"
 fi

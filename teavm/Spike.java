@@ -37,6 +37,12 @@ public class Spike {
         tool.setLog(new ConsoleTeaVMToolLog(false));
         tool.setOptimizationLevel(TeaVMOptimizationLevel.SIMPLE);
         tool.setDebugInformationGenerated(true);
+        // -Dteavm.strict=true: explicit null and array-bounds checks, so a null dereference throws
+        // a catchable NullPointerException instead of trapping the whole Wasm instance
+        if (Boolean.getBoolean("teavm.strict")) {
+            tool.setStrict(true);
+            System.out.println("STRICT mode");
+        }
         tool.setWasmDebugInfoLevel(org.teavm.backend.wasm.WasmDebugInfoLevel.FULL);
         try {
             tool.generate();

@@ -1,66 +1,92 @@
-#!/usr/bin/env bash
-# Build shims.jar, patched Audiveris classes, and the TeavmMain entry classes.
-# Usage: ./build.sh   (re-runs make_patches.py first, so patched/src is fresh)
+#!/bin/sh
+# Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+# Build Audiveris for the browser with TeaVM (WebAssembly GC) into .work/teavm/out/classes.wasm.
+#   teavm/build.sh   (needs .work/ from ./setup.sh, and .work/patched.jar from ./build.sh)
+# TEAVM_STRICT=0 builds without TeaVM's null and bounds checks (smaller and a little faster, but a
+# null dereference then kills the whole run instead of being an exception Audiveris can catch).
 set -e
-cd "$(dirname "$0")"
-J=~/workspace/score-reader-spikes/repo/.work/jdk/jdk-25.0.5+8/bin
-CP_PROG=$(paste -sd: program-jars.txt)
-CP_PROG="$CP_PROG:$PWD/lib/jzlib-1.1.3.jar"   # jzlib was missing from repo .work/lib
+cd "$(dirname "$0")/.."
+J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) # macOS or Linux
+L=.work/teavm-lib # TeaVM's jars and the source of the classes teavm/fork/ fixes (setup.sh)
+W=${TEAVM_WORK:-.work/teavm} # everything built here (TEAVM_WORK to build elsewhere)
+ASM="$L/asm-9.10.1.jar:$L/asm-tree-9.10.1.jar"
+TEAVM_JARS="$L/teavm-interop-0.16.0.jar:$L/teavm-jso-0.16.0.jar:$L/teavm-jso-apis-0.16.0.jar:$L/teavm-jso-impl-0.16.0.jar:$L/teavm-metaprogramming-api-0.16.0.jar:$L/teavm-metaprogramming-impl-0.16.0.jar:$L/teavm-platform-0.16.0.jar"
+[ -f .work/patched.jar ] || { echo "run ./build.sh first: TeaVM's build uses its .work/patched.jar" >&2; exit 1; }
+rm -rf $W && mkdir -p $W
+jc() { "$J/javac" -nowarn "$@" > $W/javac.log 2>&1 || { cat $W/javac.log >&2; exit 1; }; }
 
-python3 patched/make_patches.py
+# 1. TeaVM's own bugs, fixed (teavm/fork/, see FORK_FIX.md): those classes of its release, patched and
+# compiled to go before the release's jars
+mkdir -p $W/fork-src
+grep -h '^+++ b/' teavm/fork/*.patch | sed 's|^+++ b/[a-z]*/src/main/java/||' | sort -u | while read -r f; do
+  case $f in */classlib/*) jar=teavm-classlib ;; *) jar=teavm-core ;; esac
+  unzip -q -o -d $W/fork-src "$L/$jar-0.16.0-sources.jar" "$f"
+done
+for p in teavm/fork/*.patch; do patch -s -p5 -d $W/fork-src < "$p"; done
+jc --release 17 -cp "$L/teavm-classlib-0.16.0.jar:$L/*" -d $W/fork-classlib $(find $W/fork-src -path '*/classlib/*' -name '*.java')
+jc --release 17 -cp "$L/*" -d $W/fork-core $(find $W/fork-src -path '*/backend/*' -name '*.java')
 
-# 0. regenerate the AWT/Swing stub sources (idempotent)
-python3 shims/gen_awt.py > /dev/null
-python3 shims/gen_awt2.py > /dev/null
-python3 shims/gen_swing2.py > /dev/null
-python3 shims/gen_swing3.py > /dev/null
+# 2. Audiveris's source (ours applied) with the TeaVM patches
+TEAVM_PATCHED_SRC=$W/patched-src PYTHONDONTWRITEBYTECODE=1 python3 teavm/patched/make_patches.py > /dev/null
 
-# 1. shims (three passes: java.base shims first, then java.desktop shims,
-#    then java.xml shims, each against the earlier passes' classes;
-#    a single pass fails with 83 errors)
-rm -rf shims/classes && mkdir -p shims/classes
-"$J/javac" --patch-module java.base=shims/src -d shims/classes \
-    $(find shims/src/java/lang shims/src/java/util shims/src/java/text shims/src/java/io shims/src/java/nio shims/src/java/security shims/src/java/net shims/src/org -name '*.java' ! -path '*/w3c/*')
-"$J/javac" --patch-module java.desktop=shims/src -cp shims/classes -d shims/classes \
-    $(find shims/src/java/awt shims/src/java/applet shims/src/java/beans shims/src/javax/imageio shims/src/javax/swing -name '*.java' ! -path '*/datatransfer/*')
-# 2b. java.datatransfer lives in its own module, not java.desktop
-"$J/javac" --patch-module java.datatransfer=shims/src -cp shims/classes -d shims/classes \
-    $(find shims/src/java/awt/datatransfer -name '*.java')
-"$J/javac" --patch-module java.xml=shims/src -cp shims/classes -d shims/classes \
-    $(find shims/src/javax/xml shims/src/org/w3c/dom -name '*.java')
-"$J/jar" --create --file shims.jar -C shims/classes .
-echo "shims.jar OK: $(ls -la shims.jar | awk '{print $5}') bytes"
+# 3. the JDK classes TeaVM's class library lacks or gets wrong: AWT, Swing and XML stubs and shims,
+# compiled in passes, each against the ones before (one pass fails)
+for g in gen_awt gen_awt2 gen_swing2 gen_swing3; do python3 teavm/shims/$g.py > /dev/null; done
+S=teavm/shims/src
+mkdir -p $W/shims
+jc --patch-module java.base=$S -d $W/shims \
+  $(find $S/java/lang $S/java/util $S/java/text $S/java/io $S/java/nio $S/java/security $S/java/net $S/org -name '*.java' ! -path '*/w3c/*')
+jc --patch-module java.desktop=$S -cp $W/shims -d $W/shims \
+  $(find $S/java/awt $S/java/applet $S/java/beans $S/javax/imageio $S/javax/swing -name '*.java' ! -path '*/datatransfer/*')
+jc --patch-module java.datatransfer=$S -cp $W/shims -d $W/shims $(find $S/java/awt/datatransfer -name '*.java')
+jc --patch-module java.xml=$S -cp $W/shims -d $W/shims $(find $S/javax/xml $S/org/w3c/dom -name '*.java')
+"$J/jar" --create --file $W/shims.jar -C $W/shims .
 
-# 1b. ASM rewrites (see tools/RewriteJars.java):
-#   - PhantomReference super(referent) -> super() inside shims.jar
-#     (TeaVM's TReference has only a no-arg ctor)
-#   - ij Color.<lowercase> field refs -> TColor equivalents (lib-patched/)
-#   - jgrapht SupplierUtil.canAccess check skipped (lib-patched/)
-mkdir -p tools/classes lib-patched
-"$J/javac" -cp "lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" -d tools/classes tools/RewriteJars.java
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" RewriteJars phantom shims.jar
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" RewriteJars ij ~/workspace/score-reader-spikes/repo/.work/lib/ij-1.54p.jar lib-patched/ij-1.54p-teavm.jar
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" RewriteJars jgrapht ~/workspace/score-reader-spikes/repo/.work/lib/jgrapht-core-1.5.2.jar lib-patched/jgrapht-core-1.5.2-teavm.jar
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar:$HOME/workspace/score-reader-spikes/repo/.work/lib/bsaf-1.9.2.jar" RewriteJars bsaf ~/workspace/score-reader-spikes/repo/.work/lib/bsaf-1.9.2.jar lib-patched/bsaf-1.9.2-teavm.jar
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" RewriteJars jaxb ~/workspace/score-reader-spikes/repo/.work/lib/jaxb-api-2.3.1.jar lib-patched/jaxb-api-2.3.1-teavm.jar
-"$J/java" -cp "tools/classes:lib/asm-9.10.1.jar:lib/asm-tree-9.10.1.jar" RewriteJars colorfields ~/workspace/score-reader-spikes/repo/.work/lib/jgoodies-forms-1.9.0.jar lib-patched/jgoodies-forms-1.9.0-teavm.jar
+# 4. bytecode rewrites TeaVM needs (teavm/tools/RewriteJars.java): in the shims, and in five of the
+# release's jars
+mkdir -p $W/tools $W/lib-patched
+jc -cp "$ASM" -d $W/tools teavm/tools/RewriteJars.java
+R="$J/java -cp $W/tools:$ASM RewriteJars"
+$R phantom $W/shims.jar
+$R ij .work/lib/ij-1.54p.jar $W/lib-patched/ij-1.54p-teavm.jar
+$R jgrapht .work/lib/jgrapht-core-1.5.2.jar $W/lib-patched/jgrapht-core-1.5.2-teavm.jar
+"$J/java" -cp "$W/tools:$ASM:.work/lib/bsaf-1.9.2.jar" RewriteJars bsaf .work/lib/bsaf-1.9.2.jar $W/lib-patched/bsaf-1.9.2-teavm.jar
+$R jaxb .work/lib/jaxb-api-2.3.1.jar $W/lib-patched/jaxb-api-2.3.1-teavm.jar
+$R colorfields .work/lib/jgoodies-forms-1.9.0.jar $W/lib-patched/jgoodies-forms-1.9.0-teavm.jar
 
-# 2. patched Audiveris sources + entry (compiled together: patched LoadStep
-#    references teavm.TeavmImageHolder, entry references patched classes)
-rm -rf patched/classes && mkdir -p patched/classes
-"$J/javac" -d patched/classes \
-    -cp "$CP_PROG:$PWD/shims.jar:$PWD/lib/teavm-jso-0.16.0.jar" \
-    $(find patched/src entry/src -name '*.java')
-echo "patched/classes OK: $(find patched/classes -name '*.class' | wc -l) classes"
-echo BUILD OK
+# 5. the release's jars, in the page's order, and jzlib (which the desktop gets from its JDK)
+PROG=$(tr ':' '\n' < .work/classpath.txt | sed 's|^/app/||')
+PROG="$PROG
+$L/jzlib-1.1.3.jar"
 
-# 3. reflection policy (compile-time only, DIAG10): TeaVM generates field-reflection
-#    metadata only for members a ReflectionPolicy declares accessible; without it,
-#    Class.getDeclaredFields() returns [] and ConstantSet.initMap() builds an empty map.
-#    Compiled into policy-classes/ (with META-INF/services) and added to the program
-#    classpath in teavm-fork/teavm-main-jars-corepatch.txt.
-rm -rf policy-classes && mkdir -p policy-classes
-"$J/javac" -cp "lib/teavm-extension-spi-0.16.0.jar:lib/teavm-extension-apis-0.16.0.jar" -d policy-classes \
-    $(find policy/src -name '*.java')
-cp -r policy/src/META-INF policy-classes/
-echo "policy-classes OK: $(find policy-classes -name '*.class' | wc -l) classes"
+# 6. the patched Audiveris classes and the entry (together: each refers to the other)
+mkdir -p $W/classes
+jc -proc:none -d $W/classes -cp "$(echo "$PROG" | paste -sd: -):$W/shims.jar:$L/teavm-jso-0.16.0.jar" \
+  $(find $W/patched-src teavm/entry/src -name '*.java')
+
+# 7. the reflection TeaVM must keep (teavm/policy/): only for the compiler
+mkdir -p $W/policy
+jc -cp "$L/teavm-extension-spi-0.16.0.jar:$L/teavm-extension-apis-0.16.0.jar" -d $W/policy $(find teavm/policy/src -name '*.java')
+cp -R teavm/policy/src/META-INF $W/policy/
+
+# 8. compile to WebAssembly. What the program is made of, first found first: the shims, TeaVM (fixed
+# classes first), the TeaVM-patched Audiveris classes, then ours (.work/patched.jar: a change to
+# Audiveris in patches/ reaches the browser build without being copied here), the rewritten jars,
+# and the release's jars.
+{
+  echo $W/shims.jar; echo $W/policy
+  echo $W/fork-classlib; echo $L/teavm-classlib-0.16.0.jar; echo $W/fork-core; echo $L/teavm-core-0.16.0.jar
+  echo "$TEAVM_JARS" | tr ':' '\n'
+  echo $W/classes; echo .work/patched.jar
+  ls $W/lib-patched/*.jar
+  echo "$PROG"
+} > $W/classpath.txt
+mkdir -p $W/compiler
+jc -cp "$L/*" -d $W/compiler teavm/Spike.java
+STRICT=-Dteavm.strict=true; [ "$TEAVM_STRICT" = 0 ] && STRICT=
+"$J/java" -Xmx4g $STRICT -cp "$W/fork-core:$L/*:$W/compiler" Spike wasm-gc $W/out teavm.TeavmMain @$W/classpath.txt > $W/compile.log 2>&1 || true
+if grep -q '^PROBLEM' $W/compile.log || [ ! -f $W/out/classes.wasm ]; then
+  grep '^PROBLEM' $W/compile.log | head -20 >&2; echo "TeaVM failed: $W/compile.log" >&2; exit 1
+fi
+cp teavm/runtime.mjs $W/out/
+echo "teavm: $(du -h $W/out/classes.wasm | cut -f1) $(grep -o 'Classes compiled: [0-9]*' $W/compile.log)"
