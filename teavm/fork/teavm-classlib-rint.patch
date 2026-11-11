@@ -1,0 +1,49 @@
+diff --git a/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java b/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
+index 2d19d35..69a85dd 100644
+--- a/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
++++ b/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
+@@ -116,7 +116,25 @@ public final class TMath extends TObject {
+     private static native double powImpl(double x, double y);
+ 
+     public static double rint(double a) {
+-        return round(a);
++        // JDK: the closest integer; ties go to the even integer (round half
++        // to even). TeaVM previously delegated to round(), i.e. half away
++        // from zero, and additionally destroyed NaN/Infinity (they pass
++        // through a (long) cast, becoming 0 / +-Long.MAX_VALUE).
++        if (Double.isNaN(a) || Double.isInfinite(a) || a == 0.0) {
++            return a;
++        }
++        double f = floor(a);
++        double diff = a - f;
++        if (diff < 0.5) {
++            return f;
++        }
++        if (diff > 0.5) {
++            return f + 1.0;
++        }
++        // Tie: return the even neighbour. (Preserve the sign of zero:
++        // rint(-0.5) is -0.0 on the JDK.)
++        double r = (f % 2.0 == 0.0) ? f : f + 1.0;
++        return (r == 0.0) ? (a < 0.0 ? -0.0 : 0.0) : r;
+     }
+ 
+     @GeneratedBy(MathNativeGenerator.class)
+@@ -125,11 +143,15 @@ public final class TMath extends TObject {
+     public static native double atan2(double y, double x);
+ 
+     public static int round(float a) {
+-        return (int) (a + signum(a) * 0.5f);
++        // JDK: (int) floor(a + 0.5f). TeaVM previously rounded halves away
++        // from zero, so round(-8.5f) was -9 instead of -8.
++        return (int) floor(a + 0.5f);
+     }
+ 
+     public static long round(double a) {
+-        return (long) (a + signum(a) * 0.5);
++        // JDK: (long) floor(a + 0.5). TeaVM previously rounded halves away
++        // from zero, so round(-8.5) was -9 instead of -8.
++        return (long) floor(a + 0.5);
+     }
+ 
+     public static int floorDiv(int a, int b) {

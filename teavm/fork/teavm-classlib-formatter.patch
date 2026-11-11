@@ -1,0 +1,41 @@
+diff --git a/classlib/src/main/java/org/teavm/classlib/java/util/TFormatter.java b/classlib/src/main/java/org/teavm/classlib/java/util/TFormatter.java
+index 3503f05..e548f0a 100644
+--- a/classlib/src/main/java/org/teavm/classlib/java/util/TFormatter.java
++++ b/classlib/src/main/java/org/teavm/classlib/java/util/TFormatter.java
+@@ -264,6 +264,12 @@ public final class TFormatter implements Closeable, Flushable {
+ 
+             Object arg = args[argumentIndex];
+             boolean negative;
++            // JDK: a null argument is formatted as "null" for every conversion
++            // (precision truncates, width pads — formatGivenString applies both).
++            if (arg == null) {
++                formatGivenString(upperCase, "null");
++                return;
++            }
+             if (arg instanceof Double) {
+                 negative = (Double) arg < 0;
+             } else if (arg instanceof Float) {
+@@ -402,6 +408,11 @@ public final class TFormatter implements Closeable, Flushable {
+             String str;
+             Object arg = args[argumentIndex];
+             boolean negative;
++            // JDK: a null argument is formatted as "null" for every conversion.
++            if (arg == null) {
++                formatGivenString(upperCase, "null");
++                return;
++            }
+             if (arg instanceof Long) {
+                 long value = (Long) arg;
+                 str = Long.toString(Math.abs(value));
+@@ -475,6 +486,11 @@ public final class TFormatter implements Closeable, Flushable {
+ 
+             String str;
+             Object arg = args[argumentIndex];
++            // JDK: a null argument is formatted as "null" for every conversion.
++            if (arg == null) {
++                formatGivenString(upperCase, "null");
++                return;
++            }
+             if (arg instanceof Long) {
+                 str = IntegerUtil.toUnsignedLogRadixString((Long) arg, radixLog2);
+             } else if (arg instanceof Integer) {

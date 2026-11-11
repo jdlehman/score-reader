@@ -1,0 +1,29 @@
+diff --git a/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java b/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
+index 2d19d35..3dcac51 100644
+--- a/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
++++ b/classlib/src/main/java/org/teavm/classlib/java/lang/TMath.java
+@@ -599,6 +599,24 @@ public final class TMath extends TObject {
+     }
+ 
+     public static double hypot(double x, double y) {
++        // TEAVM §27: JDK semantics (java.lang.Math.hypot): if either
++        // argument is infinite the result is positive infinity, even if
++        // the other is NaN; if either is NaN (and neither infinite) the
++        // result is NaN. The old sqrt(x*x + y*y) returned NaN for
++        // hypot(NaN, Infinity) (NaN*NaN + Inf*Inf = NaN), which let
++        // CircleModel.createValid accept a NaN-radius circle for a
++        // collinear slur triple (den = 0, centre (NaN, Infinity)) and
++        // crashed CURVES under Wasm, while desktop rejected it (radius
++        // +Infinity). Finite inputs keep the old formula, so finite
++        // results are unchanged.
++        if (Double.isInfinite(x) || Double.isInfinite(y)) {
++            return Double.POSITIVE_INFINITY;
++        }
++
++        if (Double.isNaN(x) || Double.isNaN(y)) {
++            return Double.NaN;
++        }
++
+         return sqrt(x * x + y * y);
+     }
+ 
