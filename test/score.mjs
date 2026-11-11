@@ -181,8 +181,14 @@ function lcs(a, b) {
 /** Scores one read against one answer. */
 export function score(answer, readXml) {
   const parts = parseMusicXml(readXml)
+  // pitched notes only: an unpitched (drum) note has no pitch to find
+  answer = { ...answer, parts: answer.parts.map(p => ({ ...p, notes: p.notes.filter(n => Number.isFinite(n.midi)) })) }
   const total = answer.parts.reduce((s, p) => s + p.notes.length, 0)
   const readTotal = parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.length, 0), 0)
+  if (!total) {
+    // nothing pitched to score (a drum page): only whether it was read, and its parts
+    return { notes: null, precision: null, extra: readTotal, inPart: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
+  }
   const count = answer.bars ?? Math.max(...answer.parts.flatMap(p => p.notes.map(n => n.bar)))
   // one line-up for the whole read: measure i of every part stands for the same answer bar
   const pitches = (rp, i) => (i == null ? [] : (rp.measures[i]?.notes ?? []).map(x => x.midi))
