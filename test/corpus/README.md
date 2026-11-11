@@ -2,8 +2,13 @@
 
 Pages that `test/corpus.mjs` reads with desktop Audiveris (patched and set up as the page reads)
 and scores against their answers (`test/score.mjs`). A page with a `.json` next to it has an
-answer: every pitched note of every part, by bar, with its syllable. A page without one is
-checked only for being read, and for its part count.
+answer: every pitched note of every part, by bar, with its syllable and its onset (where in the
+bar it starts, in quarter notes; the rhythm column scores these). A page without one is checked
+only for being read, and for its part count.
+
+The onsets come from the MusicXML each page was drawn from: `node test/onsets.mjs <answer.json>
+<source.musicxml> --write` pairs each answer note with the source's, and writes nothing unless
+every bar has the same notes in both.
 
     node test/corpus.mjs                       # read, score, compare with baseline.json
     EXTRA=~/Downloads/choral-test-set node test/corpus.mjs   # also the pieces kept out of git

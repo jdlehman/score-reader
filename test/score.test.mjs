@@ -64,3 +64,31 @@ test('unpitched (drum) notes are not scored', () => {
   const mixed = { bars: 1, parts: [{ notes: [{ bar: 1, midi: 60 }, { bar: 1, unpitched: true }] }] }
   assert.equal(score(mixed, xml([[[60]]])).notes, 1)
 })
+
+// rhythm: notes with durations (divisions 2 to the quarter), as Audiveris writes them
+const timedNote = (midi, duration, extra = '') => `<note>${extra}<pitch><step>${STEP[midi % 12]}</step>${[1, 3, 6, 8, 10].includes(midi % 12) ? '<alter>1</alter>' : ''}<octave>${Math.floor(midi / 12) - 1}</octave></pitch><duration>${duration}</duration></note>`
+const timedXml = measures => `<score-partwise><part-list><score-part id="P0"><part-name>p</part-name></score-part></part-list><part id="P0">${measures.map((m, i) => `<measure>${i ? '' : '<attributes><divisions>2</divisions></attributes>'}${m}</measure>`).join('')}</part></score-partwise>`
+// bar 1: C5 and E5 together for a half, then G5 a half; under them, from the start, C3 a whole
+const timedAnswer = { bars: 1, parts: [{ notes: [[72, 0], [76, 0], [79, 2], [48, 0]].map(([midi, onset]) => ({ bar: 1, midi, onset })) }] }
+
+test('onsets follow chords, backups and forwards', () => {
+  const r = score(timedAnswer, timedXml([timedNote(72, 4) + timedNote(76, 4, '<chord/>') + timedNote(79, 4) + '<backup><duration>8</duration></backup>' + timedNote(48, 8)]))
+  assert.equal(r.notes, 1)
+  assert.equal(r.rhythm, 1)
+})
+
+test('a note at the wrong beat counts in notes, not in rhythm', () => {
+  // C5 and E5 read as quarters, so G5 starts a quarter early
+  const r = score(timedAnswer, timedXml([timedNote(72, 2) + timedNote(76, 2, '<chord/>') + timedNote(79, 4) + '<backup><duration>6</duration></backup>' + timedNote(48, 8)]))
+  assert.equal(r.notes, 1)
+  assert.equal(r.rhythm, 3 / 4)
+})
+
+test('a forward moves the next note on; grace notes take no time', () => {
+  const r = score(timedAnswer, timedXml(['<note><grace/><pitch><step>B</step><octave>4</octave></pitch></note>' + timedNote(72, 4) + timedNote(76, 4, '<chord/>') + '<forward><duration>4</duration></forward><backup><duration>4</duration></backup>' + timedNote(79, 4) + '<backup><duration>8</duration></backup>' + timedNote(48, 8)]))
+  assert.equal(r.rhythm, 1)
+})
+
+test('rhythm is not scored without answer onsets', () => {
+  assert.equal(score(answer, xml([upper, lower])).rhythm, null)
+})
