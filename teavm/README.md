@@ -1,9 +1,9 @@
 # Audiveris in WebAssembly (TeaVM)
 
-The page reads music with Audiveris, a Java program. CheerpJ runs it as Java in the browser, but
-loads its runtime from its maker's servers under a licence they can change. This builds Audiveris
-into WebAssembly instead, with [TeaVM](https://teavm.org) 0.16 (WebAssembly GC, Apache-2.0), so
-the site serves everything itself.
+The page reads music with Audiveris, a Java program, built into WebAssembly with
+[TeaVM](https://teavm.org) 0.16 (WebAssembly GC, Apache-2.0), so the site serves everything itself.
+(Until November 2026 it ran the Java with CheerpJ, whose runtime loads from its maker's servers
+under a licence they can change.)
 
 The port is robbie-muse's [score-reader-teavm](https://github.com/robbie-muse/score-reader-teavm)
 (imported at 9b7e935); `FORK_FIX.md` is its log of every defect found and fixed, which the code's

@@ -1,6 +1,6 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// The Audiveris settings Score Reader reads with. The page (reader.js) and the corpus test
-// (test/corpus.mjs, desktop Audiveris) both use these, so the test reads as the page does.
+// The Audiveris settings Score Reader reads with. The page (reader.js, Audiveris in WebAssembly) and
+// the corpus test (test/corpus.mjs, desktop Audiveris) both use these, so the test reads as the page does.
 
 /** Settings for how Audiveris reads music, the same in the browser and on the desktop. */
 export const READING = [
@@ -15,11 +15,5 @@ export const READING = [
   'org.audiveris.omr.sheet.grid.LinesRetriever.minStaffLength=15',
 ]
 
-/** Settings only the browser needs. */
-export const BROWSER = [
-  'org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false', // its Tesseract is native: the page reads the text
-  'org.audiveris.omr.Main.sheetStepTimeOut=3600', // steps take longer than the usual 2 minutes here
-]
-
-/** As Audiveris's command line wants them: -constant name=value, each. */
+/** As desktop Audiveris's command line wants them (the corpus test): -constant name=value, each. */
 export const asArgs = constants => constants.flatMap(c => ['-constant', c])

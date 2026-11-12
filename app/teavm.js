@@ -51,6 +51,7 @@ export async function readScore({ teavm, pages, constants, languages = '', ocr, 
     }
     let text = ''
     if (ocr && globalThis.__ocrImageB64) {
+      onStep?.(n, 'WORDS')
       try {
         text = await ocr({
           grey: fromBase64(globalThis.__ocrImageB64),

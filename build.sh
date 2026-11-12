@@ -1,9 +1,9 @@
 #!/bin/sh
 # Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-# Build the site into dist/: the page, the licences, Audiveris's jars (patched, and rewritten to
-# call FastMath), Audiveris in WebAssembly (teavm/), and the source of the copyleft libraries.
-#   ./build.sh        (needs .work/ from ./setup.sh, and npm install for PDF.js)
-#   ./build.sh page   rebuilds only the page, keeping the jars in dist/
+# Build the site into dist/: the page, the licences, Audiveris in WebAssembly (teavm/), and the
+# source of the copyleft libraries compiled into it.
+#   ./build.sh        (needs .work/ from ./setup.sh, and npm install for PDF.js and tesseract.js)
+#   ./build.sh page   rebuilds only the page, keeping Audiveris in dist/
 set -e
 cd "$(dirname "$0")"
 
@@ -14,7 +14,8 @@ else
   J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) # macOS or Linux
   SRC=.work/audiveris/app/src/main/java/org/audiveris/omr
 
-  # our changed Audiveris classes (patches/), compiled against the Audiveris jars
+  # our changed Audiveris classes (patches/), compiled against the Audiveris jars: the browser build
+  # starts from them (teavm/build.sh), and the corpus test reads with them (test/corpus.mjs)
   rm -rf .work/classes && mkdir -p .work/classes
   "$J/javac" -nowarn -proc:none -cp ".work/lib/*" -d .work/classes \
     $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
@@ -24,24 +25,20 @@ else
     $SRC/sheet/rhythm/MeasureRhythm.java $SRC/sheet/rhythm/StackRhythm.java $SRC/sheet/note/NoteHeadsBuilder.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
-  # Audiveris in WebAssembly, for ?engine=teavm (teavm/README.md)
+  # Audiveris in WebAssembly (teavm/README.md), copied into dist/ below
   teavm/build.sh
 
-  # FastMath, and every jar rewritten to call it (patched classes first, so they win)
-  rm -rf .work/fastclasses .work/fast && mkdir -p .work/fastclasses
-  "$J/javac" -d .work/fastclasses java/org/scorereader/FastMath.java java/org/scorereader/Rewrite.java
-  (echo .work/patched.jar; tr ':' '\n' < .work/classpath.txt | sed 's|^/app/||') \
-    | xargs "$J/java" -cp .work/fastclasses org.scorereader.Rewrite .work/fast
-  "$J/jar" cf .work/fast/scorereader.jar -C .work/fastclasses org/scorereader/FastMath.class
-  (printf '/app/.work/fast/patched.jar:/app/.work/fast/scorereader.jar:'; sed 's|/app/.work/lib/|/app/.work/fast/|g' .work/classpath.txt) > .work/classpath-fast.txt
-
   rm -rf dist
-  mkdir -p dist/jars dist/source
-  # the jars in class path order; the page adds where they are served from
-  sed 's|/app/.work/fast/||g' .work/classpath-fast.txt | tr ':' '\n' > dist/jars/classpath.txt
-  for j in $(cat dist/jars/classpath.txt); do cp ".work/fast/$j" dist/jars/; done
+  mkdir -p dist/source dist/licenses
   # the source of the copyleft libraries (see NOTICE.txt)
   cp .work/sources/*.jar dist/source/
+  # the libraries' own licence and notice files, from their jars (their code is compiled into teavm/)
+  for j in .work/lib/*.jar; do
+    files=$(unzip -Z1 "$j" | grep -iE '^(META-INF/)?(LICEN[CS]E|NOTICE|COPYING)[^/]*$' || true)
+    [ -n "$files" ] && unzip -q -o "$j" $files -d "dist/licenses/$(basename "$j" .jar)"
+  done
+  # TeaVM's (Apache License 2.0, whose text PDF.js's LICENSE is): its jars carry none
+  mkdir -p dist/licenses/teavm-0.16.0 && cp node_modules/pdfjs-dist/LICENSE dist/licenses/teavm-0.16.0/LICENSE
 fi
 
 cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/style.css app/*.svg app/*.png dist/

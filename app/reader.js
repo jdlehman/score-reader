@@ -1,64 +1,43 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// Audiveris in the browser, built into WebAssembly (teavm-worker.js): the page hands it the pages'
-// grey pixels, follows its steps for progress, and offers the MusicXML it writes. With
-// ?engine=cheerpj it reads with Audiveris's Java through CheerpJ instead, as it used to.
+// Audiveris in the browser, built into WebAssembly (teavm-worker.js, teavm/README.md): the page hands
+// it the pages' grey pixels, reads the words it asks for, follows its steps for progress, and offers
+// the MusicXML it writes.
 
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
-import { imagesToPdf, pdfToPdf } from './pdf.js'
-import { BROWSER, READING, asArgs } from './settings.js'
+import { imagePages, pdfPages } from './pdf.js'
+import { READING } from './settings.js'
 
-/** Audiveris's steps for each page, with roughly how long each takes (seconds, first page). */
+/** Audiveris's steps for each page, with roughly how long each takes (seconds, in Chrome on a laptop). */
 const STEPS = [
-  ['LOAD', 'Opening the page', 1.6],
-  ['BINARY', 'Turning it black and white', 2.6],
+  ['LOAD', 'Opening the page', 0.5],
+  ['BINARY', 'Turning it black and white', 3],
   ['SCALE', 'Measuring the staff lines', 0.1],
-  ['GRID', 'Finding the staves', 7.3],
-  ['HEADERS', 'Reading clefs, keys and time signatures', 6.5],
-  ['STEM_SEEDS', 'Looking for stems', 0.6],
-  ['BEAMS', 'Finding beams', 6.4],
-  ['LEDGERS', 'Finding ledger lines', 2.3],
-  ['HEADS', 'Finding note heads (the longest part)', 18],
-  ['STEMS', 'Joining stems to notes', 3.6],
-  ['REDUCTION', 'Sorting out overlaps', 0.5],
-  ['CUE_BEAMS', 'Looking for small notes', 0.1],
-  ['TEXTS', 'Reading the words', 5],
+  ['GRID', 'Finding the staves', 5],
+  ['HEADERS', 'Reading clefs, keys and time signatures', 1.7],
+  ['STEM_SEEDS', 'Looking for stems', 1.2],
+  ['BEAMS', 'Finding beams', 11],
+  ['LEDGERS', 'Finding ledger lines', 1.6],
+  ['HEADS', 'Finding note heads (the longest part)', 13.5],
+  ['STEMS', 'Joining stems to notes', 8.3],
+  ['REDUCTION', 'Sorting out overlaps', 0.4],
+  ['CUE_BEAMS', 'Looking for small notes', 1.5],
+  ['WORDS', 'Reading the words', 4], // ocr.js, between Audiveris's two calls for a page (teavm.js)
+  ['TEXTS', 'Placing the words', 1.4],
   ['MEASURES', 'Finding bar lines', 0.1],
   ['CHORDS', 'Grouping notes into chords', 0.1],
-  ['CURVES', 'Finding ties and slurs', 6.3],
-  ['SYMBOLS', 'Reading other symbols', 8.5],
-  ['LINKS', 'Linking symbols to notes', 0.4],
+  ['CURVES', 'Finding ties and slurs', 3.3],
+  ['SYMBOLS', 'Reading other symbols', 2.6],
+  ['LINKS', 'Linking symbols to notes', 0.2],
   ['RHYTHMS', 'Working out the rhythm', 0.3],
-  ['PAGE', 'Putting the page together', 3],
+  ['PAGE', 'Putting the page together', 0.2],
 ]
 const STEP = new Map(STEPS.map(([id, text, s], i) => [id, { text, i, before: STEPS.slice(0, i).reduce((a, x) => a + x[2], 0) }]))
 const PAGE_SECONDS = STEPS.reduce((a, x) => a + x[2], 0)
-const START_SECONDS = 12 // starting Java and Audiveris, before the first page
-const LATER = 0.6 // later pages take this much of the first one's time (Java has compiled Audiveris by then)
+const START_SECONDS = 4 // starting Audiveris (once its 12 MB are downloaded), before the first page
 
-/** Where Audiveris finds the score, and what it names its output after. */
-const INPUT = '/str/score.pdf'
-const OUTPUT_NAME = 'score'
-/** Which Audiveris reads: the WebAssembly build (teavm/README.md), or with ?engine=cheerpj, CheerpJ's Java. */
-const ENGINE = new URLSearchParams(location.search).get('engine') === 'cheerpj' ? 'cheerpj' : 'teavm'
-/** The WebAssembly build writes plain MusicXML; Audiveris on CheerpJ, compressed MusicXML (.mxl). */
+/** What Audiveris writes: plain MusicXML. */
 const MUSICXML = 'application/vnd.recordare.musicxml+xml'
-/** CheerpJ's loader, from its maker's servers: only when it reads. */
-const cheerpjLoaded = ENGINE === 'cheerpj' && new Promise((resolve, reject) => {
-  const script = document.createElement('script')
-  script.src = 'https://cjrtnc.leaningtech.com/5.0/loader.js'
-  script.onload = resolve
-  script.onerror = () => reject(new Error('CheerpJ couldn’t be loaded (are you online?)'))
-  document.head.append(script)
-})
-if (cheerpjLoaded) cheerpjLoaded.catch(() => {}) // said when a read needs it
-/**
- * Where this read's MusicXML goes: a folder of its own. CheerpJ keeps what Java writes in /files
- * between visits, so a fixed folder still held an earlier read's score, which was offered when a
- * read wrote none of its own (it failed) or wrote movements instead. (Java may not write in
- * /files/uploads, the folder CheerpJ clears.)
- */
-const OUTPUT = `/files/reads/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
 
 const $ = id => document.getElementById(id)
 const show = id => { for (const s of ['pick', 'work', 'done', 'failed']) $(s).hidden = s !== id }
@@ -73,14 +52,14 @@ document.addEventListener('drop', e => {
   document.body.classList.remove('dragging')
   if (!$('pick').hidden) read([...e.dataTransfer.files])
 })
-// Audiveris can't be started twice in one page, so another score means a fresh page
+// another score starts on a fresh page, with nothing left of the last
 for (const b of ['again', 'again-failed']) $(b).addEventListener('click', () => location.reload())
 
 const isPdf = f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name)
 const isImage = f => f.type.startsWith('image/') || /\.(png|jpe?g|tiff?|bmp)$/i.test(f.name)
 const stem = name => name.replace(/\.[^.]+$/, '').trim() || 'score'
 
-/** What Audiveris will read: a PDF of grey pages, drawn from the PDF or images chosen (see pdf.js). */
+/** What Audiveris will read: the grey pages, drawn from the PDF or images chosen (see pdf.js). */
 async function prepare(files, onPage) {
   const pdfs = files.filter(isPdf)
   const images = files.filter(isImage)
@@ -88,8 +67,8 @@ async function prepare(files, onPage) {
   if (pdfs.length + images.length < files.length) throw new Error(`${files.find(f => !isPdf(f) && !isImage(f)).name} isn’t a PDF or an image.`)
   if (pdfs.length > 1 || (pdfs.length && images.length)) throw new Error('Choose one PDF at a time, or photos of the pages (not both).')
   if (files.some(f => /\.hei[cf]$/i.test(f.name))) throw new Error('HEIC photos can’t be read here. On an iPhone, share the photos as JPEG, or scan the pages with Notes instead.')
-  if (pdfs.length) return { ...await pdfToPdf(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
-  return { ...await imagesToPdf(images, onPage), title: stem(images[0].name) }
+  if (pdfs.length) return { ...await pdfPages(new Uint8Array(await pdfs[0].arrayBuffer()), onPage), title: stem(pdfs[0].name) }
+  return { ...await imagePages(images, onPage), title: stem(images[0].name) }
 }
 
 /**
@@ -115,11 +94,11 @@ function askToRead(checks) {
   })
 }
 
-// ---- progress, from Audiveris's log ----
+// ---- progress, from the steps Audiveris reports ----
 
 const progress = {
   t0: 0,
-  pages: null, // known once Audiveris has opened the file
+  pages: null,
   page: 0,
   step: null,
   stepAt: 0,
@@ -130,14 +109,11 @@ const progress = {
 function fraction() {
   const p = progress
   const pages = p.pages ?? 1
-  // the first page is slower than the rest (Java compiles Audiveris as it goes)
-  const total = START_SECONDS + PAGE_SECONDS * (1 + (pages - 1) * LATER) + 3
+  const total = START_SECONDS + PAGE_SECONDS * pages + 1
   if (p.phase === 'start') return Math.min(0.95, (performance.now() - p.t0) / 1000 / total) * (START_SECONDS / (START_SECONDS + 1)) // creeps
-  const pageWeight = n => (n === 1 ? 1 : LATER) * PAGE_SECONDS
-  let done = START_SECONDS
-  for (let n = 1; n < p.page; n++) done += pageWeight(n)
+  let done = START_SECONDS + PAGE_SECONDS * (p.page - 1)
   const s = STEP.get(p.step)
-  if (s) done += (pageWeight(p.page) * (s.before + Math.min(STEPS[s.i][2], (performance.now() - p.stepAt) / 1000 * (p.page === 1 ? 1 : 1 / LATER)))) / PAGE_SECONDS
+  if (s) done += s.before + Math.min(STEPS[s.i][2], (performance.now() - p.stepAt) / 1000)
   if (p.phase === 'export') done = total - 1
   return Math.min(0.99, done / total)
 }
@@ -153,38 +129,28 @@ function render() {
   }
 }
 
+/** A step of a page starts, as Audiveris says (page 0: writing the MusicXML). */
+function stepStarts(page, id) {
+  if (page === 0) {
+    progress.phase = 'export'
+    $('status').textContent = 'Writing the MusicXML file…'
+  } else if (STEP.has(id)) {
+    progress.phase = 'pages'
+    progress.page = page
+    progress.step = id
+    progress.stepAt = performance.now()
+  }
+}
+
+/** What Audiveris prints, shown under "Details". */
 const log = []
 function onLine(text) {
   for (const line of String(text).split('\n')) {
     if (!line.trim() || /^\s+at /.test(line)) continue
     log.push(line)
     if (log.length > 400) log.shift()
-    // INFO  [score#2]        null 0    | HEADS
-    const m = /^(INFO|WARN|ERROR)\s+\[([^\]]*)\][^|]*\|\s?(.*)$/.exec(line)
-    if (!m) continue
-    const [, level, tag, message] = m
-    const sheet = Number(/#(\d+)/.exec(tag)?.[1] ?? 1)
-    const count = /^(\d+) sheets? in /.exec(message)
-    if (count) progress.pages = Number(count[1])
-    if (STEP.has(message)) {
-      progress.phase = 'pages'
-      progress.page = sheet
-      progress.step = message
-      progress.stepAt = performance.now()
-    } else if (/^Exporting/.test(message)) {
-      progress.phase = 'export'
-      $('status').textContent = 'Writing the MusicXML file…'
-    } else if (level === 'WARN' && /Error processing stub|Sheet ignored|invalid/i.test(message) && tag.includes('#')) {
-      progress.failedPages.add(sheet)
-    }
   }
   $('log').textContent = log.slice(-200).join('\n')
-}
-
-// CheerpJ writes Java's output to the console
-for (const level of ['log', 'info', 'warn', 'error']) {
-  const original = console[level].bind(console)
-  console[level] = (...args) => { onLine(args.join(' ')); original(...args) }
 }
 
 // ---- reading ----
@@ -200,7 +166,7 @@ async function read(files) {
   $('work-name').textContent = stem(files[0]?.name ?? '')
   progress.t0 = performance.now()
   const timer = setInterval(render, 500)
-  // Tesseract and its data download while the pages are prepared and Java starts, in the
+  // Tesseract and its data download while the pages are prepared and Audiveris starts, in the
   // language picked for this score (a pack is ~6-14 MB, cached by the browser afterwards)
   startOcr(ocrLanguage).catch(e => console.warn('Tesseract could not start, so the words will be left out:', e))
   let input
@@ -220,82 +186,9 @@ async function read(files) {
     show('pick')
     return
   }
-  if (ENGINE === 'teavm') return readInWasm(input, timer)
-  $('status').textContent = 'Starting the reader (it downloads about 45 MB the first time)…'
-
-  try {
-    let finished
-    const done = new Promise(resolve => { finished = resolve })
-    await cheerpjLoaded
-    await cheerpjInit({
-      version: 25,
-      status: 'none',
-      // Audiveris wants a home folder
-      env: ['HOME=/files/home', 'XDG_CONFIG_HOME=/files/home/config', 'XDG_DATA_HOME=/files/home/data', 'XDG_CACHE_HOME=/files/home/cache'],
-      javaProperties: [
-        'file.encoding=UTF-8',
-        'java.awt.headless=true',
-        'sun.java2d.uiScale=1', // skips a screen-scaling check that needs native code
-        'com.sun.media.jai.disableMediaLib=true',
-        'sun.font.layout.ffm=false', // Java 25's HarfBuzz text layout needs native code; use the older one
-        'scorereader.keepSheets=true', // our patch: keep pages in memory (reloading them is slow here)
-        'scorereader.inBrowser=true', // our patch: tell the page when done; don't save the project file
-        'scorereader.skipFailedPages=true', // our patch: a page Audiveris can't read is left out, not the whole score
-      ],
-      natives: {
-        // our patch calls this when Audiveris is done; Java's shutdown never ends in CheerpJ, so park it here
-        async Java_org_audiveris_omr_ScoreReaderHook_finished(lib, failure) {
-          finished(!!failure)
-          return new Promise(() => {})
-        },
-        // our patch's OCR: Audiveris asks the page to read the text in an image (see ocr.js).
-        // Audiveris passes the language it was told to use; the page resolves it against
-        // the pick panel's choice (see language.js — Audiveris's default is always 'eng',
-        // so a non-default panel choice wins, or the selector would do nothing).
-        async Java_org_audiveris_omr_text_BrowserOCR_read(lib, grey, width, height, languages, pageSegMode) {
-          try {
-            return await readText(grey, width, height, pageSegMode, resolveOcrLanguage(languages, ocrLanguage))
-          } catch (e) {
-            console.warn('Tesseract failed, so this text is left out:', e)
-            return ''
-          }
-        },
-      },
-    })
-    // Audiveris asks the window system which thread it is on, even without windows
-    cheerpjCreateDisplay(320, 200, $('display'))
-    cheerpOSAddStringFile(INPUT, input.bytes)
-    const jars = new URL('jars/', location.href).pathname
-    const classpath = (await (await fetch('jars/classpath.txt')).text()).trim().split('\n').map(j => '/app' + jars + j).join(':')
-    cheerpjRunMain('Audiveris', classpath,
-      '-batch',
-      ...asArgs([...BROWSER, ...READING]), // see settings.js
-      '-transcribe', '-export', '-output', OUTPUT, INPUT,
-    ).then(code => finished(code !== 0))
-    const failure = await done
-    const results = await outputs(OUTPUT_NAME)
-    clearInterval(timer)
-    render()
-    if (!results.length) {
-      return fail(progress.pages === 0 || failure
-        ? 'Audiveris couldn’t find music it could read. Check the file is sheet music with five-line staves, and try a clearer scan or the original PDF.'
-        : 'Audiveris finished without writing a score.')
-    }
-    finish(input, results)
-  } catch (e) {
-    clearInterval(timer)
-    console.error(e)
-    fail('Something went wrong in the reader: ' + (e.message || e) + '. Reload the page to try again.')
-  }
-}
-
-/**
- * Read with Audiveris in WebAssembly, in a worker (teavm-worker.js): the pages' grey pixels go to
- * it, the words it asks for are read here (ocr.js, as for CheerpJ), and MusicXML comes back.
- */
-async function readInWasm(input, timer) {
   $('status').textContent = 'Starting the reader (it downloads about 12 MB the first time)…'
   progress.pages = input.pages.length
+  // in a worker: each page is a minute or more of work that can't be interrupted
   const worker = new Worker(new URL('teavm-worker.js', import.meta.url), { type: 'module' })
   try {
     const { scores, failed } = await new Promise((resolve, reject) => {
@@ -303,6 +196,8 @@ async function readInWasm(input, timer) {
         if (data.log !== undefined) onLine(data.log)
         else if (data.step) stepStarts(...data.step)
         else if (data.ocr) {
+          // Audiveris passes the language it was told to use; the page resolves it against the
+          // pick panel's choice (language.js)
           const { grey, width, height, pageSegMode, languages } = data.ocr
           readText(grey, width, height, pageSegMode, resolveOcrLanguage(languages, ocrLanguage))
             .catch(e => {
@@ -330,40 +225,6 @@ async function readInWasm(input, timer) {
   }
 }
 
-/** A step of a page starts, as the WebAssembly reader says (page 0: writing the MusicXML). */
-function stepStarts(page, id) {
-  if (page === 0) {
-    progress.phase = 'export'
-    $('status').textContent = 'Writing the MusicXML file…'
-  } else if (STEP.has(id)) {
-    progress.phase = 'pages'
-    progress.page = page
-    progress.step = id
-    progress.stepAt = performance.now()
-  }
-}
-
-/** The MusicXML files Audiveris wrote: one, or one per movement. */
-async function outputs(radix) {
-  const blob = async path => {
-    try {
-      const b = await cjFileBlob(path)
-      return b && b.size ? b : null
-    } catch {
-      return null
-    }
-  }
-  const one = await blob(`${OUTPUT}/${radix}.mxl`)
-  if (one) return [one]
-  const movements = []
-  for (let n = 1; n < 30; n++) {
-    const b = await blob(`${OUTPUT}/${radix}.mvt${n}.mxl`)
-    if (!b) break
-    movements.push(b)
-  }
-  return movements
-}
-
 function finish(input, results) {
   const secs = Math.round((performance.now() - progress.t0) / 1000)
   const time = secs >= 90 ? `${Math.round(secs / 6) / 10} minutes` : `${secs} seconds`
@@ -376,10 +237,9 @@ function finish(input, results) {
   const box = $('downloads')
   results.forEach((blob, i) => {
     const a = document.createElement('a')
-    const ext = blob.type === MUSICXML ? 'musicxml' : 'mxl'
     a.className = 'button primary'
-    a.href = URL.createObjectURL(blob.type === MUSICXML ? blob : new Blob([blob], { type: 'application/vnd.recordare.musicxml' }))
-    a.download = results.length === 1 ? `${input.title}.${ext}` : `${input.title} (${i + 1}).${ext}`
+    a.href = URL.createObjectURL(blob)
+    a.download = results.length === 1 ? `${input.title}.musicxml` : `${input.title} (${i + 1}).musicxml`
     a.textContent = results.length === 1 ? `Download ${a.download}` : `Download movement ${i + 1}`
     box.append(a)
   })

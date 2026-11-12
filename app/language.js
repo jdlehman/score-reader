@@ -1,8 +1,8 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // The language of the words under the notes (lyrics, titles, part names).
 //
-// Audiveris reads text with Tesseract, which is native code CheerpJ can't run, so the page reads
-// it with tesseract.js instead (see ocr.js). The page offers six languages; each is a tesseract.js language pack
+// Audiveris reads text with Tesseract, which is native code, so the page reads it with tesseract.js
+// instead (see ocr.js). The page offers six languages; each is a tesseract.js language pack
 // (@tesseract.js-data/<code> 1.0.0, MIT, the 4.0.0 data Audiveris's legacy engine needs —
 // NOT tessdata_fast, whose integer models only work with the LSTM engine).
 // A pack is ~6-14 MB, downloaded once and kept by the browser afterwards.

@@ -1,18 +1,16 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// What Audiveris reads: a PDF of grey pages, drawn here from the PDF or photos chosen.
+// What Audiveris reads: grey pages, drawn here from the PDF or photos chosen.
 //
-// Audiveris can read PDFs and images itself, but in the browser only the simplest ones. Java's
-// JPEG decoder is native code that CheerpJ can't finish running (a phone scan's PDF is all
-// JPEGs), and so is its colour management. So the page draws everything itself, the PDF with
-// PDF.js and photos with the browser, and hands Audiveris raw grey pixels compressed with
-// deflate, which Java reads in Java.
+// Audiveris in WebAssembly has no image decoders, PDF reader or colour management (they are
+// native code, or need fonts), so the page draws everything itself, the PDF with PDF.js and photos
+// with the browser, and hands Audiveris raw grey pixels, a byte each (teavm.js).
 //
 // Each photo and scanned page also gets a quick look (preflight.js), so the page can warn before a
 // read that Audiveris would give up on.
 
 import { preflight } from './preflight.js'
 
-/** Audiveris draws a PDF's pages at 300 dpi; pages this size come out at the images' own size. */
+/** Desktop Audiveris draws a PDF's pages at 300 dpi: so does the page. */
 const DPI = 300
 
 /** Bigger pages are scaled down to this on their long side: more pixels only slow the reading. */
@@ -21,10 +19,10 @@ const MAX_SIDE = 4096
 const PDFJS = new URL('pdfjs/', import.meta.url)
 
 /**
- * A PDF's pages, drawn at 300 dpi with PDF.js. onPage(n, of) tells how far it has got. Returns the
- * PDF Audiveris reads, and for each page what the quick look found (null for a drawn page).
+ * A PDF's pages, drawn at 300 dpi with PDF.js. onPage(n, of) tells how far it has got. Returns each
+ * page's grey pixels, and what the quick look found (null for a drawn page).
  */
-export async function pdfToPdf(bytes, onPage) {
+export async function pdfPages(bytes, onPage) {
   const pdfjs = await import(new URL('pdf.min.mjs', PDFJS).href)
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdf.worker.min.mjs', PDFJS).href
   const task = pdfjs.getDocument({
@@ -64,11 +62,11 @@ export async function pdfToPdf(bytes, onPage) {
       // as Audiveris would draw it; a page with images (a scan) keeps its greys, as Audiveris does.
       const crisp = !(await page.getOperatorList()).fnArray.some(f => IMAGE.has(f))
       const g = canvas.getContext('2d')
-      pages.push(await greyPage(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data, crisp))
+      pages.push(greyPage(canvas.width, canvas.height, g.getImageData(0, 0, canvas.width, canvas.height).data, crisp))
       canvas.width = canvas.height = 0
       page.cleanup()
     }
-    return { bytes: writePdf(pages), pages: greys(pages), checks: pages.map(p => p.check) }
+    return { pages: pages.map(({ w, h, grey }) => ({ w, h, grey })), checks: pages.map(p => p.check) }
   } finally {
     task.destroy() // and the worker with it
   }
@@ -78,7 +76,7 @@ export async function pdfToPdf(bytes, onPage) {
  * Each image is drawn (which applies a phone photo's rotation, and puts transparent PNGs on
  * white), made grey and put on a page of its own.
  */
-export async function imagesToPdf(files, onPage) {
+export async function imagePages(files, onPage) {
   const pages = []
   for (const f of files) {
     onPage?.(pages.length + 1, files.length)
@@ -100,81 +98,22 @@ export async function imagesToPdf(files, onPage) {
     g.imageSmoothingQuality = 'high'
     g.drawImage(bitmap, 0, 0, w, h)
     bitmap.close()
-    pages.push(await greyPage(w, h, g.getImageData(0, 0, w, h).data))
+    pages.push(greyPage(w, h, g.getImageData(0, 0, w, h).data))
     canvas.width = canvas.height = 0 // let go of the pixels now, not when collected
   }
-  return { bytes: writePdf(pages), pages: greys(pages), checks: pages.map(p => p.check) }
+  return { pages: pages.map(({ w, h, grey }) => ({ w, h, grey })), checks: pages.map(p => p.check) }
 }
 
-/** The pages' grey pixels, as the WebAssembly reader takes them (teavm.js): what the PDF holds. */
-const greys = pages => pages.map(({ w, h, grey }) => ({ w, h, grey }))
-
 /**
- * A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel,
- * as is (grey) and deflated (data). A page that isn't crisp (a photo or a scan) also gets a quick look (preflight.js);
- * drawn pages, from notation software, don't need one.
+ * A page from RGBA pixels: grey (by luminance), or only black and white if crisp; one byte a pixel.
+ * A page that isn't crisp (a photo or a scan) also gets a quick look (preflight.js); drawn pages,
+ * from notation software, don't need one.
  */
-export async function greyPage(w, h, rgba, crisp = false) {
+export function greyPage(w, h, rgba, crisp = false) {
   const grey = new Uint8Array(w * h)
   for (let i = 0, j = 0; i < grey.length; i++, j += 4) {
     const v = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29 + 128) >> 8
     grey[i] = crisp ? (v < 128 ? 0 : 255) : v
   }
-  return { w, h, grey, data: await deflate(grey), check: crisp ? null : preflight(grey, w, h) }
-}
-
-/** zlib-wrapped deflate, which is what a PDF's FlateDecode reads. */
-async function deflate(bytes) {
-  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'))
-  return new Uint8Array(await new Response(stream).arrayBuffer())
-}
-
-/** The smallest PDF that does: a catalog, the page tree, and per page its page, contents and image. */
-export function writePdf(pages) {
-  const enc = new TextEncoder()
-  const chunks = []
-  const offsets = []
-  let length = 0
-  const put = x => {
-    const b = typeof x === 'string' ? enc.encode(x) : x
-    chunks.push(b)
-    length += b.length
-  }
-  const obj = (n, body) => {
-    offsets[n] = length
-    put(`${n} 0 obj\n`)
-    body()
-    put('\nendobj\n')
-  }
-  const at = i => ({ page: 3 + 3 * i, contents: 4 + 3 * i, image: 5 + 3 * i })
-
-  put('%PDF-1.4\n%âãÏÓ\n') // the second line marks the file as binary
-  obj(1, () => put('<< /Type /Catalog /Pages 2 0 R >>'))
-  obj(2, () => put(`<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, i) => `${at(i).page} 0 R`).join(' ')}] >>`))
-  pages.forEach((p, i) => {
-    const w = ((p.w * 72) / DPI).toFixed(2)
-    const h = ((p.h * 72) / DPI).toFixed(2)
-    const n = at(i)
-    obj(n.page, () => put(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Resources << /XObject << /Im ${n.image} 0 R >> >> /Contents ${n.contents} 0 R >>`))
-    const draw = `q ${w} 0 0 ${h} 0 0 cm /Im Do Q`
-    obj(n.contents, () => put(`<< /Length ${draw.length} >>\nstream\n${draw}\nendstream`))
-    obj(n.image, () => {
-      put(`<< /Type /XObject /Subtype /Image /Width ${p.w} /Height ${p.h} /ColorSpace /DeviceGray /BitsPerComponent 8 /Filter /FlateDecode /Length ${p.data.length} >>\nstream\n`)
-      put(p.data)
-      put('\nendstream')
-    })
-  })
-  const size = 3 + 3 * pages.length
-  const xref = length
-  put(`xref\n0 ${size}\n0000000000 65535 f \n`)
-  for (let n = 1; n < size; n++) put(`${String(offsets[n]).padStart(10, '0')} 00000 n \n`)
-  put(`trailer\n<< /Size ${size} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`)
-
-  const out = new Uint8Array(length)
-  let o = 0
-  for (const c of chunks) {
-    out.set(c, o)
-    o += c.length
-  }
-  return out
+  return { w, h, grey, check: crisp ? null : preflight(grey, w, h) }
 }
