@@ -4691,32 +4691,11 @@ print("  MusicFont DIAG42 (§36)")
 #     per-measure rhythm outcome + un-timed/voiceless chords.
 # All prints are print-only (same patched files both sides).
 # ---------------------------------------------------------------------------
-text = copy_src("org/audiveris/omr/sig/inter/SlurInter.java")
-text = sub(text, """        HeadInter h1 = getHead(LEFT);
-        HeadInter h2 = getHead(RIGHT);
-        boolean result = (h1 != null) && (h2 != null) && (h1.getStaff() == h2.getStaff())
-                && areTieCompatible(h1, h2) && isSpaceClear(h1, h2, systemHeadChords);
-        setTie(result);""", """        HeadInter h1 = getHead(LEFT);
-        HeadInter h2 = getHead(RIGHT);
-        boolean sameStaff = (h1 != null) && (h2 != null) && (h1.getStaff() == h2.getStaff());
-        boolean compatible = areTieCompatible(h1, h2);
-        boolean spaceClear = isSpaceClear(h1, h2, systemHeadChords);
-        boolean result = sameStaff && compatible && spaceClear;
-        setTie(result);
-        // DIAG44A (§38): tie decision trace, print-only. isSpaceClear is
-        // null-safe; head centers locate the slur without getBounds()
-        // (null curve would trap, §28 lesson).
-        String d1 = (h1 == null) ? "null"
-                : ("#" + h1.getId() + " " + h1.getStep() + h1.getOctave()
-                + " staff#" + h1.getStaff().getId() + " @" + h1.getCenter());
-        String d2 = (h2 == null) ? "null"
-                : ("#" + h2.getId() + " " + h2.getStep() + h2.getOctave()
-                + " staff#" + h2.getStaff().getId() + " @" + h2.getCenter());
-        System.out.println("DIAG44 tie slur#" + getId() + " left=" + d1 + " right=" + d2
-                + " sameStaff=" + sameStaff + " compatible=" + compatible
-                + " spaceClear=" + spaceClear + " tie=" + result);""")
-write("org/audiveris/omr/sig/inter/SlurInter.java", text)
-print("  SlurInter DIAG44A (§38)")
+# score-reader: DIAG44A (a rewrite of SlurInter.checkStaffTie to print its inputs) is gone. It
+# called isSpaceClear for every slur, where the desktop's && only asks for heads on one staff that
+# could be tied, and isSpaceClear on two staves found no measure and threw: the 36-staff Beethoven 9
+# finale lost the page in LINKS. (It also read each head's staff without a null check.) SlurInter
+# is the desktop's again.
 
 text = copy_src("org/audiveris/omr/sheet/rhythm/TupletsBuilder.java")
 text = sub(text, """        Collections.sort(chords, new ByEuclidean(tupletCenter));
