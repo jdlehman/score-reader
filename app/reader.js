@@ -4,6 +4,7 @@
 // the MusicXML it writes.
 
 import { showScore } from './check.js'
+import { readScoreFile } from './score-view.js'
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
 import { imagePages, pdfPages } from './pdf.js'
@@ -58,6 +59,7 @@ for (const b of ['again', 'again-failed']) $(b).addEventListener('click', () => 
 
 const isPdf = f => f.type === 'application/pdf' || /\.pdf$/i.test(f.name)
 const isImage = f => f.type.startsWith('image/') || /\.(png|jpe?g|tiff?|bmp)$/i.test(f.name)
+const isMusicXml = f => /\.(musicxml|mxl|xml)$/i.test(f.name) || /musicxml/.test(f.type)
 const stem = name => name.replace(/\.[^.]+$/, '').trim() || 'score'
 
 /** What Audiveris will read: the grey pages, drawn from the PDF or images chosen (see pdf.js). */
@@ -161,6 +163,7 @@ let started = false
 let ocrLanguage = 'eng'
 async function read(files) {
   if (started) return
+  if (files.some(isMusicXml)) return open(files)
   started = true
   ocrLanguage = $('ocr-language')?.value ?? 'eng'
   show('work')
@@ -224,6 +227,26 @@ async function read(files) {
   } finally {
     worker.terminate()
   }
+}
+
+/** A MusicXML file chosen instead of pages: nothing to read, straight to checking its notes. */
+async function open(files) {
+  started = true
+  if (files.length > 1) return fail('Open one MusicXML file at a time, or choose a PDF or photos of the pages.')
+  const [file] = files
+  let xml
+  try {
+    xml = await readScoreFile(file)
+  } catch {
+    return fail(`${file.name} couldn’t be opened as MusicXML.`)
+  }
+  if (!/<score-partwise\b/.test(xml)) return fail(`${file.name} isn’t a MusicXML score that opens here (a partwise one, as notation programs write).`)
+  $('done-title').textContent = 'Opened'
+  $('done-summary').textContent = `${file.name}: check the notes below, change any that are wrong, and download it with your changes.`
+  document.querySelector('#done .next').hidden = true
+  show('done')
+  // "X (corrected).musicxml" opened again is downloaded as itself, not "X (corrected) (corrected)"
+  showScore([new Blob([xml], { type: MUSICXML })], stem(file.name).replace(/ \(corrected\)$/, ''))
 }
 
 function finish(input, results) {
