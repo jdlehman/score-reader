@@ -6,6 +6,7 @@
   "scripts": {
     "build": "./build.sh",
     "serve": "node test/serve.mjs",
+    "dev": "node test/serve.mjs",
     "e2e": "node test/e2e.mjs",
     "e2e:check": "node test/e2e-check.mjs",
     "corpus": "node test/corpus.mjs",
