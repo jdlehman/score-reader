@@ -47,6 +47,12 @@ if [ -f .work/teavm/out/classes.wasm ]; then
   cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
   cp -R .work/teavm/out/templates dist/teavm/
 fi
+# the score drawn after a read, to correct: @jdlehman/score-view (MIT, built by update-score-view.sh),
+# and Verovio (LGPL 3.0), unchanged, as files of its own
+cp app/check.js app/engrave-worker.js app/score-view.js dist/
+rm -rf dist/verovio && mkdir -p dist/verovio
+cp node_modules/verovio/dist/verovio-module.mjs node_modules/verovio/dist/verovio.mjs dist/verovio/
+cp licenses/verovio.txt dist/verovio/LICENSE.txt
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt
 printf '\nThis copy was built from commit %s of the source.\n' "$(git rev-parse --short HEAD 2>/dev/null || echo unknown)" >> dist/NOTICE.txt

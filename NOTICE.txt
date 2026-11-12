@@ -70,3 +70,10 @@ the build, with the fixes to them in the source (teavm/fork/). The note-head tem
 (teavm/templates/) are drawn by Audiveris from the music fonts it includes, under the SIL Open
 Font License 1.1: Bravura (Copyright Steinberg Media Technologies GmbH) and Leland (Copyright
 MuseScore).
+
+After a read, the page draws the score with Verovio 6.3.0 (verovio/), GNU LGPL 3.0 or later,
+Laurent Pugin and others (https://www.verovio.org, source: https://github.com/rism-digital/verovio),
+the unchanged npm package, served as files of its own that can be replaced; its licence is in
+verovio/LICENSE.txt. The score view and its note edits (score-view.js) are @jdlehman/score-view,
+MIT License, Copyright (c) 2026 Jonathan Lehman: the file is its source (compiled from
+TypeScript, not minified), with the licence at the top.

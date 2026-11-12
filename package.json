@@ -20,7 +20,8 @@
     "@tesseract.js-data/lat": "1.0.0",
     "@tesseract.js-data/spa": "1.0.0",
     "pdfjs-dist": "6.5.438",
-    "tesseract.js": "7.0.0"
+    "tesseract.js": "7.0.0",
+    "verovio": "6.3.0"
   },
   "devDependencies": {
     "playwright-core": "1.63.0"

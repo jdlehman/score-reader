@@ -3,6 +3,7 @@
 // it the pages' grey pixels, reads the words it asks for, follows its steps for progress, and offers
 // the MusicXML it writes.
 
+import { showScore } from './check.js'
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
 import { imagePages, pdfPages } from './pdf.js'
@@ -244,6 +245,7 @@ function finish(input, results) {
     box.append(a)
   })
   show('done')
+  showScore(results, input.title) // the score drawn, to check and correct (check.js)
 }
 
 function fail(why) {
