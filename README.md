@@ -19,7 +19,8 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    (`app/ocr.js`).
 3. The page draws the score it read with [Verovio](https://www.verovio.org), so you can check
    the notes and fix wrong ones before downloading (`app/check.js`). Bars that don't add up to
-   their time signature are shaded. The drawing and the note edits are `@jdlehman/score-view`
+   their time signature are shaded. A MusicXML file can be opened the same way, to fix its notes
+   without a read. The drawing and the note edits are `@jdlehman/score-view`
    (MIT), which Sectional uses too. It lives in the midi_studio repository, and
    `./update-score-view.sh` builds it into `app/score-view.js`, which is committed here. Change
    it there, not here.
@@ -49,6 +50,7 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
     ./build.sh           # the site, in dist/, in about a minute (./build.sh page rebuilds only the page)
     npm run dev          # http://127.0.0.1:8787/
     node test/e2e.mjs pdf1 some-score.pdf   # read a score in Chrome; results in .work/e2e/
+    npm run e2e:edit     # the note editor in Chrome, on a MusicXML file opened as it is (seconds)
     npm run corpus       # read the test corpus, with desktop Audiveris or (ENGINE=teavm) the browser's
 
 `.github/workflows/pages.yml` does the same on GitHub and publishes `dist/` with GitHub Pages.
