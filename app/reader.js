@@ -1,7 +1,7 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// Audiveris (Java) in the browser through CheerpJ. The page hands Audiveris the score as a PDF,
-// follows its log for progress, and offers the MusicXML it writes. With ?engine=teavm, it reads with
-// Audiveris built into WebAssembly instead (teavm-worker.js), which needs no CheerpJ.
+// Audiveris in the browser, built into WebAssembly (teavm-worker.js): the page hands it the pages'
+// grey pixels, follows its steps for progress, and offers the MusicXML it writes. With
+// ?engine=cheerpj it reads with Audiveris's Java through CheerpJ instead, as it used to.
 
 import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
@@ -39,8 +39,8 @@ const LATER = 0.6 // later pages take this much of the first one's time (Java ha
 /** Where Audiveris finds the score, and what it names its output after. */
 const INPUT = '/str/score.pdf'
 const OUTPUT_NAME = 'score'
-/** Which Audiveris reads: CheerpJ's Java, or the WebAssembly build (teavm/README.md), still on trial. */
-const ENGINE = new URLSearchParams(location.search).get('engine') === 'teavm' ? 'teavm' : 'cheerpj'
+/** Which Audiveris reads: the WebAssembly build (teavm/README.md), or with ?engine=cheerpj, CheerpJ's Java. */
+const ENGINE = new URLSearchParams(location.search).get('engine') === 'cheerpj' ? 'cheerpj' : 'teavm'
 /** The WebAssembly build writes plain MusicXML; Audiveris on CheerpJ, compressed MusicXML (.mxl). */
 const MUSICXML = 'application/vnd.recordare.musicxml+xml'
 /** CheerpJ's loader, from its maker's servers: only when it reads. */
@@ -294,7 +294,7 @@ async function read(files) {
  * it, the words it asks for are read here (ocr.js, as for CheerpJ), and MusicXML comes back.
  */
 async function readInWasm(input, timer) {
-  $('status').textContent = 'Starting the reader (it downloads about 15 MB the first time)…'
+  $('status').textContent = 'Starting the reader (it downloads about 12 MB the first time)…'
   progress.pages = input.pages.length
   const worker = new Worker(new URL('teavm-worker.js', import.meta.url), { type: 'module' })
   try {
