@@ -5,7 +5,7 @@
 // OCR=deu (or eng, fra, ...) reads the words too, with tesseract.js; without it, words are left out
 // (as the corpus reads). WASM=<dir> reads with another build than .work/teavm/out.
 // A score with several movements is written as <out>.mvt1.musicxml, <out>.mvt2.musicxml, ...
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { readScore } from '../../app/teavm.js'
 import { READING } from '../../app/settings.js'
@@ -39,6 +39,10 @@ const { scores, failed } = await readScore({
   constants: READING,
   languages: process.env.OCR ?? '',
   ocr,
+  templates: (family, size) => {
+    const file = `${dir}/templates/${family}-${size}.bin`
+    return existsSync(file) ? readFileSync(file) : null
+  },
   onStep: (page, step) => {
     const now = Date.now()
     console.log(`STEP page ${page} ${step} (${((now - at) / 1000).toFixed(1)} s since the last)`)

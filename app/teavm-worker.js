@@ -42,6 +42,14 @@ onmessage = async ({ data }) => {
         waiting.set(id, resolve)
         postMessage({ ocr: image, id }, [image.grey.buffer])
       }),
+      // asked for in the middle of a page, which can't wait: fetched synchronously (a worker may)
+      templates: (family, size) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', new URL(`teavm/templates/${family}-${size}.bin`, import.meta.url).href, false)
+        xhr.responseType = 'arraybuffer'
+        xhr.send()
+        return xhr.status === 200 ? new Uint8Array(xhr.response) : null
+      },
       onStep: (page, step) => postMessage({ step: [page, step] }),
     })
     postMessage({ done })

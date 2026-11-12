@@ -89,4 +89,13 @@ if grep -q '^PROBLEM' $W/compile.log || [ ! -f $W/out/classes.wasm ]; then
   grep '^PROBLEM' $W/compile.log | head -20 >&2; echo "TeaVM failed: $W/compile.log" >&2; exit 1
 fi
 cp teavm/runtime.mjs $W/out/
-echo "teavm: $(du -h $W/out/classes.wasm | cut -f1) $(grep -o 'Classes compiled: [0-9]*' $W/compile.log)"
+
+# 9. the note-head templates, drawn by desktop Audiveris (ours) from its fonts, a file a font and
+# point size: the page fetches the one a page needs (teavm/entry/src/teavm/PreRenderedTemplates.java).
+# From the smallest heads Audiveris reads (staff lines 11 pixels apart) to the biggest in a page of
+# 4096 pixels; Leland for the second whole-note match (NOTES.md).
+mkdir -p $W/dump
+jc -proc:none -cp ".work/patched.jar:.work/lib/*" -d $W/dump teavm/generate/TemplateDump.java
+"$J/java" -Djava.awt.headless=true -cp ".work/patched.jar:.work/lib/*:$W/dump" TemplateDump $W/out/templates 32 200 Bravura Leland > $W/dump/log.txt 2>&1 \
+  || { tail -20 $W/dump/log.txt >&2; exit 1; }
+echo "teavm: $(du -h $W/out/classes.wasm | cut -f1) $(grep -o 'Classes compiled: [0-9]*' $W/compile.log), $(ls $W/out/templates | wc -l | tr -d ' ') template files"
