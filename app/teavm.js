@@ -16,13 +16,20 @@
  * @param {string} [o.languages]  the words' language(s), as Tesseract names them ('deu', 'eng+lat')
  * @param {(image: {grey: Uint8Array, width: number, height: number, languages: string, pageSegMode: number}) => Promise<string>} [o.ocr]
  *   reads the words in an image, answering BrowserOCR's lines (ocr.js readText); without it, no words
+ * @param {(family: string, size: number) => Uint8Array | null} o.templates  the note-head templates
+ *   for a music font and point size (teavm/build.sh writes them, a file each), or null; asked for
+ *   in the middle of a page, so it must answer at once (a worker can fetch synchronously)
  * @param {(page: number, step: string) => void} [o.onStep]  as each step of a page starts (page 0: the export)
  * @returns {Promise<{scores: string[], failed: number[]}>} the MusicXML of each score (a movement
  *   each), and the pages that couldn't be read (left out)
  */
-export async function readScore({ teavm, pages, constants, languages = '', ocr, onStep }) {
+export async function readScore({ teavm, pages, constants, languages = '', ocr, templates, onStep }) {
   const java = teavm.exports
   globalThis.__teavmStep = (page, step) => onStep?.(page, step)
+  globalThis.__teavmTemplates = (family, size) => {
+    const bytes = templates(family, size)
+    return bytes ? toBase64(bytes) : null
+  }
   java.main([])
   for (const c of constants) {
     const i = c.indexOf('=')

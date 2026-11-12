@@ -48,6 +48,7 @@ cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/prefli
 if [ -f .work/teavm/out/classes.wasm ]; then
   rm -rf dist/teavm && mkdir -p dist/teavm
   cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
+  cp -R .work/teavm/out/templates dist/teavm/
 fi
 cp LICENSE dist/LICENSE.txt
 cp NOTICE.txt dist/NOTICE.txt

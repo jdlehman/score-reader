@@ -27,8 +27,11 @@ What it builds from:
   Audiveris hits, fixed in `fork/*.patch` and compiled over them.
 - **`shims/`**: the JDK classes TeaVM's class library lacks (AWT, Swing, XML), as stubs.
 - **`entry/`**: what the page calls (`TeavmMain`), a MusicXML writer (`MxlWriter`: JAXB can't run
-  here), and Audiveris's note-head templates, classifier and font metrics, drawn on the desktop and
-  saved as data (there are no fonts here). `generate/` makes them.
+  here), and Audiveris's classifier and font metrics, saved as data (there are no fonts here).
+- **Note-head templates**: desktop Audiveris draws them from its fonts at every point size from 32
+  to 200 (`generate/TemplateDump.java`, run by `build.sh`), a file a font and size; the page
+  fetches the one a page needs (`PreRenderedTemplates`). The port's five sizes made most pages use
+  a neighbouring size, up to 12% off, and lose heads (Hallelujah p05 88% of notes, now 100%).
 - **`policy/`**: the reflection TeaVM must keep. **`tools/RewriteJars.java`**: bytecode fixes to
   five of the release's jars.
 
@@ -48,8 +51,6 @@ Each page is read in two calls, up to its words and the rest, so the words can b
 
 ## Known gaps
 
-- Only Bravura's note-head templates are drawn in advance, so the desktop's second, narrower
-  whole-note template (Leland, see NOTES.md) isn't used here.
 - A boxed rehearsal letter's own OCR gets no text (the page's words are read once, before the
   TEXTS step).
 - `MxlWriter` hasn't met pedal marks, chord names, measure repeats or drum parts on a test page.

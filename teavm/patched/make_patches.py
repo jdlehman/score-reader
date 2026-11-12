@@ -956,15 +956,6 @@ COPY_ASIS = [
 for rel in COPY_ASIS:
     write(rel, copy_src(rel))
 
-# score-reader matches whole notes with Leland's template as well as Bravura's (NoteHeadsBuilder
-# wholeCatalog). TeaVM has pre-rendered templates for Bravura only (ROUND 12) and its stub font
-# draws nothing, so a Leland template would be blank: Bravura's alone here, as before, until
-# Leland's whole note is pre-rendered too.
-text = copy_src("org/audiveris/omr/sheet/note/NoteHeadsBuilder.java")
-text = sub(text, """            wholeCatalog = (family != MusicFamily.Leland)
-                    ? TemplateFactory.getInstance().getCatalog(MusicFamily.Leland, pointSize)
-                    : null;""", """            wholeCatalog = null; // TEAVM: no pre-rendered Leland templates (see make_patches.py)""")
-write("org/audiveris/omr/sheet/note/NoteHeadsBuilder.java", text)
 print("All round-3 copies applied.")
 
 # ============================================================ ROUND 4 =======
