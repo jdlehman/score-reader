@@ -10,6 +10,9 @@ J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) #
 L=.work/teavm-lib # TeaVM's jars and the source of the classes teavm/fork/ fixes (setup.sh)
 W=${TEAVM_WORK:-.work/teavm} # everything built here (TEAVM_WORK to build elsewhere)
 ASM="$L/asm-9.10.1.jar:$L/asm-tree-9.10.1.jar"
+# TeaVM's jars to compile against: not its source jars, or javac compiles from them (when they look
+# newer than the classes, as they can on a fresh checkout) and wants their build's libraries
+LIB=$(ls $L/*.jar | grep -v -- '-sources\.jar$' | paste -sd: -)
 TEAVM_JARS="$L/teavm-interop-0.16.0.jar:$L/teavm-jso-0.16.0.jar:$L/teavm-jso-apis-0.16.0.jar:$L/teavm-jso-impl-0.16.0.jar:$L/teavm-metaprogramming-api-0.16.0.jar:$L/teavm-metaprogramming-impl-0.16.0.jar:$L/teavm-platform-0.16.0.jar"
 [ -f .work/patched.jar ] || { echo "run ./build.sh first: TeaVM's build uses its .work/patched.jar" >&2; exit 1; }
 rm -rf $W && mkdir -p $W
@@ -23,8 +26,8 @@ grep -h '^+++ b/' teavm/fork/*.patch | sed 's|^+++ b/[a-z]*/src/main/java/||' | 
   unzip -q -o -d $W/fork-src "$L/$jar-0.16.0-sources.jar" "$f"
 done
 for p in teavm/fork/*.patch; do patch -s -p5 -d $W/fork-src < "$p"; done
-jc --release 17 -cp "$L/teavm-classlib-0.16.0.jar:$L/*" -d $W/fork-classlib $(find $W/fork-src -path '*/classlib/*' -name '*.java')
-jc --release 17 -cp "$L/*" -d $W/fork-core $(find $W/fork-src -path '*/backend/*' -name '*.java')
+jc --release 17 -implicit:none -sourcepath $W/fork-src -cp "$LIB" -d $W/fork-classlib $(find $W/fork-src -path '*/classlib/*' -name '*.java')
+jc --release 17 -implicit:none -sourcepath $W/fork-src -cp "$LIB" -d $W/fork-core $(find $W/fork-src -path '*/backend/*' -name '*.java')
 
 # 2. Audiveris's source (ours applied) with the TeaVM patches
 TEAVM_PATCHED_SRC=$W/patched-src PYTHONDONTWRITEBYTECODE=1 python3 teavm/patched/make_patches.py > /dev/null
@@ -82,7 +85,7 @@ cp -R teavm/policy/src/META-INF $W/policy/
   echo "$PROG"
 } > $W/classpath.txt
 mkdir -p $W/compiler
-jc -cp "$L/*" -d $W/compiler teavm/Spike.java
+jc -cp "$LIB" -d $W/compiler teavm/Spike.java
 STRICT=-Dteavm.strict=true; [ "$TEAVM_STRICT" = 0 ] && STRICT=
 "$J/java" -Xmx4g $STRICT -cp "$W/fork-core:$L/*:$W/compiler" Spike wasm-gc $W/out teavm.TeavmMain @$W/classpath.txt > $W/compile.log 2>&1 || true
 if grep -q '^PROBLEM' $W/compile.log || [ ! -f $W/out/classes.wasm ]; then
