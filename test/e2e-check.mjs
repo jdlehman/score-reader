@@ -7,7 +7,7 @@
 import { join } from 'node:path'
 import { chromium } from 'playwright-core'
 
-const url = process.env.URL ?? 'http://127.0.0.1:8787/dist/'
+const url = process.env.URL ?? 'http://127.0.0.1:8787/'
 const fixture = name => join(import.meta.dirname, 'fixtures', name)
 const browser = await chromium.launch({ channel: 'chrome' })
 const visible = (tab, id) => tab.waitForFunction(id => !document.getElementById(id).hidden, id, { timeout: 60000 })
