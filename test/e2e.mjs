@@ -21,7 +21,7 @@ const t00 = Date.now()
 const note = text => appendFileSync(logFile, `${String(Math.round((Date.now() - t00) / 1000)).padStart(5)}s ${text}\n`)
 tab.on('console', m => note(m.text()))
 tab.on('response', r => { if (r.status() >= 400) note(`(${r.status()} ${r.url()})`) })
-await tab.goto(process.env.URL ?? 'http://127.0.0.1:8787/dist/') // URL=https://inlehmansterms.net/score-reader/ tests the live site
+await tab.goto(process.env.URL ?? 'http://127.0.0.1:8787/') // URL=https://inlehmansterms.net/score-reader/ tests the live site
 await tab.screenshot({ path: join(out, `${name}-0-start.png`), fullPage: true })
 const t0 = Date.now()
 // the page's memory every 15 s (Java's heap lives in it)

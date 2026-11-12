@@ -41,7 +41,7 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
     ./setup.sh           # .work/: about 340 MB to download
     npm install          # PDF.js, tesseract.js, and Playwright for the test
     ./build.sh           # the site, in dist/, in about a minute (./build.sh page rebuilds only the page)
-    npm run dev          # http://127.0.0.1:8787/dist/
+    npm run dev          # http://127.0.0.1:8787/
     node test/e2e.mjs pdf1 some-score.pdf   # read a score in Chrome; results in .work/e2e/
     npm run corpus       # read the test corpus, with desktop Audiveris or (ENGINE=teavm) the browser's
 
