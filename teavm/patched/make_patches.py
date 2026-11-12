@@ -1145,6 +1145,20 @@ write("org/audiveris/omr/text/Language.java", text)
 text = copy_src("org/audiveris/omr/glyph/dynamic/SectionCompound.java")
 text = sub(text, "return Collections.unmodifiableSortedSet(members);",
            "return members; // TEAVM: unmodifiableSortedSet missing in classlib")
+# score-reader: the bounds cached when members were last added or removed can be stale here by the
+# time a staff line's pixels are drawn into them (a member section's own bounds have moved since):
+# BWV 227 p13 and the Beethoven 9 finale then wrote a row outside the buffer and lost the page in
+# GRID (StaffFilament.toStaffLine). The desktop's are right at that point, so taking them afresh
+# changes nothing there. (Which difference lets them go stale here, perhaps TeaVM's TreeMap with
+# members whose sort key moved, is not found yet.)
+text = sub(text, """        checkBounds();
+
+        final Point offset = bounds.getLocation();
+        final ByteProcessor buffer = new ByteProcessor(bounds.width, bounds.height);""", """        bounds = null; // TEAVM: taken afresh (see make_patches.py)
+        checkBounds();
+
+        final Point offset = bounds.getLocation();
+        final ByteProcessor buffer = new ByteProcessor(bounds.width, bounds.height);""")
 write("org/audiveris/omr/glyph/dynamic/SectionCompound.java", text)
 
 # --- ShapeSymbol: MAGENTA/BLUE/new Color(int,boolean) ---
