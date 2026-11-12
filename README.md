@@ -17,6 +17,12 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    writes MusicXML, which the page offers to download (`app/reader.js`). Its steps drive the
    progress bar. When Audiveris reads text, the page reads it for it with tesseract.js
    (`app/ocr.js`).
+3. The page draws the score it read with [Verovio](https://www.verovio.org), so you can check
+   the notes and fix wrong ones before downloading (`app/check.js`). Bars that don't add up to
+   their time signature are shaded. The drawing and the note edits are `@jdlehman/score-view`
+   (MIT), which Sectional uses too. It lives in the midi_studio repository, and
+   `./update-score-view.sh` builds it into `app/score-view.js`, which is committed here. Change
+   it there, not here.
 
 Audiveris is used as released, with our changes (`patches/`, the same on the desktop) and the ones
 WebAssembly needs (`teavm/`). `NOTES.md` explains them; `teavm/README.md` explains the build.
@@ -50,6 +56,7 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
 ## Licence
 
 GNU Affero General Public License v3 or later, like Audiveris: see `LICENSE`. `NOTICE.txt` lists
-the licences of Audiveris's libraries, TeaVM, PDF.js and tesseract.js, and where their source is.
-The site serves the source of the libraries under copyleft licences (`source/`, fetched by
-`setup.sh` from Maven Central), and the licence files in the libraries' jars (`licenses/`).
+the licences of Audiveris's libraries, TeaVM, PDF.js, tesseract.js, Verovio (LGPL 3.0, served
+unchanged as files of its own) and `app/score-view.js` (MIT), and where their source is. The site
+serves the source of the libraries under copyleft licences (`source/`, fetched by `setup.sh` from
+Maven Central), and the licence files in the libraries' jars (`licenses/`).

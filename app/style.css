@@ -38,3 +38,14 @@ button,.button{display:inline-flex; align-items:center; justify-content:center; 
 .check{border:1px solid var(--amber); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px}
 .check p{margin:0}
 footer p{margin:4px 0}
+/* the score read, to check and correct (check.js) */
+.fix-bar{position:sticky; top:0; z-index:2; display:flex; flex-direction:column; gap:8px; background:var(--panel); padding:8px 0; border-bottom:1px solid var(--border)}
+.fix-bar .row{flex-wrap:wrap; gap:6px}
+.fix-bar .label{font-size:13px; color:var(--muted); min-width:52px}
+.fix-bar button{min-height:36px; padding:4px 12px; font-size:14px}
+.fix-bar button[aria-pressed=true]{background:var(--accent); border-color:var(--accent); color:#04130e; font-weight:600}
+.fix-bar button:disabled{opacity:.4; cursor:default}
+#fix select{background:var(--panel-2); border:1px solid var(--border-2); border-radius:8px; padding:6px 8px; font:inherit; color:inherit}
+.score{background:#fdfcf8; border-radius:10px; min-height:120px; padding:4px; color:#111; cursor:pointer; --score-select:#c026d3; --score-flag:#c2410c; --score-flag-bar:rgba(234,179,8,.28)}
+.score .score-page svg{width:100%; height:auto; display:block}
+@media (max-width:600px){ .fix-bar .label{display:none} }

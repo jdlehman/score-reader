@@ -73,13 +73,40 @@
     <p id="done-summary" class="muted"></p>
     <div id="downloads" class="actions"></div>
     <div class="next">
-      <p><strong>Next:</strong> open the file in <a href="https://inlehmansterms.net/sectional/">Sectional</a> to practise your part, or in MuseScore to check and correct it.</p>
+      <p><strong>Next:</strong> open the file in <a href="https://inlehmansterms.net/sectional/">Sectional</a> to practise your part, or in MuseScore.</p>
       <ul class="tips">
+        <li>Recognition isn’t perfect: check the notes below against your copy, and fix any that are wrong before you download.</li>
         <li>Check the words: the reader misses or misreads some. In Sectional, you can type or paste the words for your part with “Words…”.</li>
-        <li>Recognition isn’t perfect. Listen through once and fix any wrong notes in MuseScore (free).</li>
       </ul>
     </div>
     <div class="actions"><button id="again">Read another score</button></div>
+  </section>
+
+  <section id="fix" class="panel" hidden aria-label="Check the notes">
+    <div class="row"><h2>Check the notes</h2><span class="spacer"></span><select id="fix-movement" aria-label="Movement" hidden></select></div>
+    <p class="muted small">Tap a note or rest to change it. Shaded bars don’t add up to their time signature, so look there first.</p>
+    <div class="fix-bar">
+      <div class="row">
+        <strong id="fix-picked" class="small">Tap a note or rest to change it.</strong>
+        <span class="spacer"></span>
+        <button id="fix-undo" title="Undo (⌘Z)" disabled>Undo</button>
+        <button id="fix-download" class="button primary" hidden>Download with your changes</button>
+      </div>
+      <div id="fix-pitch" class="row" hidden>
+        <span class="label">Pitch</span>
+        <button data-step="1" title="Up a step (↑)">Up</button><button data-step="-1" title="Down a step (↓)">Down</button>
+        <button data-alter="-1" aria-label="Flat">♭</button><button data-alter="0" aria-label="Natural">♮</button><button data-alter="1" aria-label="Sharp">♯</button>
+      </div>
+      <div id="fix-length" class="row" hidden>
+        <span class="label">Length</span>
+        <button data-length="4">Whole</button><button data-length="2">Half</button><button data-length="1">Quarter</button><button data-length="0.5">Eighth</button><button data-length="0.25">16th</button>
+        <button id="fix-dot">Dotted</button>
+      </div>
+      <div id="fix-note" class="row" hidden><button id="fix-add">Add a note above</button><button id="fix-to-rest" title="Delete">Make it a rest</button></div>
+      <div id="fix-rest" class="row" hidden><button id="fix-to-note">Make it a note</button></div>
+    </div>
+    <p id="fix-status" class="muted small"></p>
+    <div id="fix-score" class="score"></div>
   </section>
 
   <section id="failed" class="panel" hidden>
@@ -89,7 +116,7 @@
   </section>
 
   <footer class="muted small">
-    <p>Score Reader runs <a href="https://audiveris.github.io/audiveris/">Audiveris</a> 5.11, the open-source music reader, in your browser, compiled to WebAssembly with <a href="https://teavm.org/">TeaVM</a>.</p>
+    <p>Score Reader runs <a href="https://audiveris.github.io/audiveris/">Audiveris</a> 5.11, the open-source music reader, in your browser, compiled to WebAssembly with <a href="https://teavm.org/">TeaVM</a>. Scores are drawn with <a href="https://www.verovio.org">Verovio</a>.</p>
     <p>Score Reader is free software under the <a href="LICENSE.txt">GNU Affero General Public License v3</a>. <a href="https://github.com/jdlehman/score-reader">Source code</a>, including our changes to Audiveris. <a href="NOTICE.txt">Other licences</a>.</p>
   </footer>
 </main>
