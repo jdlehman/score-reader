@@ -53,7 +53,7 @@ if [ ! -d .work/lib ]; then
   echo "jars: $(ls .work/lib | wc -l | tr -d ' ') from the $V release"
 fi
 
-# 3. the class path, as the page names the jars: in name order (a few classes are in two jars, and
+# 3. the class path, for the browser build and the corpus test: in name order (a few classes are in two jars, and
 # this is the order that was tested), leaving out the native code for OCR, which can't run here
 ls .work/lib/*.jar | grep -Ev -- '-(macosx|linux|windows)-' | LC_ALL=C sort | sed 's|^|/app/|' | paste -sd: - | tr -d '\n' > .work/classpath.txt
 

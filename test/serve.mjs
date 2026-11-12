@@ -1,5 +1,5 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// A static server with Range requests (CheerpJ reads jars in ranges). Serves the repository root.
+// A static server with Range requests. Serves the repository root.
 //   node test/serve.mjs [port]   (npm run serve, or npm run dev)
 import { createReadStream, statSync } from 'node:fs'
 import { createServer } from 'node:http'
@@ -16,7 +16,7 @@ createServer((req, res) => {
   let size
   try {
     let st = statSync(path)
-    // a folder: its index.html if it has one (CheerpJ probes for folders; those get 404)
+    // a folder: its index.html if it has one (others get 404)
     if (st.isDirectory() && pathname.endsWith('/')) {
       path = join(path, 'index.html')
       st = statSync(path)
@@ -35,4 +35,4 @@ createServer((req, res) => {
   res.writeHead(200, { ...headers, 'Content-Length': size })
   if (req.method === 'HEAD') return res.end()
   createReadStream(path).pipe(res)
-}).listen(port, '127.0.0.1', () => console.log(`Score Reader (built by ./build.sh): http://127.0.0.1:${port}/dist/\nwith Audiveris in WebAssembly: http://127.0.0.1:${port}/dist/?engine=teavm`))
+}).listen(port, '127.0.0.1', () => console.log(`Score Reader (built by ./build.sh): http://127.0.0.1:${port}/dist/`))

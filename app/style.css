@@ -38,5 +38,3 @@ button,.button{display:inline-flex; align-items:center; justify-content:center; 
 .check{border:1px solid var(--amber); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px}
 .check p{margin:0}
 footer p{margin:4px 0}
-/* CheerpJ needs a display; nothing is drawn on it */
-#display{position:fixed; left:-10000px; top:0; width:320px; height:200px}

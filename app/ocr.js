@@ -1,8 +1,8 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // Reading text for Audiveris: the words, titles and part names. Audiveris reads text with
-// Tesseract, which is native code that CheerpJ can't run, so the page reads it with tesseract.js
-// (the same Tesseract, in WebAssembly) and hands Java the lines, words and characters (see
-// BrowserOCR.java in patches/).
+// Tesseract, which is native code, so the page reads it with tesseract.js (the same Tesseract, in
+// WebAssembly) and hands Audiveris the lines, words and characters (see BrowserOCR.java in patches/,
+// and how teavm.js passes them).
 
 import { DEFAULT_LANGUAGE, normalizeLanguageSpec, workerLanguages } from './language.js'
 
@@ -82,7 +82,7 @@ const failed = new Set()
  *
  * One worker serves one language (tesseract.js v7 has no safe public way to re-language
  * an already-booted worker, so a different language terminates this worker and starts a
- * new one). A read picks its language once, before CheerpJ starts, so that never happens
+ * new one). A read picks its language once, before Audiveris starts, so that never happens
  * mid-read; it only matters if Audiveris asks for a different language than the page
  * preloaded. If the pack fails to load, fall back to English and warn — never stop the
  * read for a missing language pack.

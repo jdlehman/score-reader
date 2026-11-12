@@ -1,10 +1,11 @@
-# How Audiveris runs in the browser (CheerpJ)
+# How Audiveris runs in the browser
 
-Audiveris 5.11 runs unchanged on CheerpJ 5.0's Java 25 runtime, with these settings and patches.
-One clean page (gen-02-open from midi_studio's recognition test) reads in about 100 s, against
-19 s natively, and the result is the same (100% of notes).
+Audiveris 5.11 runs compiled to WebAssembly by TeaVM (`teavm/README.md`), with the patches and
+settings below, which the desktop corpus test uses too. Until November 2026 it ran unchanged on
+CheerpJ 5.0's Java 25 runtime; the notes marked CheerpJ are kept as history (one clean page,
+gen-02-open from midi_studio's recognition test, read in about 100 s there, against 19 s natively).
 
-## Settings (app/reader.js, app/settings.js)
+## CheerpJ's settings (until November 2026)
 
 - `env`: HOME and XDG folders (Audiveris needs a home).
 - `sun.java2d.uiScale=1`: skips a screen-scaling check that loads JNA.
@@ -184,7 +185,7 @@ right, against 133 from the PDF itself. So the page makes a page of drawn shapes
 at half coverage, as Audiveris would draw it (129 right); a page with images, a scan, keeps its
 greys, as Audiveris keeps an image's.
 
-## Audiveris in WebAssembly (teavm/, ?engine=teavm)
+## Audiveris in WebAssembly (teavm/)
 
 robbie-muse's TeaVM port, imported and built here (teavm/README.md). The page sends the grey pages
 to a worker; the words are read on the page between a page's two calls into Audiveris (up to
@@ -198,7 +199,7 @@ In Chrome, against CheerpJ on the same pages:
 - The IMSLP Hallelujah scan (a 3-page PDF): 7 minutes.
 The download is the 15 MB wasm, against CheerpJ's runtime and 45 MB of jars.
 
-## FastMath (java/org/scorereader)
+## FastMath (CheerpJ, until November 2026)
 
 Java 25's Math.abs, min, max, rint, floor, ceil, sqrt and hypot use raw-bit conversions or
 bit-by-bit algorithms, which CheerpJ runs 40 to 300 times slower than native (plain arithmetic is
@@ -206,7 +207,7 @@ about 10 times). `Rewrite.java` points every jar's calls at `FastMath`, which gi
 results (sqrt within one ulp) with comparisons and arithmetic: 2,948 calls. Note heads went from
 105 s to 39 s.
 
-## Times on gen-02-open (seconds)
+## Times on gen-02-open, CheerpJ (seconds)
 
 | | start | beams | heads | whole page |
 |---|---|---|---|---|
@@ -220,17 +221,12 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
 
 ## Running it
 
-    ./build.sh                          # patched classes, rewritten jars, the site
-    npm run serve &                     # static server with ranges, port 8787
+    ./build.sh                          # patched classes, Audiveris in WebAssembly, the site
+    npm run dev &                       # static server, port 8787
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
-    node test/profile.mjs HEADS 25      # where a step spends its time, on .work/page.png
     npm run corpus                      # read test/corpus/ with desktop Audiveris, score it (see its README)
-    teavm/build.sh                      # Audiveris in WebAssembly (./build.sh runs it too)
-    ENGINE=teavm npm run corpus         # read the corpus with it instead, against the desktop's scores
-    EXTRA='&fast=0' node test/profile.mjs HEADS 25   # the same without FastMath
+    ENGINE=teavm npm run corpus         # read the corpus with the browser's Audiveris instead
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
-in `lib/`, `classpath.txt` and a Temurin 25 JDK in `jdk/`: `./setup.sh` makes it.
-
-CheerpJ's community edition is free for non-commercial open-source projects loaded from its CDN,
-with a "Built with CheerpJ" credit.
+in `lib/`, `classpath.txt`, a Temurin 25 JDK in `jdk/` and TeaVM's jars in `teavm-lib/`:
+`./setup.sh` makes it.

@@ -1,18 +1,18 @@
 Score Reader: notices
 
-Score Reader (this page, its scripts, FastMath, Rewrite, and the changes to Audiveris in
-patches/) is free software under the GNU Affero General Public License, version 3 or later.
+Score Reader (this page, its scripts, and the changes to Audiveris in patches/ and teavm/) is
+free software under the GNU Affero General Public License, version 3 or later.
 Copyright (C) 2026 Jonathan Lehman. Source: https://github.com/jdlehman/score-reader
 
-It runs, unchanged except for the patches in its source and the Math calls redirected to
-FastMath (see the source):
+It runs, compiled to WebAssembly (teavm/classes.wasm) by TeaVM 0.16.0, and unchanged except for
+the changes in its source (patches/, and teavm/ for what WebAssembly can't run):
 
   Audiveris 5.11.0, GNU AGPL v3. Copyright Hervé Bitteur and others.
   https://github.com/Audiveris/audiveris (source of this version: tag 5.11.0)
 
-with the libraries Audiveris 5.11.0 is distributed with. Each jar keeps its own licence files
-where its authors included them (META-INF), and each jar the redirect changed says so, and when,
-in META-INF/SCORE-READER-CHANGES.txt. The libraries' licences, as they declare them:
+with the libraries Audiveris 5.11.0 is distributed with, as far as it uses them. The licence and
+notice files their authors put in their jars are in licenses/<jar>/. The libraries' licences, as
+they declare them:
 
   Apache License 2.0: Apache Commons IO, Lang and Logging; Apache PDFBox and FontBox; Jackson;
     jsr305; JavaCPP and its Leptonica and Tesseract presets; jheaps; EventBus
@@ -34,8 +34,8 @@ in META-INF/SCORE-READER-CHANGES.txt. The libraries' licences, as they declare t
   Creative Commons Attribution 2.5: jcip-annotations
 
 Their source is on Maven Central (https://repo1.maven.org/maven2/), under the names and versions
-of the jars in jars/. The source of those under copyleft licences is also served here, as Maven
-Central publishes it:
+in licenses/. The source of those under copyleft licences is also served here, as Maven Central
+publishes it:
 
   source/itextpdf-5.5.13.2-sources.jar             iText 5
   source/jfreechart-1.5.6-sources.jar              JFreeChart
@@ -64,10 +64,9 @@ and zlib.js (MIT). The language data (tessdata/*.traineddata.gz: deu, eng, fra, 
 is Tesseract's, Apache License 2.0 (https://github.com/tesseract-ocr/tessdata), as packaged by
 @tesseract.js-data/<code> 1.0.0 (MIT packages). Their licence files are in tesseract/.
 
-Built with CheerpJ (https://cheerpj.com), loaded from Leaning Technologies' servers under its
-community licence for non-commercial open-source projects. CheerpJ is not part of Score Reader.
-
-With ?engine=teavm, the page reads with the same Audiveris and libraries compiled to WebAssembly
-(teavm/) by TeaVM 0.16.0 (https://teavm.org), Apache License 2.0, Copyright Alexey Andreev and
-others, whose class library and runtime (teavm/runtime.mjs) are compiled in with it, with the fixes
-to them in the source (teavm/fork/).
+TeaVM 0.16.0 (https://teavm.org), Apache License 2.0 (licenses/teavm-0.16.0/), Copyright Alexey
+Andreev and others, compiled Audiveris; its class library and runtime (teavm/runtime.mjs) are in
+the build, with the fixes to them in the source (teavm/fork/). The note-head templates
+(teavm/templates/) are drawn by Audiveris from the music fonts it includes, under the SIL Open
+Font License 1.1: Bravura (Copyright Steinberg Media Technologies GmbH) and Leland (Copyright
+MuseScore).
