@@ -1,4 +1,4 @@
-// @jdlehman/score-view 0.1.0, built from midi_studio commit 98675ad (packages/score-view) by
+// @jdlehman/score-view 0.1.0, built from midi_studio commit 102f448 (packages/score-view) by
 // Score Reader's update-score-view.sh. Change it there, not here. Its licence:
 //
 // The MIT License (MIT)
@@ -1202,10 +1202,15 @@ function writtenRests(xml) {
 * `r<k>` (the k-th rest), so a tap on the drawing, which is linked to those names, says what
 * to change.
 *
-* Bars keep adding up: a note made longer takes the time of the rests after it first, and
-* moves the notes after it later only if there are none; a note made shorter leaves a rest after
-* it, or, in a bar that was too long (as when an eighth was read as a quarter), moves the notes
-* after it earlier. Nothing moves in the other voices.
+* A reader's mistakes keep the notes in their order and get a length wrong (sixteenths read as
+* quarters, a dot missed, a triplet with no 3 printed), and every note after the mistake is then
+* late or early by as much. So no edit cuts or drops a note it wasn't asked to: a change of length
+* moves the notes after it in its voice by as much, and the bar's end takes up the difference.
+* A note made longer takes the time of the rests right after it first, then of the rests at the
+* end of the bar; past that the bar is too long, and is shown so. A note made shorter, or taken
+* out, brings the notes after it earlier, and rests at the end of the bar fill it again, up to its
+* time signature (a bar that was already short keeps its length: a pickup). Nothing moves in the
+* other voices.
 */
 const STEPS = [
 	"C",
@@ -1425,12 +1430,13 @@ function shorten(slot, by, divisions) {
 }
 /**
 * Multiply a part's divisions (and every duration in it) so a length in quarters is a whole number
-* of them: an eighth in a part counted in quarters. Returns the part's state again.
+* of them: an eighth in a part counted in quarters, a triplet's third of a beat. Returns the part's
+* state again.
 */
 function ensureDivisions(part, at, quarters) {
 	const state = stateAt(part, at);
 	let k = 1;
-	while (Math.abs(quarters * state.divisions * k - Math.round(quarters * state.divisions * k)) > 1e-6 && k < 64) k *= 2;
+	while (Math.abs(quarters * state.divisions * k - Math.round(quarters * state.divisions * k)) > 1e-6 && k < 96) k++;
 	if (k === 1) return state;
 	for (const m of kids(part, "measure")) {
 		for (const el of Array.from(m.getElementsByTagName("duration")).concat(Array.from(m.getElementsByTagName("offset")))) el.textContent = String(Math.round(Number(el.textContent) * k));
@@ -1483,6 +1489,31 @@ function runTail(measure, run) {
 function insertBeforeOrAppend(measure, before, els) {
 	for (const e of els) measure.insertBefore(e, before);
 }
+/**
+* After a run became `delta` divisions longer (or shorter, negative), bring its end to where it
+* belongs: longer, take rests from its end down to the bar's length; shorter, add rests at its end
+* up to the bar's length, or to where it ended before if that was short of it (a pickup).
+*/
+function settleEnd(doc, measure, run, oldEnd, delta, state, voice, staff) {
+	const bar = barDivisions(state);
+	const end = oldEnd + delta;
+	if (delta > 0 && end > bar) trimEnd(measure, run, Math.min(delta, end - bar), state.divisions);
+	if (delta < 0) {
+		const goal = Math.min(oldEnd, bar);
+		if (end < goal) insertBeforeOrAppend(measure, runTail(measure, run), makeRests(doc, goal - end, state.divisions, voice, staff));
+	}
+}
+/** The <backup> that ends a run, and where the next run starts: to keep the next run in place. */
+function nextRun(slots, run) {
+	const b = slots.find((s) => s.kind === "backup" && s.run === run) ?? null;
+	return {
+		boundary: b?.el ?? null,
+		afterBoundary: b ? Math.max(0, b.start - b.duration) : null
+	};
+}
+const inTuplet = (slot) => slot.chord.some((el) => kid(el, "time-modification"));
+/** Where the slot holding an element is in a list of slots (each scan makes new slot objects). */
+const indexOfEl = (list, el) => list.findIndex((s) => s.el === el || s.chord.includes(el));
 /**
 * Beam a run's eighths and shorter again, a beat at a time (a dotted quarter in 6/8): after an
 * edit the old beams may join notes that no longer belong together.
@@ -1580,7 +1611,11 @@ function stepNote(xml, id, direction) {
 		}
 	};
 }
-/** Make a note flat (-1), natural (0) or sharp (1); the bar's other notes keep their pitches. */
+/**
+* Make a note flat (-1), natural (0) or sharp (1). As in print, the sign holds for the rest of the
+* bar: later notes of the same step and octave on the staff take it too, up to one with a sign of
+* its own (a reader that misses a sharp misses it for every note that inherits it).
+*/
 function setAlter(xml, id, alter) {
 	const doc = load(xml);
 	const found = find(doc, {
@@ -1589,11 +1624,24 @@ function setAlter(xml, id, alter) {
 	});
 	const state = stateAt(found.part, found.el);
 	const p = readPitch(found.el);
+	const staff = textOf(found.el, "staff") ?? "1";
+	const notesOnStaff = staffNotes(found.measure, staff);
+	const at = notesOnStaff.find((n) => n.el === found.el).start;
 	writePitch(found.el, {
 		...p,
 		alter
 	});
-	respell(found.measure, textOf(found.el, "staff") ?? "1", state.fifths, /* @__PURE__ */ new Set([`${p.step}${p.octave}`]));
+	for (const n of notesOnStaff) {
+		if (n.start <= at || n.el === found.el) continue;
+		const q = readPitch(n.el);
+		if (q.step !== p.step || q.octave !== p.octave) continue;
+		if (kid(n.el, "accidental") && !tied(n.el, "stop")) break;
+		writePitch(n.el, {
+			...q,
+			alter
+		});
+	}
+	respell(found.measure, staff, state.fifths, /* @__PURE__ */ new Set([`${p.step}${p.octave}`]));
 	return {
 		xml: save(doc),
 		select: {
@@ -1610,6 +1658,7 @@ function setLength(xml, target, quarters) {
 	if (!noteValue(quarters)) throw new Error(`A note can't be ${quarters} quarters long.`);
 	const doc = load(xml);
 	const found = find(doc, target);
+	if (inTuplet(slotOf(found.measure, found.el))) throw new Error("This note is in a triplet: take the triplet away first (Not a triplet).");
 	const state = ensureDivisions(found.part, found.el, quarters);
 	const { measure } = found;
 	const slot = slotOf(measure, found.el);
@@ -1621,35 +1670,24 @@ function setLength(xml, target, quarters) {
 	};
 	const slots = scanMeasure(measure);
 	const run = slot.run;
-	const bar = barDivisions(state);
 	const oldEnd = runEnd(slots, run);
-	const goal = oldEnd < bar ? oldEnd : bar;
-	const boundarySlot = slots.find((s) => s.kind === "backup" && s.run === run) ?? null;
-	const boundary = boundarySlot?.el ?? null;
-	const afterBoundary = boundarySlot ? Math.max(0, boundarySlot.start - boundarySlot.duration) : null;
+	const { boundary, afterBoundary } = nextRun(slots, run);
 	for (const el of slot.chord) setLengthOf(el, newDuration, state.divisions);
+	let change = delta;
 	if (delta > 0) {
-		let need = delta;
 		const after = slots.filter((s) => s.run === run && s.start >= slot.start + slot.duration - 1e-6 && s !== slot && (s.kind === "note" || s.kind === "rest" || s.kind === "forward"));
 		for (const s of after) {
-			if (need <= 0 || s.kind === "note") break;
-			if (s.duration <= need) {
+			if (change <= 0 || s.kind === "note") break;
+			if (s.duration <= change) {
 				s.el.remove();
-				need -= s.duration;
+				change -= s.duration;
 			} else {
-				shorten(s, need, state.divisions);
-				need = 0;
+				shorten(s, change, state.divisions);
+				change = 0;
 			}
 		}
-		const end = oldEnd + need;
-		if (end > goal) trimEnd(measure, run, end - goal, state.divisions);
-	} else if (oldEnd > goal) {
-		const end = oldEnd + delta;
-		if (end < goal) insertBeforeOrAppend(measure, runTail(measure, run), makeRests(doc, goal - end, state.divisions, slot.voice, textOf(slot.el, "staff")));
-	} else {
-		const last = slot.chord[slot.chord.length - 1];
-		insertBeforeOrAppend(measure, last.nextElementSibling, makeRests(doc, -delta, state.divisions, slot.voice, textOf(slot.el, "staff")));
 	}
+	settleEnd(doc, measure, run, oldEnd, change, state, slot.voice, textOf(slot.el, "staff"));
 	keepNextRunInPlace(measure, run, afterBoundary, boundary);
 	rebeam(measure, run, state);
 	return {
@@ -1657,7 +1695,7 @@ function setLength(xml, target, quarters) {
 		select: nameOf(doc, found.el)
 	};
 }
-/** Take a note out: one of a chord just goes; a note on its own becomes a rest as long. */
+/** Make a note a rest as long (a rest read as a note): one of a chord just goes. */
 function deleteNote(xml, id) {
 	const doc = load(xml);
 	const found = find(doc, {
@@ -1820,6 +1858,224 @@ function addChordNote(xml, id) {
 		xml: save(doc),
 		select: nameOf(doc, added)
 	};
+}
+/** Move a note up or down an octave (a reader that misses an 8 under a clef or an 8va line). */
+function octaveNote(xml, id, direction) {
+	const doc = load(xml);
+	const found = find(doc, {
+		kind: "note",
+		id
+	});
+	const state = stateAt(found.part, found.el);
+	const p = readPitch(found.el);
+	writePitch(found.el, {
+		...p,
+		octave: p.octave + direction
+	});
+	respell(found.measure, textOf(found.el, "staff") ?? "1", state.fifths, /* @__PURE__ */ new Set([`${p.step}${p.octave}`, `${p.step}${p.octave + direction}`]));
+	return {
+		xml: save(doc),
+		select: {
+			kind: "note",
+			id
+		}
+	};
+}
+/** The next (or, -1, previous) slot in a run after or before an element: its first element. */
+function besideInRun(measure, el, direction) {
+	const slot = slotOf(measure, el);
+	const timed = scanMeasure(measure).filter((s) => s.run === slot.run && (s.kind === "note" || s.kind === "rest"));
+	return timed[indexOfEl(timed, el) + direction]?.el ?? null;
+}
+/**
+* Take a note out, with its time (a false note): the notes after it in its voice come earlier,
+* and rests fill the end of the bar. One of a chord just goes; in a triplet it becomes a rest, so
+* the triplet stays whole. ("Make it a rest", deleteNote, keeps its time instead.)
+*/
+function removeNote(xml, id) {
+	const doc = load(xml);
+	const found = find(doc, {
+		kind: "note",
+		id
+	});
+	const { el, measure } = found;
+	const slot = slotOf(measure, el);
+	if (slot.chord.length > 1 || inTuplet(slot)) return deleteNote(xml, id);
+	const state = stateAt(found.part, el);
+	const staff = textOf(el, "staff") ?? "1";
+	const p = readPitch(el);
+	const slots = scanMeasure(measure);
+	const oldEnd = runEnd(slots, slot.run);
+	const { boundary, afterBoundary } = nextRun(slots, slot.run);
+	const next = besideInRun(measure, el, 1) ?? besideInRun(measure, el, -1);
+	untie(doc, found);
+	el.remove();
+	settleEnd(doc, measure, slot.run, oldEnd, -slot.duration, state, slot.voice, textOf(el, "staff"));
+	keepNextRunInPlace(measure, slot.run, afterBoundary, boundary);
+	respell(measure, staff, state.fifths, /* @__PURE__ */ new Set([`${p.step}${p.octave}`]));
+	rebeam(measure, slot.run, state);
+	return {
+		xml: save(doc),
+		select: next ? nameOf(doc, next) : null
+	};
+}
+/**
+* Put a note in after a note or rest (a note the reader missed): as long as it, at its pitch (a
+* rest's: the note before it in its voice). The notes after it in its voice come later, taking
+* rests at the end of the bar first.
+*/
+function insertNoteAfter(xml, target) {
+	const doc = load(xml);
+	const found = find(doc, target);
+	const { el, measure } = found;
+	const slot = slotOf(measure, el);
+	if (inTuplet(slot)) throw new Error("This note is in a triplet: take the triplet away first (Not a triplet).");
+	const state = stateAt(found.part, el);
+	const staff = textOf(el, "staff") ?? "1";
+	const slots = scanMeasure(measure);
+	const oldEnd = runEnd(slots, slot.run);
+	const { boundary, afterBoundary } = nextRun(slots, slot.run);
+	const added = make(doc, "note");
+	const p = target.kind === "note" ? readPitch(el) : startingPitch(found, state, slot);
+	added.append(make(doc, "pitch"), make(doc, "duration", String(slot.duration)), make(doc, "voice", slot.voice));
+	setLengthOf(added, slot.duration, state.divisions);
+	if (textOf(el, "staff")) place(added, make(doc, "staff", staff));
+	slot.chord[slot.chord.length - 1].after(added);
+	writePitch(added, {
+		...p,
+		alter: impliedAlter(measure, staff, state.fifths, slot.start + slot.duration, added, p.step, p.octave)
+	});
+	settleEnd(doc, measure, slot.run, oldEnd, slot.duration, state, slot.voice, textOf(el, "staff"));
+	keepNextRunInPlace(measure, slot.run, afterBoundary, boundary);
+	respell(measure, staff, state.fifths, /* @__PURE__ */ new Set([`${p.step}${p.octave}`]));
+	rebeam(measure, slot.run, state);
+	return {
+		xml: save(doc),
+		select: nameOf(doc, added)
+	};
+}
+function dropTupletMarks(note) {
+	removeAll(note, "time-modification");
+	for (const n of kids(note, "notations")) {
+		for (const c of Array.from(n.children)) if (c.tagName === "tuplet") c.remove();
+		if (!n.children.length) n.remove();
+	}
+}
+/**
+* Make a note or rest and the next two of the same value in its voice a triplet (three in the time
+* of two: a reader that finds no 3 printed reads them as plain eighths). The notes after them come
+* earlier, and rests fill the end of the bar.
+*/
+function makeTriplet(xml, target) {
+	const doc = load(xml);
+	const found = find(doc, target);
+	const { el, measure } = found;
+	const first = slotOf(measure, el);
+	const timed = scanMeasure(measure).filter((s) => s.run === first.run && (s.kind === "note" || s.kind === "rest"));
+	const group = timed.slice(indexOfEl(timed, el), indexOfEl(timed, el) + 3);
+	const type = textOf(el, "type");
+	if (group.length < 3 || group.some((s) => inTuplet(s) || textOf(s.el, "type") !== type || kid(s.el, "dot") || s.duration !== first.duration)) throw new Error("A triplet needs this note and the next two in its voice, all of one value and not dotted.");
+	const state = ensureDivisions(found.part, el, first.duration * 2 / 3 / stateAt(found.part, el).divisions);
+	const slots = scanMeasure(measure);
+	const now = slotOf(measure, el);
+	const runSlots = slots.filter((s) => s.run === now.run && (s.kind === "note" || s.kind === "rest"));
+	const members = runSlots.slice(indexOfEl(runSlots, el), indexOfEl(runSlots, el) + 3);
+	const oldEnd = runEnd(slots, now.run);
+	const { boundary, afterBoundary } = nextRun(slots, now.run);
+	const each = Math.round(now.duration * 2 / 3);
+	members.forEach((m, i) => {
+		for (const note of m.chord) {
+			setChild(note, "duration", String(each));
+			const tm = make(doc, "time-modification");
+			tm.append(make(doc, "actual-notes", "3"), make(doc, "normal-notes", "2"));
+			place(note, tm);
+		}
+		if (i === 0 || i === 2) {
+			let notations = kid(m.el, "notations");
+			if (!notations) {
+				notations = make(doc, "notations");
+				place(m.el, notations);
+			}
+			notations.append(make(doc, "tuplet", void 0, i === 0 ? {
+				type: "start",
+				bracket: "yes"
+			} : { type: "stop" }));
+		}
+	});
+	settleEnd(doc, measure, now.run, oldEnd, 3 * each - 3 * now.duration, state, now.voice, textOf(el, "staff"));
+	keepNextRunInPlace(measure, now.run, afterBoundary, boundary);
+	rebeam(measure, now.run, state);
+	return {
+		xml: save(doc),
+		select: nameOf(doc, el)
+	};
+}
+/**
+* Take away the triplet (or other tuplet) a note or rest is in, all of it: its notes take their
+* written value again (a reader that made plain eighths a triplet). The notes after them come
+* later, taking rests at the end of the bar first.
+*/
+function removeTuplet(xml, target) {
+	const doc = load(xml);
+	const found = find(doc, target);
+	const { el, measure } = found;
+	const slots = scanMeasure(measure);
+	const slot = slotOf(measure, el);
+	if (!inTuplet(slot)) throw new Error("This note is not in a triplet.");
+	const timed = slots.filter((s) => s.run === slot.run && (s.kind === "note" || s.kind === "rest"));
+	const marks = (s, type) => kid(s.el, "notations")?.querySelector(`tuplet[type="${type}"]`);
+	let a = indexOfEl(timed, el);
+	while (a > 0 && !marks(timed[a], "start") && inTuplet(timed[a - 1])) a--;
+	let b = indexOfEl(timed, el);
+	while (b < timed.length - 1 && !marks(timed[b], "stop") && inTuplet(timed[b + 1])) b++;
+	const group = timed.slice(a, b + 1);
+	const ratio = (s) => {
+		const tm = kid(s.el, "time-modification");
+		return Number(textOf(tm, "actual-notes") ?? 3) / Number(textOf(tm, "normal-notes") ?? 2);
+	};
+	let state = stateAt(found.part, el);
+	for (const s of group) state = ensureDivisions(found.part, s.el, s.duration * ratio(s) / state.divisions);
+	const fresh = scanMeasure(measure);
+	const members = fresh.filter((s) => s.run === slot.run && (s.kind === "note" || s.kind === "rest")).slice(a, b + 1);
+	const oldEnd = runEnd(fresh, slot.run);
+	const { boundary, afterBoundary } = nextRun(fresh, slot.run);
+	let delta = 0;
+	for (const m of members) {
+		const d = Math.round(m.duration * ratio(m));
+		delta += d - m.duration;
+		for (const note of m.chord) {
+			setChild(note, "duration", String(d));
+			dropTupletMarks(note);
+		}
+	}
+	settleEnd(doc, measure, slot.run, oldEnd, delta, state, slot.voice, textOf(el, "staff"));
+	keepNextRunInPlace(measure, slot.run, afterBoundary, boundary);
+	rebeam(measure, slot.run, state);
+	return {
+		xml: save(doc),
+		select: nameOf(doc, el)
+	};
+}
+/** Whether a note or rest is in a triplet (or other tuplet): its length then changes with the group's. */
+function inTriplet(xml, target) {
+	try {
+		const found = find(load(xml), target);
+		return inTuplet(slotOf(found.measure, found.el));
+	} catch {
+		return false;
+	}
+}
+/**
+* The note or rest next to one (direction 1) or before it (-1) in its voice and part, across bars:
+* to step through a run of notes, fixing each.
+*/
+function neighbour(xml, target, direction) {
+	const doc = load(xml);
+	const found = find(doc, target);
+	const voice = textOf(found.el, "voice") ?? "1";
+	const all = [...writtenNotes(doc), ...writtenRestEls(doc)].filter((x) => x.part === found.part && !kid(x.el, "chord") && (textOf(x.el, "voice") ?? "1") === voice).sort((x, y) => x.el.compareDocumentPosition(y.el) & 4 ? -1 : 1);
+	const next = all[all.findIndex((x) => x.el === found.el || slotOf(x.measure, x.el).chord.includes(found.el)) + direction];
+	return next ? nameOf(doc, next.el) : null;
 }
 /** What each voice of each bar adds up to, in quarters, against its time signature: for tests and checks. */
 function voiceLengths(xml) {
@@ -2097,4 +2353,4 @@ function createScoreView(container, options) {
 	};
 }
 //#endregion
-export { EditHistory, SCORE_VIEW_CSS, addChordNote, addScoreViewStyle, barLength, checkFlags, checkScore, createEngraver, createScoreView, deleteNote, drawnNotes, drawnRests, engraveScore, isWrittenNote, keyAlter, linkNotes, linkRests, mergeFlags, noteKey, noteValue, octaveDown, parseMusicXML, readScoreFile, readVoiceName, readerFlags, restToNote, scaleFor, serveEngraving, setAlter, setLength, splitLongBars, splitValues, stepNote, tenorsInTreble, unzipMxl, valueLength, voiceLengths, writtenRests };
+export { EditHistory, SCORE_VIEW_CSS, addChordNote, addScoreViewStyle, barLength, checkFlags, checkScore, createEngraver, createScoreView, deleteNote, drawnNotes, drawnRests, engraveScore, inTriplet, insertNoteAfter, isWrittenNote, keyAlter, linkNotes, linkRests, makeTriplet, mergeFlags, neighbour, noteKey, noteValue, octaveDown, octaveNote, parseMusicXML, readScoreFile, readVoiceName, readerFlags, removeNote, removeTuplet, restToNote, scaleFor, serveEngraving, setAlter, setLength, splitLongBars, splitValues, stepNote, tenorsInTreble, unzipMxl, valueLength, voiceLengths, writtenRests };

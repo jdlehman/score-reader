@@ -1,8 +1,9 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // The note editor ("Check the notes", check.js), in Chrome, on a MusicXML file opened as it is (no
 // read, so it takes seconds): the bar that's too long is shaded, a note changes, the download has
-// the change and is named "(corrected)", the button says Saved, and leaving with a change not
-// downloaded asks first.
+// the change and is named "(corrected)", the button says Saved, leaving with a change not
+// downloaded asks first, and the edits for a reader's mistakes (octave, stepping through a voice,
+// a note put in and taken out, a triplet made and taken away) work.
 //   node test/edit.mjs   (with npm run dev running; URL=... tests another copy of the site)
 import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -56,6 +57,35 @@ check(dialogs.includes('beforeunload'), 'leaving with a change not downloaded as
 await tab.click('#fix-undo')
 await tab.waitForFunction(() => document.getElementById('fix-picked').textContent.startsWith('D5'))
 check(await button() === 'Saved (off)', 'undoing back to what was downloaded is Saved again')
+// the new edits, on the first note of bar 3 (five quarters: a beat too long)
+const note = i => tab.locator('#fix-score svg g.note').nth(i).dispatchEvent('click')
+await note(5)
+check((await picked()).startsWith('A4 · bar 3'), `bar 3's first note is picked (${await picked()})`)
+await tab.click('#fix-pitch [data-octave="1"]')
+await tab.waitForFunction(() => document.getElementById('fix-picked').textContent.startsWith('A5'))
+await tab.keyboard.press('Shift+ArrowDown')
+await tab.waitForFunction(() => document.getElementById('fix-picked').textContent.startsWith('A4'))
+check(true, 'an octave up, and back down with shift ↓')
+await tab.keyboard.press('ArrowRight')
+await tab.waitForFunction(() => document.getElementById('fix-picked').textContent.startsWith('B4'))
+await tab.keyboard.press('ArrowLeft')
+await tab.waitForFunction(() => document.getElementById('fix-picked').textContent.startsWith('A4'))
+check(true, '→ steps to the next note in the voice, ← back')
+const count = () => tab.locator('#fix-score svg g.note').count()
+const notesBefore = await count()
+await tab.click('#fix-insert')
+await tab.waitForFunction(n => document.querySelectorAll('#fix-score svg g.note').length === n + 1, notesBefore)
+await tab.keyboard.press('Delete')
+await tab.waitForFunction(n => document.querySelectorAll('#fix-score svg g.note').length === n, notesBefore)
+check(true, 'a note put in after it, and taken out with Delete')
+await tab.click('#fix-triplet')
+await tab.waitForFunction(() => !document.getElementById('fix-not-triplet').hidden)
+await tab.waitForFunction(() => document.querySelectorAll('#fix-score rect.flag-bar').length === 0)
+check(await tab.isDisabled('#fix-length [data-length="1"]'), 'made a triplet: bar 3 fits, no bar is shaded, and its lengths wait for "Not a triplet"')
+await tab.click('#fix-not-triplet')
+await tab.waitForFunction(() => document.querySelectorAll('#fix-score rect.flag-bar').length > 0)
+check(true, '"Not a triplet" puts it back: bar 3 is shaded again')
+
 check(!errors.length, `no page errors${errors.length ? ': ' + errors.join('; ') : ''}`)
 
 await browser.close()
