@@ -1161,6 +1161,65 @@ text = sub(text, """        checkBounds();
         final ByteProcessor buffer = new ByteProcessor(bounds.width, bounds.height);""")
 write("org/audiveris/omr/glyph/dynamic/SectionCompound.java", text)
 
+# ------------------------------------------------------------------ DrumSet
+# score-reader: Audiveris reads its drum set (res/drum-set.xml) with JAXB, which can't run here,
+# from a res folder there isn't. A staff it takes for percussion (on a hard photo, a staff whose
+# clef it couldn't read) then lost the whole page in HEADS ("Parent is null", the res folder). The
+# entries are read from that same file here, when building, and added as Audiveris's loader adds
+# them, so the drum set is the desktop's.
+text = copy_src("org/audiveris/omr/score/DrumSet.java")
+drum = re.sub(r"<!--.*?-->", "", (REPO.parents[2] / "res" / "drum-set.xml").read_text(), flags=re.S)
+calls = []
+for staff in re.finditer(r'<staff\s+line-count="(\d+)"\s*>(.*?)</staff>', drum, re.S):
+    for entry in re.finditer(r"<entry\b([^>]*)/>", staff.group(2)):
+        a = dict(re.findall(r'([\w-]+)="([^"]*)"', entry.group(1)))
+        sign = f"Shape.{a['sign']}" if "sign" in a else "null"
+        calls.append(f"        teavmAdd({staff.group(1)}, {a['pitch-position']}, HeadMotif.{a['motif']}, {sign}, DrumSound.{a['sound']});")
+assert calls and len(calls) == len(re.findall(r"<entry\b", drum)), f"drum-set.xml: read {len(calls)} of its entries"
+text = replace_method(text, r"private void loadAllConfigurations \(\)", """private void loadAllConfigurations ()
+    {
+        // TEAVM: the system drum set, from res/drum-set.xml when building (make_patches.py)
+""" + "\n".join(calls) + """
+    }
+
+    /** TEAVM: add an entry as loadConfiguration does. */
+    private void teavmAdd (int lineCount,
+                           int pitchPosition,
+                           HeadMotif motif,
+                           Shape sign,
+                           DrumSound sound)
+    {
+        Map<Integer, Map<MotifSign, DrumInstrument>> byPitch = structure.get(lineCount);
+        if (byPitch == null) {
+            structure.put(lineCount, byPitch = new TreeMap<>());
+        }
+        Map<MotifSign, DrumInstrument> msMap = byPitch.get(pitchPosition);
+        if (msMap == null) {
+            byPitch.put(pitchPosition, msMap = new LinkedHashMap<>());
+        }
+        msMap.put(new MotifSign(motif, sign), new DrumInstrument(motif, sign, sound));
+    }""")
+write("org/audiveris/omr/score/DrumSet.java", text)
+print(f"  DrumSet: {len(calls)} entries from res/drum-set.xml")
+
+# ------------------------------------------------------------------ ArcRetriever
+# score-reader: on a hard photo (chorale-bwv303-photo-hard) an arc's first point lay in no staff's
+# area here, and isStaffArc dereferenced the null staff, losing the page in CURVES. The desktop
+# finds a staff for it (or it would fail the same way): staff areas are cut by the shim's polygon
+# clipping here (shims/src/java/awt/geom/Area.java), which can leave a sliver out. An arc with no
+# staff around it is not part of a staff line; the other callers of getClosestStaff check already.
+text = copy_src("org/audiveris/omr/sheet/curve/ArcRetriever.java")
+text = sub(text, """        Staff staff = sheet.getStaffManager().getClosestStaff(p0);
+
+        if (staff.isTablature()) {""", """        Staff staff = sheet.getStaffManager().getClosestStaff(p0);
+
+        if (staff == null) {
+            return false; // TEAVM: in no staff's area (see make_patches.py)
+        }
+
+        if (staff.isTablature()) {""")
+write("org/audiveris/omr/sheet/curve/ArcRetriever.java", text)
+
 # --- ShapeSymbol: MAGENTA/BLUE/new Color(int,boolean) ---
 text = copy_src("org/audiveris/omr/ui/symbol/ShapeSymbol.java")
 text = sub(text, "g.setColor(logger.isDebugEnabled() ? Color.MAGENTA : defaultImageColor);",
