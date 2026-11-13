@@ -948,6 +948,32 @@ index a3cb0f0..2390eaf 100644
      //-----------//
      // getHeight //
      //-----------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java b/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
+index 2757b77..48ca03a 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
+@@ -260,7 +260,20 @@ public class ScaleBuilder
+                             maxHeight));
+         }
+ 
+-        final List<Integer> peaks = histoKeeper.blackFunction.getLocalMaxima(minHeight, maxHeight);
++        List<Integer> peaks = histoKeeper.blackFunction.getLocalMaxima(minHeight, maxHeight);
++
++        // score-reader: getLocalMaxima only finds a peak it climbs into, so never one at the very
++        // bottom of its range, where thin beams sit (LilyPond's, 0.45-0.5 of an interline). Missed,
++        // a head-sized peak was taken, and the beams were then too thin to be beams (BWV 227 p13:
++        // sixteenths read as quarters). A peak there counts when it clearly outnumbers the best one
++        // inside the range (twice as many runs: 7 times on p13); one barely ahead may be the tail of
++        // the staff lines' runs on a blurred photo.
++        final List<Integer> fromBelow = histoKeeper.blackFunction.getLocalMaxima(minHeight - 1, maxHeight);
++        if (!fromBelow.isEmpty() && (fromBelow.get(0) == minHeight)
++                && (peaks.isEmpty() || (histoKeeper.blackFunction.getValue(minHeight) >= 2
++                        * histoKeeper.blackFunction.getValue(peaks.get(0))))) {
++            peaks = fromBelow;
++        }
+ 
+         if (!peaks.isEmpty()) {
+             final int peak = peaks.get(0);
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
 index 3efeee8..5b1eb0c 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java

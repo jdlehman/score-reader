@@ -22,7 +22,7 @@ else
     $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
     $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java \
     $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Voices.java $SRC/sig/inter/KeyInter.java $SRC/sheet/clef/ClefBuilder.java $SRC/sig/inter/OctaveShiftInter.java \
-    $SRC/sheet/rhythm/MeasureRhythm.java $SRC/sheet/rhythm/StackRhythm.java $SRC/sheet/note/NoteHeadsBuilder.java 2>&1 | grep -v '^Note:' || true
+    $SRC/sheet/rhythm/MeasureRhythm.java $SRC/sheet/rhythm/StackRhythm.java $SRC/sheet/note/NoteHeadsBuilder.java $SRC/sheet/ScaleBuilder.java 2>&1 | grep -v '^Note:' || true
   "$J/jar" cf .work/patched.jar -C .work/classes .
 
   # Audiveris in WebAssembly (teavm/README.md), copied into dist/ below

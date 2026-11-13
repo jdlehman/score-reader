@@ -75,7 +75,16 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   LilyPond's, and matched them too badly to keep: the Cantique (MuseScore) lost nearly all of
   them, p13 78%, now 99%; p01 73%, now 100% (with the tuplets above). Leland for all heads
   read the Cantique as well but cost BWV 227 and the Hallelujah wrong notes, so only whole notes.
-  Not in the TeaVM build: it has pre-rendered templates for Bravura only.
+  In the TeaVM build too since its templates come at every size for both fonts (teavm/README.md).
+- Beam height, measured from a peak in the lengths of black vertical runs (`ScaleBuilder`), between
+  0.45 and 1 interline: `getLocalMaxima` only finds a peak it climbs into, so never one at the very
+  bottom of the range, which is where thin beams sit (LilyPond's: 7 pixels at an interline of 15).
+  Missed, a head-sized peak (11) was taken, the real beams were too thin to be beams, and their
+  sixteenths were read as quarters: BWV 227 p13 rhythm 46%, p17 44%. Now a peak at the bottom
+  counts when it has at least twice the runs of the best one inside the range (7 times on p13; a
+  blurred photo's noise peak there, chorale BWV 269 mild, has 1.25 and is left alone, as it must:
+  taking it cost that photo 3 points of rhythm). p13 86%, p17 83%, four more BWV 227 pages better
+  (p23 83% to 99%); nothing worse; corpus rhythm 81% to 82%.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at
