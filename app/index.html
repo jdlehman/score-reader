@@ -97,14 +97,16 @@
         <span class="label">Pitch</span>
         <button data-step="1" title="Up a step (↑)">Up</button><button data-step="-1" title="Down a step (↓)">Down</button>
         <button data-alter="-1" aria-label="Flat">♭</button><button data-alter="0" aria-label="Natural">♮</button><button data-alter="1" aria-label="Sharp">♯</button>
+        <button data-octave="1" title="Up an octave (shift ↑)">Octave up</button><button data-octave="-1" title="Down an octave (shift ↓)">Octave down</button>
       </div>
       <div id="fix-length" class="row" hidden>
         <span class="label">Length</span>
         <button data-length="4">Whole</button><button data-length="2">Half</button><button data-length="1">Quarter</button><button data-length="0.5">Eighth</button><button data-length="0.25">16th</button>
         <button id="fix-dot">Dotted</button>
+        <button id="fix-triplet" title="This and the next two notes, three in the time of two">Triplet</button><button id="fix-not-triplet" title="Its notes take their written lengths again" hidden>Not a triplet</button>
       </div>
-      <div id="fix-note" class="row" hidden><button id="fix-add">Add a note above</button><button id="fix-to-rest" title="Delete">Make it a rest</button></div>
-      <div id="fix-rest" class="row" hidden><button id="fix-to-note">Make it a note</button></div>
+      <div id="fix-note" class="row" hidden><button id="fix-insert" title="A note the reader missed: the notes after it move on">Insert a note after</button><button id="fix-add">Add a note above</button><button id="fix-remove" title="A note that isn’t there: the notes after it move back (Delete)">Remove</button><button id="fix-to-rest" title="Keeps its time">Make it a rest</button></div>
+      <div id="fix-rest" class="row" hidden><button id="fix-to-note">Make it a note</button><button id="fix-insert-rest" title="A note the reader missed: the notes after it move on">Insert a note after</button></div>
     </div>
     <p id="fix-status" class="muted small"></p>
     <div id="fix-score" class="score"></div>

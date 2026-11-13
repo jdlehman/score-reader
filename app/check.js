@@ -4,8 +4,8 @@
 // up to their time signature are shaded: the reader most often goes wrong there.
 
 import {
-  addChordNote, checkFlags, createEngraver, createScoreView, deleteNote, mergeFlags, noteValue, parseMusicXML,
-  readerFlags, restToNote, setAlter, setLength, stepNote, writtenRests,
+  addChordNote, checkFlags, createEngraver, createScoreView, deleteNote, insertNoteAfter, inTriplet, makeTriplet, mergeFlags, neighbour,
+  noteValue, octaveNote, parseMusicXML, readerFlags, removeNote, removeTuplet, restToNote, setAlter, setLength, stepNote, writtenRests,
 } from './score-view.js'
 
 const engrave = createEngraver(() => new Worker(new URL('engrave-worker.js', import.meta.url), { type: 'module' }))
@@ -111,8 +111,13 @@ function start(scores, title) {
     $('fix-rest').hidden = !rest
     const value = noteValue(note?.duration ?? rest?.duration ?? 0)
     for (const b of document.querySelectorAll('#fix-length [data-length]')) b.setAttribute('aria-pressed', String(!!value && BASE[value.type] === Number(b.dataset.length)))
+    // a triplet's notes change length as one, with "Not a triplet"
+    const triplet = !!(note || rest) && inTriplet(now().xml, now().selected)
+    for (const b of document.querySelectorAll('#fix-length [data-length]')) b.disabled = triplet
+    $('fix-triplet').hidden = triplet
+    $('fix-not-triplet').hidden = !triplet
     $('fix-dot').setAttribute('aria-pressed', String(!!value?.dots))
-    $('fix-dot').disabled = !value || !(value.type in BASE)
+    $('fix-dot').disabled = triplet || !value || !(value.type in BASE)
     for (const b of document.querySelectorAll('#fix-pitch [data-alter]')) b.setAttribute('aria-pressed', String(!!note && alterOf(note) === Number(b.dataset.alter)))
     $('fix-undo').disabled = !now().past.length
     // once something is changed: download it, and after a download, again when there is more
@@ -136,7 +141,13 @@ function start(scores, title) {
     const value = noteValue(note?.duration ?? rest?.duration ?? 0)
     if (value && value.type in BASE) change((xml, t) => setLength(xml, t, BASE[value.type] * (value.dots ? 1 : 1.5)))
   })
+  for (const b of document.querySelectorAll('#fix-pitch [data-octave]')) b.addEventListener('click', () => change((xml, t) => octaveNote(xml, t.id, Number(b.dataset.octave))))
+  $('fix-triplet').addEventListener('click', () => change((xml, t) => makeTriplet(xml, t)))
+  $('fix-not-triplet').addEventListener('click', () => change((xml, t) => removeTuplet(xml, t)))
+  $('fix-insert').addEventListener('click', () => change((xml, t) => insertNoteAfter(xml, t)))
+  $('fix-insert-rest').addEventListener('click', () => change((xml, t) => insertNoteAfter(xml, t)))
   $('fix-add').addEventListener('click', () => change((xml, t) => addChordNote(xml, t.id)))
+  $('fix-remove').addEventListener('click', () => change((xml, t) => removeNote(xml, t.id)))
   $('fix-to-rest').addEventListener('click', () => change((xml, t) => deleteNote(xml, t.id)))
   $('fix-to-note').addEventListener('click', () => change((xml, t) => restToNote(xml, t.id)))
   $('fix-undo').addEventListener('click', undo)
@@ -169,9 +180,21 @@ function start(scores, title) {
     const sel = now().selected
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); return undo() }
     if (e.key === 'Escape') { now().selected = null; view.select(null); return controls() }
+    // ←→ the next or previous note or rest in its voice
+    if (sel && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      e.preventDefault()
+      const next = neighbour(now().xml, sel, e.key === 'ArrowRight' ? 1 : -1)
+      if (next) { now().selected = next; view.select(next); controls() }
+      return
+    }
     if (sel?.kind !== 'note') return
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); change((xml, t) => stepNote(xml, t.id, e.key === 'ArrowUp' ? 1 : -1)) }
-    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); change((xml, t) => deleteNote(xml, t.id)) }
+    // ↑↓ a step, with shift an octave; Delete takes the note out, with its time
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      const dir = e.key === 'ArrowUp' ? 1 : -1
+      change((xml, t) => (e.shiftKey ? octaveNote(xml, t.id, dir) : stepNote(xml, t.id, dir)))
+    }
+    if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); change((xml, t) => removeNote(xml, t.id)) }
   })
 
   redraw()
