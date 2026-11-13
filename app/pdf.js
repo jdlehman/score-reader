@@ -15,6 +15,16 @@ const DPI = 300
 
 /** Bigger pages are scaled down to this on their long side: more pixels only slow the reading. */
 const MAX_SIDE = 4096
+/**
+ * ...but never so far that the short side is under this (about an A4 page's width at 300 dpi): a
+ * tall page (two stacked, a long orchestral score) was shrunk until its staff lines were 12 pixels
+ * apart, near the least Audiveris reads, and lost most of its notes (64% to 27%).
+ */
+const MIN_SHORT_SIDE = 2400
+
+/** How much to scale a page of this size: down to MAX_SIDE, not below MIN_SHORT_SIDE, never up past `most`. */
+export const pageScale = (width, height, most = 1) =>
+  Math.min(most, Math.max(MAX_SIDE / Math.max(width, height), MIN_SHORT_SIDE / Math.min(width, height)))
 
 const PDFJS = new URL('pdfjs/', import.meta.url)
 
@@ -49,7 +59,7 @@ export async function pdfPages(bytes, onPage) {
       onPage?.(n, doc.numPages)
       const page = await doc.getPage(n)
       const size = page.getViewport({ scale: 1 })
-      const scale = Math.min(DPI / 72, MAX_SIDE / Math.max(size.width, size.height))
+      const scale = pageScale(size.width, size.height, DPI / 72)
       const viewport = page.getViewport({ scale })
       const canvas = document.createElement('canvas')
       canvas.width = Math.round(viewport.width)
@@ -86,7 +96,7 @@ export async function imagePages(files, onPage) {
     } catch {
       throw new Error(`${f.name} couldn’t be opened as an image in this browser. Try a JPEG or PNG.`)
     }
-    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height))
+    const scale = pageScale(bitmap.width, bitmap.height)
     const w = Math.round(bitmap.width * scale)
     const h = Math.round(bitmap.height * scale)
     const canvas = document.createElement('canvas')
