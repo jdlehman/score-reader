@@ -85,6 +85,14 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   blurred photo's noise peak there, chorale BWV 269 mild, has 1.25 and is left alone, as it must:
   taking it cost that photo 3 points of rhythm). p13 86%, p17 83%, four more BWV 227 pages better
   (p23 83% to 99%); nothing worse; corpus rhythm 81% to 82%.
+- No percussion clef at the start of a 5-line staff (`ClefBuilder.HEADER_CLEF_SHAPES`; a 1-line
+  staff still takes one). On the hard photo of the IMSLP Hallelujah, a piano page, the warp lost
+  the left part of the last bass staff, and where that staff seemed to start an eighth rest and a
+  chord's stems were read as a percussion clef (grade 0.33): the desktop then wrote no notes
+  there, and the TeaVM build loaded the drum set and wrote 5 unpitched ones. It was the only
+  percussion clef in the corpus; the one drum page was already read with an F clef. No score
+  changed, on the corpus or the held-out pages: a choir reader has no use for it, and a real drum
+  staff read with another clef costs only a part no singer reads.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at

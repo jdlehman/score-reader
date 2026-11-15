@@ -1005,10 +1005,32 @@ index 3efeee8..5b1eb0c 100644
      // getPicture //
      //------------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java b/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
-index 00f766d..2e9a1d3 100644
+index 00f766d..65751cf 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/clef/ClefBuilder.java
-@@ -153,6 +153,9 @@ public class ClefBuilder
+@@ -108,14 +108,19 @@ public class ClefBuilder
+      * All possible clef symbols at beginning of staff: all but small clefs.
+      * Octave bass clefs are reported to be extremely
+      * <a href="http://en.wikipedia.org/wiki/Clef#Octave_clefs">rare</a>.
++     * <p>
++     * Score Reader: and no percussion clef on a staff of 5 lines (a 1-line staff still takes
++     * one, below). Its two bars are what a barline, a rest or a chord's stems look like where a
++     * staff seems to start, and a staff read as percussion loses every note's pitch: on a bent
++     * photo a piano staff found from the middle of a system was read so. A real drum staff read
++     * with the next best clef costs only notes of a part no singer reads.
+      */
+     private static final EnumSet<Shape> HEADER_CLEF_SHAPES = EnumSet.of(
+             F_CLEF,
+             G_CLEF,
+             G_CLEF_8VA,
+             G_CLEF_8VB,
+-            C_CLEF,
+-            PERCUSSION_CLEF);
++            C_CLEF);
+ 
+     /**
+      * All possible clef symbols on a 1-line staff.
+@@ -153,6 +158,9 @@ public class ClefBuilder
      /** Inner clef area. */
      private Rectangle innerRect;
  
@@ -1018,7 +1040,7 @@ index 00f766d..2e9a1d3 100644
      /** Shape classifier to use. */
      private final Classifier classifier = ShapeClassifier.getInstance();
  
-@@ -219,6 +222,7 @@ public class ClefBuilder
+@@ -219,6 +227,7 @@ public class ClefBuilder
  
          // Register the remaining clef candidates
          if (!bestMap.isEmpty()) {
@@ -1026,7 +1048,7 @@ index 00f766d..2e9a1d3 100644
              registerClefs(bestMap.values());
          }
      }
-@@ -358,10 +362,79 @@ public class ClefBuilder
+@@ -358,10 +367,79 @@ public class ClefBuilder
  
          system.registerGlyphs(parts, null);
          logger.debug("{} parts: {}", this, parts.size());
