@@ -3,7 +3,7 @@
 Date: 2026-11-08. TeaVM 0.16.0, Node v24.22.1, Java 25 (jdk-25.0.5+8),
 Audiveris 5.11, headless entry point `teavm.TeavmMain`.
 
-## Verdict: DONE at §45 — flat-key loss FIXED: the §19 BravuraMetrics table lacked LINE_CODE 0xe010, so the shim TextLayout fell back to stub bounds (height = font size) and populatePitchOffsets computed lineHeight 200.0 instead of 6.40625, collapsing pitchHeight 25.0 → 0.80 and inflating every pitch offset ~31× (flat alters shifted +15.97, checkWithClefs graded 0, no key ever created); sharp keys survived because they use only massPitch. Fix is shim data only (0xe010 metrics dumped on desktop Java, table 157 → 158 codepoints; no Audiveris code changed). All 8 flat-key pages recovered: Widmung 291 pitched = desktop (was 169), Wiegenlied 155 = desktop with pickup m0 restored and the phantom G♭4 gone (was 156), BWV 397 and Après un rêve exact, Erlkönig/Wolf/Sanctus/Agnus keys exact with pre-existing pitched gaps unchanged. A second, self-inflicted bug surfaced en route — the DIAG51 browse print NPE'd on empty hilos (StaffHeader.Range.getStart auto-unboxes null start) — fixed print-only in ROUND 56 (hasStart guard), proven by the desktop harness dying identically. New current clean build full-out110 (0 problems, 3,055 classes, 28,726 methods); controls byte-identical to full-out94. §44.1 Mozart Kyrie export trap FIXED (MxlWriter processKey null-fifths guard; page exports 435 notes / 408 pitched; full-out94 was the previous clean build); §44.4 BWV p14 +2 is a §40 × §42 interaction (rint fix flips HEADS template matching, §42 supports let the flipped heads survive; p13's +1 flip is the same cause; 2×2 toggle proves it; no contained fix — reverting either re-breaks §40 or §42) — verdict (c), next DIAG53. Items 5–8 from the validation report (Lindenbaum batch-vs-harness gap, Beethoven typeset p165, StackRhythm wobbles, Beethoven p229 wall time) still open and do NOT block the PR. Still open: BrowserOCR follow-up, photometric recovery, real-browser Chrome run, upstream filings (#272, #21244, §11, §19 TColor, §27 hypot, §33 retainAll, §35 TFormatter, §40 rint/round). CheerpJ 5 remains the only working option.
+## Verdict: DONE at §47 — DIAG55 hymnal −28 split, measured (2026-11-11). The −28 (batch 125 pitched vs Wasm 97) is fully split with ZERO Wasm-side loss: 22 template-driven (stock-template harness SYMBOLS-END 119 vs pre-rendered 97, same gray, same harness) + 6 gray-conversion (batch 125 pitched vs stock-harness 119 heads; batch gray is max-RGB, harness/Wasm gray is PIL-L luma — all 2,338,180 px differ, max 22 levels; GRID already diverges: 4 vs 2 spurious clusters destroyed). Wasm == pre-rendered desktop harness at every measured step (HEADS 572, REDUCTION/MEASURES/CHORDS/CURVES/SYMBOLS 97, identical checksums and COLUMN dumps to full float precision). The loss HEADS→REDUCTION sits inside STEMS on both sides. The 2 barline deletions are template-driven too (GRID-END has both barlines on all sides; pre-rendered COLUMN drops S2 x≈878 s4 and S3 x≈340 s5 on both desktop and Wasm; stock keeps groups=2, 13 raw measures = batch). The harness TEXTS crash is solved: no inter — it was the ROUND 20 DIAG24 dead block (hard-coded ROI x 1854..1929 on a 1196-wide page) at SheetScanner.getCleanImage:143; removed (stock-restoring), harness now passes TEXTS on the hymnal both template variants. Contained fix applied as the §47 round; clean build full-out113 verified byte-identical (hymnal + 3 controls) and is the new current clean build (full-out112 diagnostic-only, DIAG54+55 kept). §46 in one line: Wasm right on Cantique p13/p01 — desktop harness, not batch .mxl, is the authoritative comparator. Still open: DIAG53 (BWV p14 +2), real-browser Chrome run, upstream filings (#272, #21244, §11, §19 TColor, §27 hypot, §33 retainAll, §35 TFormatter, §40 rint/round), BrowserOCR follow-up, photometric recovery, multi-file export N>1, Lindenbaum batch-vs-harness gap, Beethoven typeset p165, StackRhythm wobbles, Beethoven p229 wall time (profiled §46.5). CheerpJ 5 remains the only working option.
 
 - The #272 defect is **fixed**: the minimal repro now loads in Node and runs
   with correct results, and the full TeavmMain module compiles with
@@ -11520,3 +11520,573 @@ did not move.
 - `teavm/patched/make_patches.py` ROUND 56.
 - Builds: `full-out108/` (diagnostic, DIAG51 kept), `full-out109/`
   (diagnostic + ROUND 56), `full-out110/` (clean, current).
+
+## §46 — Fix round on the full-out110 validation findings (2026-11-11)
+
+Six items, sequential, shared build tree. Validation context:
+`open-music/FULLOUT110_ADDITIONS_RESULTS.md` (22 pages, desktop Audiveris
+5.11 vs Wasm full-out110, no-OCR first + hymnal OCR bridge). Current clean
+build remains **full-out110** (0 problems, 3,055 classes, 28,726 methods);
+**full-out111** is the diagnostic build of this round (DIAG54 kept, ROUND 57).
+No contained fix landed in this round, so no clean build beyond full-out111
+is warranted. DIAG54 used (item 1); next fresh DIAG is **DIAG55**.
+
+### §46.1 Hymnal Wasm −28 notes / 2 bars — verdict (c) inconclusive, localised; reframed by the item-2 experiment
+
+Desktop 125/126 notes, 12 measures/part; Wasm 97/98, 10 measures/part.
+Per-part loss P1 (odd staves) −8, P2 (even staves) −20; per-system S1 −10,
+S2 −10, S3 −8.
+
+**DIAG54 (ROUND 57, `teavm/patched/make_patches.py`, before the ROUND 49
+strip):** three print-only sites — `HeadsStep.doEpilog` (per-staff HeadInter
+counts + bounds checksums at HEADS-END; `copy_src`, pristine),
+`SymbolsStep.doEpilog` override (same at SYMBOLS-END; `read_out`, R2 copy
+list, unmodified by any ROUND), `MeasuresBuilder` column loop (every barline
+column: deskewed x, groupCount, staffCount, per-staff groups; `copy_src`,
+pristine). Diagnostic build **full-out111** (0 problems, 3,055 classes,
+28,728 methods; `phase56/build111.log`, `phase56/spike111.log`).
+
+**Results (all in `teavm-fork/phase56/`):**
+- HEADS-END **identical both sides**: sys1 `{1=80, 2=89}` check
+  `{71871, 87195}`; sys2 `{3=89, 4=72}` check `{97483, 85914}`; sys3
+  `{5=113, 6=129}` check `{145904, 179959}`; total 572. Tripwire matches:
+  `requested 57 maps to desktop catalog 64` both sides.
+- Wasm SYMBOLS-END: sys1 `{1=13, 2=11}`, sys2 `{3=16, 4=16}`, sys3
+  `{5=22, 6=19}` = 97. Desktop final (`.omr`): 15/21/20/22/24/23 = 125.
+  Per-staff gaps: s1 −2, s2 −10, s3 −4, s4 −6, s5 −2, s6 −4. Loss is
+  inside STEMS..SYMBOLS; post-SYMBOLS steps create no heads, so desktop
+  SYMBOLS-END ≥125.
+- Barlines: Wasm COLUMN dump shows S2 x=878.88 groups=1 (s3 only —
+  staff-4 barline at ~876 **absent** from SIG, not mis-grouped) and S3
+  x=340.49 groups=1 (s6 only — staff-5 barline at ~337 absent). Desktop
+  `.omr` has both barlines. All other columns complete (groups=2). The 2
+  deletions explain 13→11 raw measures, not the −28.
+- Weak pointers (not proof): GRID spurious clusters destroyed 4 (desktop)
+  vs 2 (Wasm); ReductionStep stem free-length median 32 px / 2.7 interlines
+  (desktop) vs 33 / 2.8 (Wasm).
+- Wasm `.mxl` byte-identical full-out110 vs full-out111 (md5
+  `56c5941c661ba048b84cb652109fe427`, 38,762 B) — DIAG54 print-only on the
+  Wasm side.
+
+**Ruled out:** HEADS template matching; clef recognition (identical "no
+recognized header clef" warnings on staves 2/3/5/6 both sides, identical
+`.mxl` clefs); missing time signature as the note-loss cause (both sides
+warn "No target duration for measures", same assumed 4/4); barline grouping
+as the cause of note loss (S1 loses 12 notes with intact barlines).
+
+**Reframe from the item-2 stock-template experiment (same round):** the
+desktop harness with STOCK `TemplateFactory` on the hymnal page gives
+HEADS-END **584** (sys1 `{87, 82}`, sys2 `{82, 73}`, sys3 `{124, 136}`),
+vs 572 pre-rendered, with a different per-staff split — the template
+catalog DOES move the hymnal head population. The −28 is now most plausibly
+template-driven (request 57 → catalog 64, a 12% oversize template), the
+same mechanism proven on p13 (§46.2, ±24 heads). The exact template-vs-
+TeaVM split is **unmeasured**: the desktop stock SYMBOLS-END is blocked by
+the harness TEXTS crash (see below).
+
+**Blocker — desktop harness TEXTS crash on the hymnal page
+(template-independent):** `ArrayIndexOutOfBoundsException: Coordinate out
+of bounds!` in `SheetScanner.getCleanImage` → `BufferedImage.getRGB` (via
+`TextsCleaner.eraseInters`), after HEADS-END printed, before SYMBOLS/
+MEASURES — so no desktop SYMBOLS-END/COLUMN reference exists yet, with
+either template variant (`phase56/desktop-hymnal-noocr111.log`,
+`phase56/desktop-hymnal-stocktemplate.log`, both exit 1).
+`TestOcr.isAvailable()` always returns true, so TEXTS cannot be skipped
+via property. Batch skips TEXTS (no crash); Wasm's BrowserOCR path does
+not hit it. Hymn control on the same `phase23/classes`: exit 0, `.mxl`
+md5 `9b058b42b4b0f22814cc428b6990a110` (known-good §41 value), all DIAG54
+lines present — the crash is hymnal-page-specific, not a harness/DIAG54
+regression. (The StemBuilder `TreeMap.get` NPEs in the hymn log are
+pre-existing Audiveris DEBUG-log formatting noise, non-fatal.)
+
+**Next diagnostic DIAG55:** same per-staff print at end of REDUCTION,
+MEASURES, CHORDS, CURVES (bracket the flip inside STEMS..SYMBOLS) +
+barline presence at end of GRID; plus identification of the
+out-of-bounds inter in the TEXTS crash to unblock the stock reference.
+
+### §46.2 Cantique p13/p01 desktop measure merging — verdict: Wasm is right; the desktop harness is the authoritative comparator
+
+**Deep diff (`phase56/cantique_deepdiff.py`):** key-aware exact scorer (GT
+pitches carry no key-signature accidentals; Db major fifths=−5 applies
+flats to B,E,A,D,G; per-bar exact = per-page exact, so no bar
+misalignment). GT p13: 160 notes / 8 bars; p01: 216 / 12 bars.
+- p13: desktop batch `.mxl` 124 pitched, key-aware exact 120; Wasm 158
+  pitched, exact 154. **Wasm's +34 are GT-correct** (154−120=34).
+- p01: desktop 149, exact 134; Wasm 158, exact 143. **Wasm's +9 are
+  GT-correct** (dropped m3's 8 notes + m1's 1).
+
+**Decomposition (desktop `.omr` model vs `.mxl`, resolving head-chord→head
+via `<containment>` relations):**
+- p13: desktop pipeline log says 8 raw measures [4+4]; `.omr` model has 8
+  measure-slots/part (1–4, 5, 6, 7, 7C), all 134 SIG heads placed in
+  measures. Desktop `.mxl` has 7 measures/part, 124 notes. Desktop SIG
+  has 24 fewer heads than Wasm (134 vs 158), concentrated in system 2
+  (voices bars 5/7/8: desktop SIG sys2 voice heads = 8 = bar 6 only;
+  organ sys2 34 vs Wasm 45). The stock pipeline loses 10 more heads
+  between SIG (134) and `.mxl` (124), all in the two "no correct rhythm"
+  stacks (#2P5 m2: model 12 → `.mxl` 4; #6P5 m6: model 8 → 6).
+- p01: SIGs agree (desktop 215 vs Wasm 216 heads); desktop model places
+  all 215. Both sides fail rhythm on all 12 stacks (identical
+  StackRhythm behaviour, §25.5 family); the stock exporter drops measure
+  3 wholesale (model 17 notes → 0; Wasm exports 8) and 1 more in m1.
+
+**Decisive harness experiments (same build, `phase56/`):**
+- Desktop harness (DesktopOcrExport + MxlWriter, pre-rendered templates)
+  on p13: **158 notes, per-part/per-measure counts identical to Wasm**;
+  HEADS-END 360 = Wasm's `STAVES 12 HEADS 360`; SYMBOLS-END 158 (sys1
+  {1=5,2=5,3=6,4=5,5=40,6=32}=93; sys2 {7=5,8=5,9=5,10=5,11=29,12=16}=65);
+  tripwire `requested 84 maps to desktop catalog 80` both sides; deep diff
+  vs Wasm `.musicxml`: tag counts identical, only source-path artefact
+  (Wasm hardcodes `/hymn-satb.png`) + ±1 px dynamics `default-y` / ±4 px
+  `relative-x` wobbles. 0 "no correct rhythm" stacks (Wasm log: 0).
+- Same harness on p01: **158 notes, 12 measures, per-measure counts
+  identical to Wasm** (incl. m3=8); HEADS-END total 517 = Wasm's
+  `STAVES 12 HEADS 517`. Tripwire `requested 83 maps to desktop catalog 80`.
+- **Root cause — the template (proven by controlled experiment):**
+  harness with **stock** `TemplateFactory` (pristine, compiled into
+  `phase23/classes`) gives HEADS-END 321, SYMBOLS-END 134 (sys1
+  {5,5,6,5,41,30}=92; sys2 {2,2,2,2,26,8}=42), and exports **124 notes
+  with per-measure counts identical to the batch `.mxl`** (2 "no correct
+  rhythm" stacks, #2 and #6 — matching the batch log). Batch rerun into
+  `/tmp/batch-p13-rerun` reproduced 124 exactly (deterministic, not a
+  flake). So: pre-rendered catalog templates (request 84 → catalog 80, 5%
+  undersize) find more heads than exact-size stock templates on p13; on
+  the hymnal page the direction reverses (request 57 → catalog 64, 12%
+  oversize; batch 125 vs harness/Wasm 97). The harness and Wasm agree
+  partly because they share the same template approximation.
+
+**Verdict:** Wasm is right on measure counts (8/12 = GT) and on the extra
+notes (GT-correct). **Authoritative comparator for the pipeline is the
+desktop harness (DesktopOcrExport + MxlWriter), NOT the desktop batch
+`.mxl`** — the stock JAXB ScoreExporter drops the 7C courtesy measure
+(p13) and rhythm-failed measure 3 (p01) and notes from rhythm-failed
+stacks, and the batch pipeline builds exact-size templates where
+harness/Wasm use the §36 pre-rendered catalog. For `.mxl`-level
+comparison, use the desktop harness (same MxlWriter both sides); the batch
+`.mxl` conflates pipeline behaviour with exporter behaviour and with
+template differences. Caveat to record: the harness shares Wasm's
+pre-rendered-template approximation, so harness==Wasm does not by itself
+prove the pipeline matches stock desktop — and the approximation is
+GT-favourable here (p13 key-aware exact 154 vs 120), so "fixing" the
+catalog toward exact sizes would make Wasm *worse* vs GT on this page.
+No catalog change in this round.
+
+**⚠️ State — restored:** `phase23/classes/org/audiveris/omr/image/TemplateFactory.class`
+held the **stock** version during the experiment; the patched (ROUND-12)
+`.class` was backed up at `phase56/TemplateFactory-patched.class` and
+**restored** (recompiled from `teavm/patched/src/.../TemplateFactory.java`;
+md5 `7cf8f9d0140f6c42e3b45b78ffc5ca2c` matches the backup). The p01 harness
+run after the restore (exit 0, 158 notes) re-verifies the harness.
+Related logs: `phase56/desktop-compile-stocktemplate.log`,
+`phase56/desktop-cantique-p13-stocktemplate.log`,
+`phase56/desktop-cantique-p13-stocktemplate.musicxml`,
+`phase56/desktop-cantique-p13-noocr111.{log,musicxml}`,
+`phase56/desktop-cantique-p01-noocr111.{log,musicxml}`,
+`phase56/desktop-hymnal-stocktemplate.log` (TEXTS crash, no `.musicxml` produced),
+`phase56/desktop-restore-template.log`, `phase56/cantique-p13.png`,
+`phase56/cantique-p01.png`, `phase56/hymnal.png`.
+
+### §46.3 Writer-path coverage as a WRITER test — verdict: verified, no fix needed (writer correct; the gap is pipeline-side)
+
+Grace/harmony/drums/measure-repeat emit nothing on EITHER side across the
+whole validation set (verified by grep over all `wasm92`/`wasm110`/
+`multi-page` `.mxl`/`.musicxml`; the one `measure-repeat` hit was a false
+positive — the string in the drum file's `<source>` path, not an element),
+and octave-shift `stop` is missing on both sides (`down` found on both).
+Route taken: synthetic Score → `MxlWriter.build` at unit level.
+
+**`WriterPathTest.java`** (`teavm-fork/phase23/src/teavm/`, harness-only —
+NOT part of the Wasm build): runs the desktop pipeline on the hymn PNG to
+PAGE, then mutates the in-memory Score/SIG with one instance of each
+unexercised path, and verifies `MxlWriter.build` emits the elements.
+Mutations are test-only (reflection on the protected `AbstractInter.shape`
+field; synthetic inters linked into the SIG; a subclass exposing the
+protected `OctaveShiftInter` geometry ctor). All 7 checks **PASS** on the
+first run (`phase56/writerpath-test.{log,musicxml}`, compile
+`phase56/writerpath-compile.log`):
+- `<grace>` ×1 — first head of system-1 chord 1 → `NOTEHEAD_BLACK_SMALL`
+  (`isSmallHead()` true).
+- `<harmony>` ×1 — `ChordNameInter` (C major: root-step C, kind major)
+  linked to chord 2 via `ChordNameRelation`.
+- `<unpitched>` ×40 — first-measure clef → `PERCUSSION_CLEF`, so
+  `Part.isDrumPart()` is true for the whole part.
+- `<measure-repeat type="start" slashes="1">` ×1 (measure 3) and
+  `<measure-repeat type="stop">` ×1 (measure 4) — `MeasureRepeatInter`
+  (`REPEAT_ONE_BAR`) in the measure of a mid-system chord; the writer
+  copies the preceding measure's content into the repeat measure.
+- `<octave-shift type="down" number="1" size="8">` ×1 and
+  `<octave-shift type="stop" number="1" size="8">` ×1 — 8va ALTA line from
+  chord 3 (LEFT) to chord 6 (RIGHT) with no extensions; `stop` is emitted
+  exactly when `os.getExtension(RIGHT) == null`.
+- Output parses as well-formed XML (`score-partwise`).
+
+**Interpretation:** `MxlWriter` handles all five paths correctly when the
+model contains them. The validation gap is **pipeline-side**: Audiveris
+never produces small-head grace chords, `ChordNameInter`,
+percussion-clef drum parts, or `MeasureRepeatInter` on those pages (the
+Ständchen grace notes are recovered as ordinary notes; the Jeanie chord
+symbols never become `ChordNameInter`; the drum page's part is never
+flagged as percussion). Octave-shift `stop` specifically requires an OS
+inter with no RIGHT extension; on real pages (Verborgenheit) the line
+extends past the last chord, so no `stop` is emitted — pipeline behaviour,
+not a writer bug. Verification is at the desktop level on shared
+`MxlWriter` source; these paths contain no TeaVM-sensitive operations
+(no reflection, no native calls — model reads + XML building).
+
+### §46.4 Cantique validity — verdict: diagnostics only, concluded — Audiveris behaviour identical on both sides
+
+Low validity is the StackRhythm family (§25.5), not a Wasm divergence.
+"No correct rhythm" stacks, desktop batch vs Wasm (existing logs):
+p01 12 = 12 (all 12 stacks fail both sides); p02 1 = 1; p03–p10 0 = 0;
+p11 1 (#1) vs 0; p12 2 (#3, #6) vs 1 (#3 — same stack fails both sides,
+#6 desktop-only); p13 2 (#2, #6) vs 0. Identical on 10/13 pages; the 3
+differing pages are the template-effect pages (§46.2). Validity rates:
+p01 24/98 vs 24/101 (24% both); p05 7/54 both; p13 20/39 (51%) vs 33/57
+(58%) — the gap follows the note-count gap, not a separate rhythm
+divergence. Organ triplets (349 `<Tuplet>` elements in the source) are
+hard for Audiveris on both sides. No fix in this round per the task; the
+divergence question is settled — improving Audiveris rhythm itself is out
+of scope. (Analysis record: `phase56/ITEM456_NOTES.md`.)
+
+### §46.5 Orchestral latency/memory — verdict: profile only, no optimisation
+
+36-part Beethoven 9 finale page, 2480×7319 px, 1 system, 36 staves, 2,089
+head candidates, SIG 4,261. Wasm wall 791.2 s vs desktop 91.0 s, peak RSS
+~1,079 MB. Per-step times from the existing Wasm log
+(`open-music/wasm110/orchestral-beethoven9-finale/wasm/*.log`):
+
+| span | Wasm | share |
+|---|---|---|
+| LOAD..HEADS | 128,493 ms | 16% |
+| STEMS..SYMBOLS | 656,768 ms | **83%** |
+| LINKS | 1,466 ms | |
+| RHYTHMS | 1,350 ms | |
+| PAGE | 14 ms | |
+| export | 1,172 ms | |
+| total main_ms | 790,280 ms | |
+
+Desktop same page (batch-log StepMonitoring timestamps): LOAD..HEADS-start
+23.5 s; HEADS..TEXTS 42.7 s; CURVES 6.5 s; SYMBOLS 6.0 s; LINKS 0.6 s;
+RHYTHMS+PAGE ~4.1 s; pipeline ~84 s. Wasm/desktop ratios: HEADS family
+×1.9; STEMS..SYMBOLS span ×52; LINKS ×2.4. The TeaVM penalty concentrates
+in the graph-heavy SYMBOLS span, not the pixel-heavy HEADS span.
+Template exact here (requested 92 → catalog 92), so the template is not a
+factor on this page.
+
+Scaling (Wasm SYMBOLS-span vs SIG size; Cantique pages have 4 systems,
+orchestral has 1 system of 36 staves): p05 SIG 619 → 12.8 s; p01 SIG
+1,199 → 23.9 s; p13 SIG 1,014 → 22.2 s; hymnal SIG 589 → 38.6 s (outlier —
+not a pure function of SIG size); orchestral SIG 4,261 → 656.8 s
+(154 ms/inter vs ~21 ms/inter on Cantique). Per staff: p01 2.0 s/staff vs
+orchestral 18.2 s/staff (×9.2 for ×3 staves — roughly quadratic in
+single-system graph size). No OOM; the run completed.
+**Next step if pursued (no optimisation this round):** split the SYMBOLS
+span with per-substep timing (STEMS/REDUCTION/MEASURES/CHORDS/CURVES/
+SYMBOLS) to name the exact substep before any optimisation. (Analysis
+record: `phase56/ITEM456_NOTES.md`.)
+
+### §46.6 Hymnal OCR recall (62.5%, 233/373 stanza words) — verdict: diagnostics only, localised to lyric attachment
+
+Misses are whole verse lines not picked up as text — localised to the
+**lyric-to-note attachment (x-slot mapping)**, not OCR capture and not
+TEXTS line classification. Evidence (OCR text
+`teavm-fork/phase23/hymnal289-ocr.txt`, 2,463 rows: 81 L, 456 W, 1,927 C;
+GT `open-music/hymnal/hymnal-am1874-p213-lyrics.json`, 11 stanzas × 6
+lines = 66 lines, 373 stanza words; output
+`open-music/wasm110/hymnal-am1874-p213/wasm-ocr/hymnal-am1874-p213-ocr.musicxml`,
+256 lyric elements on 18 of 98 notes):
+- **OCR stage: not the drop point.** Tesseract captured ALL 66 verse lines
+  (OCR lines 14–79; 380 verse words vs 373 GT words, with normal misreads:
+  'Otispring' for 'offspring', 'llc', 'ﬁrst', ligature/curly-quote
+  confusions). OCR lines 0–13 are the title/epigraph plus the music
+  staves misread as text fragments (lines 2–10); those contribute lyric
+  junk ('J', 'l', 'PART', 'II.').
+- **TEXTS classification: not the main drop point.** The words DO become
+  lyrics (256 elements, words from all 66 lines present). No stanza or
+  line is dropped wholesale at classification.
+- **Attachment: the drop point.** Multiset difference OCR verse words
+  (380) vs lyric elements (256): 128 words dropped. **64/128 (50%) are
+  the first or last word of their verse line** — x outside the note slots
+  of system 3 (before the first note / after the last note / in
+  inter-note gaps). Drops spread across all 11 stanzas and both columns;
+  no stanza wholly dropped (apparent whole-line drops on OCR lines 63 /
+  75 / 76 are a greedy-matching artefact of repeated words like 'Praise
+  and honour to the').
+- **Attachment shape:** all lyrics land on P2 (system-3 lower part),
+  measures 8–10, 18 notes, up to 24 lyrics per note, in vertical column
+  slices — each note takes all verse words whose x falls in its slot,
+  across all 66 lines. The verse text sits below the last system;
+  Audiveris attaches by x-proximity to that system's notes only. That is
+  the shape of this page (verses printed as text below the tune, not
+  underlaid), interacting with stock Audiveris TEXTS/LyricsBuilder
+  behaviour. No desktop OCR comparison exists (no Tesseract in this VM),
+  so this is a Wasm-only number — but the mechanism is stock Audiveris,
+  identical code on desktop.
+- **Next diagnostic if pursued:** instrument LyricsBuilder to log
+  per-word attach/drop decisions (x-range vs system), or run the same
+  page through desktop Tesseract + Audiveris TEXTS once Tesseract is
+  available, to confirm identical attachment. No behaviour change in this
+  round. (Analysis record: `phase56/ITEM456_NOTES.md`.)
+
+### §46.7 Artefacts and build state
+
+- `teavm-fork/phase56/` — `build111.log`, `spike111.log`
+  (full-out111 diagnostic build), `cantique_deepdiff.py`,
+  `desktop-cantique-p13-noocr111.{log,musicxml}`,
+  `desktop-cantique-p01-noocr111.{log,musicxml}`,
+  `desktop-cantique-p13-stocktemplate.{log,musicxml}`,
+  `desktop-compile-stocktemplate.log`, `desktop-restore-template.log`,
+  `TemplateFactory-patched.class` (backup of the ROUND-12 patched
+  `.class`; restored to `phase23/classes`, md5-verified),
+  `desktop-hymnal-noocr111.log` (TEXTS crash),
+  `desktop-hymnal-stocktemplate.{log,musicxml}` (TEXTS crash),
+  `hymnal.png`, `cantique-p01.png`, `cantique-p13.png` (PIL mode `L`
+  from the prep110 grey), `writerpath-compile.log`,
+  `writerpath-test.{log,musicxml}`, `ITEM456_NOTES.md`.
+- `teavm-fork/phase23/src/teavm/WriterPathTest.java` (+ compiled
+  `.class` in `phase23/classes`) — harness-only test, not in the Wasm build.
+- `teavm/patched/make_patches.py` ROUND 57 (DIAG54, print-only).
+- Builds: `full-out111/` (diagnostic, DIAG54 kept); `full-out110/`
+  (clean, current — unchanged). No clean build beyond full-out111.
+- Still open (unchanged): DIAG53 (BWV p14 +2), DIAG55 (hymnal flip
+  bracket + TEXTS-crash inter), real-browser Chrome run, upstream
+  filings (deferred), BrowserOCR follow-up, photometric recovery,
+  multi-file export N>1, Lindenbaum batch-vs-harness gap, Beethoven
+  typeset p165, StackRhythm wobbles, Beethoven p229 wall time (profiled
+  §46.5, not optimised). CheerpJ 5 remains the only working option.
+
+## §47 — DIAG55: hymnal −28 split MEASURED — 22 template + 6 gray, 0 Wasm-side; TEXTS crash solved (DIAG24 dead block); contained fix + clean build full-out113 (2026-11-11)
+
+**Verdict: (a) localised + contained fix applied.** The hymnal −28 is fully
+split, and there is no Wasm-side loss left: Wasm equals the pre-rendered
+desktop harness at every measured step, with identical checksums. The fix
+in this round is the removal of the ROUND 20 DIAG24 dead block that caused
+the harness TEXTS crash (harness-only artefact, stock-restoring). Clean
+build **full-out113** verified byte-identical and is the new current clean
+build; **full-out112** is the diagnostic build of this round (DIAG54+55
+kept, ROUND 58). DIAG55 is this round's number (verified fresh: no DIAG55
+print existed before it); next fresh DIAG is **DIAG56**.
+
+### §47.1 The measured split (pitched notes; heads in brackets)
+
+| Stage | Batch (max-RGB gray, stock tpl, stock exporter) | Harness stock (PIL-L gray, stock tpl) | Harness pre-rendered (PIL-L gray) | Wasm full-out112 (PIL-L gray) |
+|---|---|---|---|---|
+| HEADS-END | unmeasured (no DIAG in batch) | 584 | 572 | 572 |
+| REDUCTION-END | — | 118 | 97 | 97 |
+| MEASURES-END | — | 118 | 97 | 97 |
+| CHORDS-END | — | 119 (+1 s1) | 97 | 97 |
+| CURVES-END | — | 119 | 97 | 97 |
+| SYMBOLS-END | — (≈126 final SIG, see below) | 119 | 97 | 97 |
+| Export | **125 pitched / 126 notes, 12 meas/part** | BLOCKED (LINKS NPE, §47.5) | 97 / 98, 10 meas/part | 97 / 98, 10 meas/part |
+| Final SIG heads (`.omr`) | **126** (35 NOTEHEAD_BLACK + 91 NOTEHEAD_VOID) | — | — | — |
+
+Per-staff HEADS→REDUCTION (the flip lives inside STEMS, both worlds):
+pre-rendered {80,89,89,72,113,129}=572 → {13,11,16,16,22,19}=97 (losses
+−67/−78/−73/−56/−91/−110); stock {87,82,82,73,124,136}=584 →
+{16,20,18,21,20,23}=118 (losses −71/−62/−64/−52/−104/−113). StemsStep +
+SigReducer discard ~81% of head candidates on this page on both sides;
+the template moves how many survive (+21 stock at REDUCTION).
+
+**Split: 125 − 97 = 28 = 22 + 6.**
+- **22 template-driven:** stock SYMBOLS-END 119 vs pre-rendered 97 —
+  same PIL-L gray, same harness, only the TemplateFactory differs
+  (request 57 → catalog 64, 12% oversize). Measures 13 vs 11 likewise.
+- **6 gray-conversion-driven:** batch 125 pitched vs stock-harness 119
+  heads — same stock templates, same harness code path family; the
+  difference is the input gray. The batch input PNG is RGB; Audiveris
+  converts it with max-RGB ("Converting max RGB to gray", batch log),
+  while the prep grey (hence the harness PNG, the Wasm grey, and the
+  harness input) is PIL-L luma. The two grays differ on **all 2,338,180
+  pixels (max 22 levels)**. GRID already diverges on the gray alone:
+  spurious clusters destroyed **4 (batch) vs 2 (harness-stock,
+  harness-pre-rendered, Wasm)** — same templates in the stock pair, so
+  not template-driven. Corroboration: the ReductionStep stem free-length
+  median follows the gray, not the template — batch 32 px / 2.7
+  interlines = harness-stock 32 / 2.7, while harness-pre-rendered and
+  Wasm are both 33 / 2.8.
+- **0 Wasm-side:** Wasm == pre-rendered harness at HEADS (572, identical
+  per-staff checksums), REDUCTION, MEASURES, CHORDS, CURVES, SYMBOLS
+  (97, identical checksums throughout), GRID-END barlines (identical
+  x/staff lists), and the COLUMN dump to full float precision (S2
+  x=878.8752905097153, S3 x=340.4904514293648 on both sides). Tripwire
+  `requested 57 maps to desktop catalog 64` matches on both sides.
+- Head-level arithmetic: batch final SIG 126 heads vs Wasm 97 = 29
+  heads = 22 template + 7 gray (the 7th gray head is the batch's one
+  unpitched note: 126 notes vs 125 pitched). The stock-harness pitched
+  count is unmeasured (export blocked, §47.5), so the gray share is
+  stated pitched as ≥6, heads as 7.
+
+### §47.2 Barlines — template-driven, not a Wasm loss
+
+DIAG55 GRID-END (BarlineInter per system, x → staff list) is **identical
+on all four runs** (desktop pre-rendered, desktop stock, Wasm 112;
+batch has no DIAG print but its 13 raw measures agree with stock):
+sys1 `{73=[2], 74=[1], 395=[2], 396=[1], 644=[2], 645=[1], 652=[2],
+653=[1], 902=[1, 2], 1097=[1, 2], 1105=[1, 2]}`,
+sys2 `{75=[3, 4], 348=[4], 349=[3], 607=[3], 608=[4], 615=[3], 617=[4],
+877=[4], 878=[3], 1097=[3, 4], 1105=[3, 4]}`,
+sys3 `{74=[5, 6], 338=[5], 339=[6], 577=[5], 578=[6], 585=[5], 586=[6],
+844=[5, 6], 999=[5], 1000=[6], 1007=[5], 1008=[6], 1098=[5, 6],
+1106=[5, 6]}`. The two "missing" barlines (S2 x≈877 staff-4, S3
+x≈338 staff-5) are present at GRID on every side. They disappear
+between GRID and MEASURES in the pre-rendered world on BOTH desktop
+harness and Wasm (DIAG54 COLUMN groups=1 at S2 x=878.88 s3-only and S3
+x=340.49 s6-only, identical both sides), while the stock world keeps
+groups=2 at both columns (S2 x=878.48 s3+s4, S3 x=339.89 s5+s6) and
+13 raw measures [4, 4, 5] = batch (pre-rendered: 11 [4, 3, 4]). So
+the 13→11 measure regrouping is a template effect, not a Wasm loss.
+Note the GRID pattern: most barlines appear as adjacent ±1 px
+per-staff pairs (e.g. 877[4]/878[3]) — one physical barline detected
+per staff — which is why a per-staff loss at MEASURES reads as a
+"missing barline" in the COLUMN dump.
+
+### §47.3 TEXTS crash — solved: no inter, it was the DIAG24 dead block
+
+§46's open item ("identification of the out-of-bounds inter") is
+closed by inspection: there is no inter. The crash is
+`SheetScanner.getCleanImage:143`, i.e. the ROUND 20 DIAG24 block
+(§23 trap 4) calling `img.getRGB(xx, yy)` over the hard-coded ROI
+x 1854..1929, y 574..609. The hymnal page is 1196 px wide, so x=1854
+is out of bounds on the first pixel. §46's "(via
+TextsCleaner.eraseInters)" attribution was wrong — eraseInters is
+line 130; line 143 is the DIAG24 getRGB. The block computes bx/ix
+that nothing reads (dead code); it survived the §43 strip because
+tier 1 only removes `System.out` prints. It is the ONLY
+patched-vs-repo diff in `SheetScanner.java`, so removing it restores
+the repo-original `getCleanImage` exactly. **Fix (ROUND 58,
+`read_out` per §39.1): the block is removed.** The desktop harness
+now passes TEXTS on the hymnal, exit 0, both template variants.
+Harness-only artefact: the block exists only in patched sources
+(stock Audiveris has no such code, so the batch never crashed), and
+Wasm never surfaced it (the full-out110 run completed with the block
+present). The first ROUND 58 build attempt failed loudly on a
+truncated anchor (the block also contains a `DIAG24 cleanCheck`
+println my first anchor missed — the earlier diff view had been
+truncated at 60 lines); the anchor was corrected to the full block
+and the build passed.
+
+### §47.4 DIAG55 method (ROUND 58, `teavm/patched/make_patches.py`)
+
+Inserted after ROUND 57, before the ROUND 49 strip; diagnostic build
+run with `TEAVM_KEEP_DIAG=54,55` so DIAG54 prints survive alongside
+DIAG55. Six sites, print-only apart from §47.3:
+- `SheetScanner` (read_out): DIAG24 block removal (§47.3).
+- `GridStep.doit` end (read_out, R2 displayUI no-op only): DIAG55
+  GRID-END barline print (BarlineInter per system, TreeMap x →
+  staff list, sorted by x).
+- `ReductionStep.doEpilog` end (copy_src, pristine): DIAG55
+  REDUCTION-END per-staff HeadInter counts+checks (DIAG54 shape).
+- `MeasuresStep.doEpilog` end (copy_src, pristine): DIAG55
+  MEASURES-END.
+- `ChordsStep` (copy_src, pristine): new `doEpilog` override (class
+  has none) with DIAG55 CHORDS-END.
+- `CurvesStep.doit` end (copy_src, pristine): DIAG55 CURVES-END.
+All prints use fully-qualified names (no import edits). Build:
+`phase57/build112.log` (BUILD OK, patched/classes 394 — was 368,
++26 from the 4 new step files and their inner classes); Spike
+`phase57/spike112.log` (0 problems, 3,055 classes, 28,730 methods;
+full-out111 was 28,728 — +2 is the new ChordsStep doEpilog + one
+synthetic). Desktop harness: the 6 changed files compiled alone into
+`phase23/classes` (`phase57/desktop-compile-diag55.log`, javac exit
+0; none on the §29.2 excluded list). Stock-template experiment:
+patched `TemplateFactory.class` backed up to
+`phase57/TemplateFactory-patched112.class`, stock repo
+`TemplateFactory.java` compiled in (md5 f8e8674e…), run, then the
+patched class restored (md5 7cf8f9d0140f6c42e3b45b78ffc5ca2c =
+`phase56/TemplateFactory-patched.class`), and the hymn control
+re-run after the restore (exit 0, `.mxl` md5 9b058b42… = known-good
+§41 value).
+
+### §47.5 Residuals and notes (not regressions)
+
+- **Stock-harness LINKS NPE (new, stock Audiveris, not a TeaVM
+  defect):** the stock-template harness run exits 1 in LINKS
+  doEpilog — `SlurInter.isSpaceClear:754` ← `checkStaffTie:447` ←
+  `LinksStep.doEpilog:112`: `Part.getMeasureAt(Point2D)` returns null
+  for a slur point, i.e. a slur falls outside all measures in the
+  stock-template SIG. The batch does not hit it (different SIG via
+  the gray) and Wasm does not hit it (pre-rendered SIG completes
+  LINKS). It blocks the stock-harness export, which is why the stock
+  pitched count is unmeasured (§47.1). No fix in this round — it is a
+  stock-Audiveris robustness gap (getMeasureAt-null), out of scope
+  for the TeaVM fork; candidate for the deferred upstream list, as an
+  Audiveris issue, not a TeaVM issue. It does not affect the split:
+  the split is measured at SYMBOLS-END, before LINKS.
+- **+1 head at CHORDS, stock world only:** REDUCTION 118 → CHORDS
+  119 (staff 1, check 13394 → 13945); pre-rendered is flat 97 → 97.
+  One HeadInter appears between REDUCTION and CHORDS in the stock
+  world. Not pursued to the inter level — it moves the template
+  share from 21 (at REDUCTION) to 22 (at SYMBOLS) and changes
+  nothing else.
+- **Lindenbaum batch-vs-harness gap (§46 open item):** the hymnal
+  residual shows batch-vs-harness gaps can come from the gray
+  conversion alone (max-RGB vs PIL-L). Before treating the
+  Lindenbaum gap as a pipeline divergence, check whether its batch
+  and harness inputs differ the same way.
+- **Strip note for a future round:** the DIAG24 block survived the
+  §43 strip because it contains no println — only a `println` was
+  stripped from it in clean builds, leaving the crashing loops.
+  A future strip pass could flag leftover `// DIAG<digit>` comment
+  blocks whose code has no live use; not done here.
+
+### §47.6 Fix applied — clean build full-out113
+
+The §47 round's code change is the DIAG24 dead-block removal
+(stock-restoring, output-neutral by construction). Verification:
+- Hymnal Wasm full-out112: `.mxl` md5
+  `56c5941c661ba048b84cb652109fe427` (38,762 B) — **byte-identical to
+  full-out110/111**.
+- Controls on full-out112 (no-OCR): hymn `75637092…` (44,105 B),
+  Hallelujah SATB `126771ec…` (105,434 B), Lindenbaum `dbd546ba…`
+  (99,305 B) — all byte-identical to the full-out110 known-good
+  values.
+- Desktop hymn control on the new `phase23/classes`: exit 0,
+  `.mxl` md5 `9b058b42…` — known-good §41 value.
+- **Clean build full-out113** (`./build.sh` with no
+  `TEAVM_KEEP_DIAG`; `phase57/build113.log`, strip verified: 0 live
+  DIAG printlns in patched/src, DIAG24 block gone; Spike
+  `phase57/spike113.log`, 0 problems, 3,055 classes, 28,730
+  methods): hymnal + all three controls **byte-identical to
+  full-out112** (hymnal `56c5941c…`, hymn `75637092…`, Hallelujah
+  `126771ec…`, Lindenbaum `dbd546ba…`).
+- **full-out113 is the new current clean build.** full-out112
+  remains the diagnostic build of this round (DIAG54+55 kept);
+  full-out110 is superseded (its Wasm output is byte-identical to
+  full-out113 on all four verified pages; the only code delta is
+  the DIAG24 removal).
+
+### §47.7 Artefacts and build state
+
+- `teavm-fork/phase57/` — `build112.log`, `spike112.log`,
+  `build113.log`, `spike113.log`, `desktop-compile-diag55.log`,
+  `desktop-hymnal-noocr112.{log,musicxml}` (pre-rendered harness,
+  exit 0, 97 pitched / 98 notes, 38,643 B),
+  `desktop-hymnal-stocktemplate112.log` (stock harness, LINKS NPE,
+  no `.musicxml`; DIAG55 lines through SYMBOLS-END),
+  `desktop-compile-stocktemplate112.log`,
+  `TemplateFactory-patched112.class` (backup of the patched
+  `.class`; restored to `phase23/classes`, md5-verified),
+  `desktop-hymn-noocr112.{log,musicxml}` (control, md5 `9b058b42…`),
+  `run-hymnal-noocr112.log`, `wasm-hymnal-noocr112.musicxml` (md5
+  `56c5941c…`), `run-hymn-112.log`,
+  `wasm-hymn-noocr112.musicxml`, `run-hallelujah-satb-112.log`,
+  `wasm-hallelujah-satb-noocr112.musicxml`,
+  `run-lindenbaum-112.log`, `wasm-lindenbaum-noocr112.musicxml`,
+  `run-hymnal-noocr113.log`, `wasm-hymnal-noocr113.musicxml`,
+  `run-hymn-113.log`, `wasm-hymn-noocr113.musicxml`,
+  `run-hallelujah-satb-113.log`,
+  `wasm-hallelujah-satb-noocr113.musicxml`,
+  `run-lindenbaum-113.log`, `wasm-lindenbaum-noocr113.musicxml`.
+- `teavm/patched/make_patches.py` ROUND 58 (DIAG55 + DIAG24 removal).
+- Builds: **full-out113** (clean, current); **full-out112**
+  (diagnostic, DIAG54+55 kept); full-out110 superseded (output-identical
+  on all verified pages); full-out111 diagnostic-only (DIAG54).
+- Still open (unchanged except DIAG55 now done): DIAG53 (BWV p14 +2),
+  real-browser Chrome run, upstream filings (deferred; plus the
+  §47.5 LinksStep getMeasureAt-null stock robustness note as an
+  Audiveris candidate, not TeaVM), BrowserOCR follow-up, photometric
+  recovery, multi-file export N>1, Lindenbaum batch-vs-harness gap
+  (re-examine via the gray-conversion lens, §47.5), Beethoven
+  typeset p165, StackRhythm wobbles, Beethoven p229 wall time
+  (profiled §46.5, not optimised). CheerpJ 5 remains the only working
+  option.
