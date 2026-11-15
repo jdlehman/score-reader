@@ -3,15 +3,31 @@
 // 70 dpi, PSM from Audiveris, L/W/C rows BrowserOCR.parse consumes),
 // adapted to Node: the grey image is PNG-encoded here (tesseract.js in
 // Node takes a PNG/JPEG buffer; there is no OffscreenCanvas).
-// Language data is downloaded by tesseract.js on first use (~6-15 MB
-// per language, cached afterwards); a failed pack falls back to English
-// and warns, never stopping the read.
+// Language data is the page's own (node_modules/@tesseract.js-data, as
+// build.sh copies it); a failed pack falls back to English and warns,
+// never stopping the read.
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 import Tesseract from 'tesseract.js';
 
 const DPI = 70;
-/** Where tesseract.js keeps the language data it downloads (not the current folder). */
+/** Where tesseract.js keeps the language data it has read (not the current folder). */
 const CACHE = new URL('../../.work/tessdata-cache', import.meta.url).pathname;
+/**
+ * The language data the page serves (build.sh copies it to dist/tessdata/ from these packages),
+ * gathered in one folder as tesseract.js wants it, so a read here uses the same data, not a
+ * download.
+ */
+const LANG_PATH = new URL('../../.work/tessdata', import.meta.url).pathname;
+function langPathFor(langs) {
+    mkdirSync(LANG_PATH, { recursive: true });
+    for (const lang of langs) {
+        const to = `${LANG_PATH}/${lang}.traineddata.gz`;
+        const from = new URL(`../../node_modules/@tesseract.js-data/${lang}/4.0.0/${lang}.traineddata.gz`, import.meta.url).pathname;
+        if (!existsSync(to) && existsSync(from)) copyFileSync(from, to);
+    }
+    return LANG_PATH;
+}
 const LEGACY = 0;
 
 let worker = null;
@@ -72,11 +88,12 @@ async function startOcr(spec) {
             legacyCore: true,
             legacyLang: true,
             cachePath: CACHE,
+            langPath: langPathFor(langs),
         });
     } catch (e) {
         if (want !== 'eng') {
             console.warn(`Tesseract data for '${want}' could not load, falling back to English:`, e.message);
-            worker = await Tesseract.createWorker('eng', LEGACY, { legacyCore: true, legacyLang: true, cachePath: CACHE });
+            worker = await Tesseract.createWorker('eng', LEGACY, { legacyCore: true, legacyLang: true, cachePath: CACHE, langPath: langPathFor(['eng']) });
             workerSpec = 'eng';
             return worker;
         }

@@ -9,12 +9,13 @@ cd "$(dirname "$0")/.."
 J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) # macOS or Linux
 L=.work/teavm-lib # TeaVM's jars and the source of the classes teavm/fork/ fixes (setup.sh)
 W=${TEAVM_WORK:-.work/teavm} # everything built here (TEAVM_WORK to build elsewhere)
+P=${PATCHED:-.work/patched.jar} # our patched classes (PATCHED for others: a change to compare)
 ASM="$L/asm-9.10.1.jar:$L/asm-tree-9.10.1.jar"
 # TeaVM's jars to compile against: not its source jars, or javac compiles from them (when they look
 # newer than the classes, as they can on a fresh checkout) and wants their build's libraries
 LIB=$(ls $L/*.jar | grep -v -- '-sources\.jar$' | paste -sd: -)
 TEAVM_JARS="$L/teavm-interop-0.16.0.jar:$L/teavm-jso-0.16.0.jar:$L/teavm-jso-apis-0.16.0.jar:$L/teavm-jso-impl-0.16.0.jar:$L/teavm-metaprogramming-api-0.16.0.jar:$L/teavm-metaprogramming-impl-0.16.0.jar:$L/teavm-platform-0.16.0.jar"
-[ -f .work/patched.jar ] || { echo "run ./build.sh first: TeaVM's build uses its .work/patched.jar" >&2; exit 1; }
+[ -f "$P" ] || { echo "run ./build.sh first: TeaVM's build uses its .work/patched.jar" >&2; exit 1; }
 rm -rf $W && mkdir -p $W
 jc() { "$J/javac" -nowarn "$@" > $W/javac.log 2>&1 || { cat $W/javac.log >&2; exit 1; }; }
 
@@ -80,7 +81,7 @@ cp -R teavm/policy/src/META-INF $W/policy/
   echo $W/shims.jar; echo $W/policy
   echo $W/fork-classlib; echo $L/teavm-classlib-0.16.0.jar; echo $W/fork-core; echo $L/teavm-core-0.16.0.jar
   echo "$TEAVM_JARS" | tr ':' '\n'
-  echo $W/classes; echo .work/patched.jar
+  echo $W/classes; echo "$P"
   ls $W/lib-patched/*.jar
   echo "$PROG"
 } > $W/classpath.txt
@@ -98,7 +99,7 @@ cp teavm/runtime.mjs $W/out/
 # From the smallest heads Audiveris reads (staff lines 11 pixels apart) to the biggest in a page of
 # 4096 pixels; Leland for the second whole-note match (NOTES.md).
 mkdir -p $W/dump
-jc -proc:none -cp ".work/patched.jar:.work/lib/*" -d $W/dump teavm/generate/TemplateDump.java
-"$J/java" -Djava.awt.headless=true -cp ".work/patched.jar:.work/lib/*:$W/dump" TemplateDump $W/out/templates 32 200 Bravura Leland > $W/dump/log.txt 2>&1 \
+jc -proc:none -cp "$P:.work/lib/*" -d $W/dump teavm/generate/TemplateDump.java
+"$J/java" -Djava.awt.headless=true -cp "$P:.work/lib/*:$W/dump" TemplateDump $W/out/templates 32 200 Bravura Leland > $W/dump/log.txt 2>&1 \
   || { tail -20 $W/dump/log.txt >&2; exit 1; }
 echo "teavm: $(du -h $W/out/classes.wasm | cut -f1) $(grep -o 'Classes compiled: [0-9]*' $W/compile.log), $(ls $W/out/templates | wc -l | tr -d ' ') template files"

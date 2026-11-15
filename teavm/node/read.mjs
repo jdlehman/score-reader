@@ -2,10 +2,12 @@
 // Read grey pages with the TeaVM build in Node, as the page's worker does (app/teavm.js).
 //   node --experimental-wasm-exnref teavm/node/read.mjs <out.musicxml> <page.grey> <page.json> [<page.grey> <page.json>]...
 // Each page is its grey pixels (a byte each) and a JSON file with its width and height.
-// OCR=deu (or eng, fra, ...) reads the words too, with tesseract.js; without it, words are left out
-// (as the corpus reads). WASM=<dir> reads with another build than .work/teavm/out.
+// OCR=deu (or eng, fra, ...) reads the words too, with tesseract.js, as the page does (the corpus
+// passes each case's language); without it, words are left out. WASM=<dir> reads with another
+// build than .work/teavm/out.
 // A score with several movements is written as <out>.mvt1.musicxml, <out>.mvt2.musicxml, ...
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readScore } from '../../app/teavm.js'
 import { READING } from '../../app/settings.js'
@@ -16,7 +18,7 @@ if (!out || !files.length || files.length % 2) {
   process.exit(2)
 }
 const root = fileURLToPath(new URL('../../', import.meta.url))
-const dir = process.env.WASM ?? `${root}.work/teavm/out`
+const dir = resolve(process.env.WASM ?? `${root}.work/teavm/out`)
 const { load } = await import(`${dir}/runtime.mjs`)
 const pages = []
 for (let i = 0; i < files.length; i += 2) {

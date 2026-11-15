@@ -1,16 +1,25 @@
 # Test corpus
 
-Pages that `test/corpus.mjs` reads with desktop Audiveris (patched and set up as the page reads)
-and scores against their answers (`test/score.mjs`). A page with a `.json` next to it has an
-answer: every pitched note of every part, by bar, with its syllable and its onset (where in the
-bar it starts, in quarter notes; the rhythm column scores these). A page without one is checked
-only for being read, and for its part count.
+Pages that `test/corpus.mjs` reads as the site does, and scores against their answers
+(`test/score.mjs`). As the site does: the WebAssembly build the site serves, run in Node (its
+output is byte for byte Chrome's), from the grey pixels the site would hand it (an image made grey
+by `test/grey.py`, a PDF drawn by the site's own `app/pdf.js` in Chrome by `test/pdf-grey.mjs`),
+with the words read by tesseract.js in the language a reader would pick (`languageOf` in
+`test/cases.mjs`). A page with a `.json` next to it has an answer: every pitched note of every
+part, by bar, with its syllable and its onset (where in the bar it starts, in quarter notes; the
+rhythm column scores these). A page without one is checked only for being read, and for its part
+count.
+
+`ENGINE=desktop` reads with desktop Audiveris instead: a few times faster, with Audiveris's logs and
+.omr files for finding a fault, but without the words, which also changes what it reads (the
+text step can take marks for words, or words for marks). So a change is judged as the site reads.
+Each engine has its baseline: `baseline.json` the site's, `baseline-desktop.json` the desktop's.
 
 The onsets come from the MusicXML each page was drawn from: `node test/onsets.mjs <answer.json>
 <source.musicxml> --write` pairs each answer note with the source's, and writes nothing unless
 every bar has the same notes in both.
 
-    node test/corpus.mjs                       # read, score, compare with baseline.json
+    node test/corpus.mjs                       # read, score, compare with baseline.json (~70 min)
     EXTRA=~/Downloads/choral-test-set node test/corpus.mjs   # also the pieces kept out of git
     HOLDOUT=only node test/corpus.mjs          # the held-out pages, to confirm a fix
 
@@ -20,10 +29,11 @@ README has the rules.
 
 **Judging a change.** The report above marks a page worse if any score drops by a point, which
 catches what broke but can't weigh it: one bar fixed and one broken look the same as nothing. So
-read the corpus with and without the change (`RUN=` for each, the setting in `CONSTANTS=` or
-`PATCHED=`) and compare the two runs bar by bar:
+read the corpus with and without the change (`RUN=` for each; the change's WebAssembly build made
+with `PATCHED=<its jar> TEAVM_WORK=.work/teavm-after teavm/build.sh` and read with `WASM=`) and
+compare the two runs bar by bar:
 
-    RUN=before node test/corpus.mjs; RUN=after PATCHED=... node test/corpus.mjs
+    RUN=before node test/corpus.mjs; RUN=after WASM=.work/teavm-after/out node test/corpus.mjs
     EXTRA=... node test/compare.mjs before after   # VERBOSE=1 lists each bar that changed
 
 It counts the bars (one answer part's bar) each run gets right, separately for sung parts and

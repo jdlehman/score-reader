@@ -51,6 +51,42 @@ export function allCases(holdout = !!process.env.HOLDOUT) {
   return all.filter(c => !c.name.startsWith('extra/') || !all.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input)))
 }
 
+/** Short words common in each language the page offers (app/language.js), lower case. */
+const WORDS = {
+  eng: 'the and of to my thy thee is in with a his he i you all that be for o our we me',
+  deu: 'der die das und ich du nicht mein dein im ist zu mit den dem ein sie wie so auf mir dich mich es',
+  fra: 'le la les et de des je tu mon ton que qui un une dans est pour pas au du en ma ta',
+  ita: 'il lo la le e di che non mi ti per un una con del al nel sei',
+  spa: 'el la los las y de que no mi tu por un una con del al en es',
+  lat: 'et in dominus domine deus qui tu est nobis dei gloria sanctus agnus pacem eleison kyrie te cum ad',
+}
+/**
+ * The corpus's pieces by the language of their words, first match first. A guess from an answer
+ * can't tell a word from a syllable (answers keep no hyphens): "Hal-le-lu-jah" counted as French.
+ */
+const NAMED = [
+  [/faure-apres|cantique/i, 'fra'],
+  [/faure-sanctus|faure-agnus|mozart-kyrie|requiem/i, 'lat'],
+  [/anthem|hymnal|chord-song/i, 'eng'],
+  [/lieder-|gute-nacht|staendchen|verborgenheit|beethoven|bwv|chorale/i, 'deu'],
+]
+
+/**
+ * The language a reader would pick on the page for a case's words: by its name, for the corpus's
+ * pieces; else the one whose short words its answer's lyrics use most (the held-out songs); else
+ * the page's default, English.
+ */
+export function languageOf(c) {
+  const named = NAMED.find(([re]) => re.test(c.name))
+  if (named) return named[1]
+  if (!c.answer) return 'eng'
+  const words = JSON.parse(readFileSync(c.answer, 'utf8')).parts
+    .flatMap(p => (p.notes ?? []).map(n => n.lyric?.toLowerCase().replace(/[^\p{L}]/gu, '')).filter(Boolean))
+  const count = code => { const set = new Set(WORDS[code].split(' ')); return words.filter(w => set.has(w)).length }
+  const [best] = Object.keys(WORDS).map(code => [code, count(code)]).sort((a, b) => b[1] - a[1])
+  return best[1] ? best[0] : 'eng'
+}
+
 /** A case's read in a batch folder: its MusicXML files, one a movement. */
 export function reads(dir, c) {
   const radix = basename(c.input, extname(c.input))
