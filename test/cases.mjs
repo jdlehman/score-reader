@@ -1,0 +1,83 @@
+// Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
+// The corpus's cases and their reads, for test/corpus.mjs (reads and scores them) and
+// test/compare.mjs (compares two runs bar by bar).
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { basename, dirname, extname, join, relative, resolve } from 'node:path'
+import { musicXmlText, parseMusicXml } from './score.mjs'
+
+export const ROOT = resolve(import.meta.dirname, '..')
+
+const INPUT = /\.(png|jpe?g|tiff?|pdf)$/i
+
+/** An answer file: <name>.gt.json, or <name>.json if it lists parts (not just an image's size). */
+function answerFor(input) {
+  for (const f of [input.replace(INPUT, '.gt.json'), input.replace(INPUT, '.json')]) {
+    try {
+      if (Array.isArray(JSON.parse(readFileSync(f, 'utf8')).parts)) return f
+    } catch {}
+  }
+  return null
+}
+
+/** Cases in a corpus folder: { name, input, answer? }, named by their path in it. */
+function cases(dir, prefix = '') {
+  const out = []
+  const walk = d => {
+    for (const f of readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const path = join(d, f.name)
+      if (f.isDirectory()) walk(path)
+      else if (INPUT.test(f.name)) {
+        const name = prefix + relative(dir, path).replace(INPUT, '')
+        let answer = answerFor(path)
+        if (!answer && basename(d) === 'photo-synthetic') answer = answerFor(join(dirname(d), 'pages', basename(f.name).replace(/-photo-\w+\.\w+$/, '.png')))
+        out.push({ name, input: path, answer })
+      }
+    }
+  }
+  walk(dir)
+  return out
+}
+
+/**
+ * Every case: test/corpus, then EXTRA's (leaving out its copies of pieces the repo has), then the
+ * held-out pages if asked for (HOLDOUT; test/holdout/README.md).
+ */
+export function allCases(holdout = !!process.env.HOLDOUT) {
+  const all = [
+    ...cases(join(ROOT, 'test', 'corpus')),
+    ...(process.env.EXTRA ? cases(resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)), 'extra/') : []),
+    ...(holdout ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
+  ]
+  return all.filter(c => !c.name.startsWith('extra/') || !all.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input)))
+}
+
+/** A case's read in a batch folder: its MusicXML files, one a movement. */
+export function reads(dir, c) {
+  const radix = basename(c.input, extname(c.input))
+  const where = [join(dir, radix), dir]
+  for (const d of where) {
+    if (!existsSync(d)) continue
+    const files = readdirSync(d).filter(f => /\.(mxl|musicxml)$/.test(f) && (f === radix + '.mxl' || f === radix + '.musicxml' || f.startsWith(radix + '.mvt'))).sort()
+    if (files.length) return files.map(f => join(d, f))
+  }
+  return []
+}
+
+/** Joins movements into one list of parts, measure lists end to end, for scoring. */
+export function joined(files) {
+  const xmls = files.map(f => musicXmlText(readFileSync(f)))
+  if (xmls.length === 1) return xmls[0]
+  // score each movement's parts as continuing the first's, by position (good enough for a check)
+  const parts = xmls.map(parseMusicXml)
+  const widest = parts.reduce((a, b) => (b.length > a.length ? b : a))
+  const out = widest.map((p, i) => ({ ...p, measures: parts.flatMap(ps => ps[i]?.measures ?? []) }))
+  return toXml(out)
+}
+
+/** Minimal MusicXML from parsed parts (only what score.mjs reads back). */
+function toXml(parts) {
+  const steps = ['C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B']
+  const alters = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
+  const note = n => `<note><pitch><step>${steps[n.midi % 12]}</step>${alters[n.midi % 12] ? '<alter>1</alter>' : ''}<octave>${Math.floor(n.midi / 12) - 1}</octave></pitch>${n.lyric ? `<lyric><text>${n.lyric}</text></lyric>` : ''}</note>`
+  return `<score-partwise><part-list>${parts.map(p => `<score-part id="${p.id}"><part-name>${p.name}</part-name></score-part>`).join('')}</part-list>${parts.map(p => `<part id="${p.id}">${p.measures.map(m => `<measure>${m.notes.map(note).join('')}</measure>`).join('')}</part>`).join('')}</score-partwise>`
+}

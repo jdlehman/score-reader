@@ -2,7 +2,7 @@
 // The corpus scorer: a dropped measure costs only itself, and jumbled parts show in inPart.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { score } from './score.mjs'
+import { bars, score } from './score.mjs'
 
 const STEP = ['C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B']
 const note = midi => `<note><pitch><step>${STEP[midi % 12]}</step>${[1, 3, 6, 8, 10].includes(midi % 12) ? '<alter>1</alter>' : ''}<octave>${Math.floor(midi / 12) - 1}</octave></pitch></note>`
@@ -91,4 +91,30 @@ test('a forward moves the next note on; grace notes take no time', () => {
 
 test('rhythm is not scored without answer onsets', () => {
   assert.equal(score(answer, xml([upper, lower])).rhythm, null)
+})
+
+// bars(): what test/compare.mjs counts, a row an answer part and bar
+const row = (rows, part, bar) => rows.find(r => r.part === part && r.bar === bar)
+
+test('bars: a perfect read has nothing missing or extra', () => {
+  const rows = bars(answer, xml([upper, lower]))
+  assert.equal(rows.length, 8)
+  assert.ok(rows.every(r => r.found === r.want && r.extra === 0))
+})
+
+test('bars: a missed note and a false one show in their part and bar', () => {
+  const rows = bars(answer, xml([[upper[0], [76], upper[2], [...upper[3], 60]], lower]))
+  assert.deepEqual([row(rows, 0, 2).want, row(rows, 0, 2).found, row(rows, 0, 2).extra], [2, 1, 0])
+  assert.deepEqual([row(rows, 0, 4).found, row(rows, 0, 4).extra], [2, 1])
+  assert.equal(row(rows, 1, 2).found, 1)
+})
+
+test('bars: a note at the wrong beat is found but not on time', () => {
+  const r = row(bars(timedAnswer, timedXml([timedNote(72, 2) + timedNote(76, 2, '<chord/>') + timedNote(79, 4) + '<backup><duration>6</duration></backup>' + timedNote(48, 8)])), 0, 1)
+  assert.deepEqual([r.want, r.timed, r.found, r.onTime], [4, 4, 4, 3])
+})
+
+test('bars: a read part paired with no answer part is all extra', () => {
+  const rows = bars(answer, xml([upper, lower, [[60], [], [], []]]))
+  assert.deepEqual(rows.filter(r => r.part === -1).map(r => [r.bar, r.extra]), [[1, 1]])
 })

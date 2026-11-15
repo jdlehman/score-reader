@@ -208,23 +208,41 @@ function lcs(a, b) {
   return prev[b.length]
 }
 
-/** Scores one read against one answer. */
-export function score(answer, readXml) {
+/**
+ * What score() and bars() share: the read's parts, its measures lined up with the answer's bars
+ * (measureOf), and each answer part paired with a read part (of, gain).
+ */
+function lineUp(answer, readXml) {
   const parts = parseMusicXml(readXml)
   // pitched notes only: an unpitched (drum) note has no pitch to find
   answer = { ...answer, parts: answer.parts.map(p => ({ ...p, notes: p.notes.filter(n => Number.isFinite(n.midi)) })) }
   const total = answer.parts.reduce((s, p) => s + p.notes.length, 0)
   const readTotal = parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.length, 0), 0)
-  if (!total) {
-    // nothing pitched to score (a drum page): only whether it was read, and its parts
-    return { notes: null, precision: null, extra: readTotal, inPart: null, rhythm: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
-  }
+  if (!total) return { answer, parts, total, readTotal }
   const count = answer.bars ?? Math.max(...answer.parts.flatMap(p => p.notes.map(n => n.bar)))
   // one line-up for the whole read: measure i of every part stands for the same answer bar
   const pitches = (rp, i) => (i == null ? [] : (rp.measures[i]?.notes ?? []).map(x => x.midi))
   const stacks = Array.from({ length: Math.max(0, ...parts.map(p => p.measures.length)) }, (_, i) => parts.flatMap(rp => pitches(rp, i)))
   const allBars = answerBars(answer.parts.flatMap(p => p.notes))
   const measureOf = align(allBars, stacks, count)
+  // each answer part with a read part of its own: the pairing that finds the most notes
+  const gain = answer.parts.map(ap => {
+    const bars = answerBars(ap.notes)
+    return parts.map(rp => [...bars].reduce((s, [bar, want]) => s + common(want, pitches(rp, measureOf.get(bar))), 0))
+  })
+  const of = assign(gain)
+  return { answer, parts, total, readTotal, count, stacks, allBars, measureOf, gain, of }
+}
+
+/** Scores one read against one answer. */
+export function score(answer, readXml) {
+  const up = lineUp(answer, readXml)
+  const { parts, total, readTotal, count, stacks, allBars, measureOf, gain, of } = up
+  answer = up.answer // its pitched notes
+  if (!total) {
+    // nothing pitched to score (a drum page): only whether it was read, and its parts
+    return { notes: null, precision: null, extra: readTotal, inPart: null, rhythm: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
+  }
   let notes = 0
   for (const [bar, want] of allBars) notes += common(want, stacks[measureOf.get(bar)] ?? [])
   // rhythm: the same, but each note must start where the answer's does (answers with onsets only)
@@ -234,12 +252,6 @@ export function score(answer, readXml) {
     const i = measureOf.get(bar)
     if (i != null) rhythm += common(want, parts.flatMap(rp => (rp.measures[i]?.notes ?? []).map(timed)))
   }
-  // each answer part with a read part of its own: the pairing that finds the most notes
-  const gain = answer.parts.map(ap => {
-    const bars = answerBars(ap.notes)
-    return parts.map(rp => [...bars].reduce((s, [bar, want]) => s + common(want, pitches(rp, measureOf.get(bar))), 0))
-  })
-  const of = assign(gain)
   let inPart = 0
   let lyricsTotal = 0
   let lyricsFound = 0
@@ -265,4 +277,42 @@ export function score(answer, readXml) {
     measures: stacks.length,
     answerBars: count,
   }
+}
+
+/**
+ * One read against one answer, bar by bar and part by part (test/compare.mjs): for each answer
+ * part and bar, its notes (want, timed: those with an onset), how many of them the read part
+ * paired with it has in that bar (found, by pitch), how many of those start on time (onTime), and
+ * how many notes that read part has there that aren't in the answer part's bar (extra). A read
+ * part paired with none adds rows with part -1, all its notes extra. Bars the read has no measure
+ * for find nothing; measures it has between bars aren't counted.
+ */
+export function bars(answer, readXml) {
+  const { answer: pitched, parts, total, count, measureOf, of } = lineUp(answer, readXml)
+  if (!total) return []
+  const notesOf = (rp, bar) => {
+    const i = measureOf.get(bar)
+    return i == null || !rp ? [] : (rp.measures[i]?.notes ?? [])
+  }
+  const rows = []
+  pitched.parts.forEach((ap, a) => {
+    const byBar = new Map()
+    for (const n of ap.notes) byBar.set(n.bar, [...(byBar.get(n.bar) ?? []), n])
+    for (let bar = 1; bar <= count; bar++) {
+      const want = byBar.get(bar) ?? []
+      const got = notesOf(parts[of[a]], bar)
+      const found = common(want.map(n => n.midi), got.map(n => n.midi))
+      const withOnset = want.filter(n => Number.isFinite(n.onset))
+      rows.push({ part: a, name: ap.name, bar, want: want.length, timed: withOnset.length, found, onTime: common(withOnset.map(timed), got.map(timed)), extra: got.length - found })
+    }
+  })
+  const paired = new Set(of)
+  parts.forEach((rp, r) => {
+    if (paired.has(r)) return
+    for (let bar = 1; bar <= count; bar++) {
+      const extra = notesOf(rp, bar).length
+      if (extra) rows.push({ part: -1, name: rp.name, bar, want: 0, timed: 0, found: 0, onTime: 0, extra })
+    }
+  })
+  return rows
 }

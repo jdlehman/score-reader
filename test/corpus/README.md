@@ -18,6 +18,20 @@ Fixes are made against these pages, so they can come to fit them. `test/holdout/
 pages, drawn at random, that no fix is made against: a fix is confirmed there once, and its
 README has the rules.
 
+**Judging a change.** The report above marks a page worse if any score drops by a point, which
+catches what broke but can't weigh it: one bar fixed and one broken look the same as nothing. So
+read the corpus with and without the change (`RUN=` for each, the setting in `CONSTANTS=` or
+`PATCHED=`) and compare the two runs bar by bar:
+
+    RUN=before node test/corpus.mjs; RUN=after PATCHED=... node test/corpus.mjs
+    EXTRA=... node test/compare.mjs before after   # VERBOSE=1 lists each bar that changed
+
+It counts the bars (one answer part's bar) each run gets right, separately for sung parts and
+accompaniment, and the notes missing, at the wrong time, or extra. Judge the sung parts first:
+they are what a singer reads. Audiveris doesn't read every page exactly the same way twice
+(between two runs of one build, the anthem p02 had one alto note at another time), so a note or
+two on a page the change shouldn't touch is noise: read that page again with and without it.
+
 Only music that anyone may copy is here. Collected on 2026-11-08 and 2026-11-10 for the
 Score Reader spikes (the "open-music" test set); the answers come from the same MusicXML the
 pages were drawn from.
