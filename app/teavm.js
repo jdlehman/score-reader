@@ -83,14 +83,15 @@ function call(f) {
   }
 }
 
-function toBase64(bytes) {
+/** Grey pixels (or any bytes) as base64, in Node and in the browser; shared with deblur.js. */
+export function toBase64(bytes) {
   if (typeof Buffer !== 'undefined') return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.length).toString('base64')
   let s = ''
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000))
   return btoa(s)
 }
 
-function fromBase64(text) {
+export function fromBase64(text) {
   if (typeof Buffer !== 'undefined') return new Uint8Array(Buffer.from(text, 'base64'))
   const s = atob(text)
   const bytes = new Uint8Array(s.length)

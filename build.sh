@@ -41,11 +41,16 @@ else
   mkdir -p dist/licenses/teavm-0.16.0 && cp node_modules/pdfjs-dist/LICENSE dist/licenses/teavm-0.16.0/LICENSE
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/deblur.js app/style.css app/*.svg app/*.png dist/
 if [ -f .work/teavm/out/classes.wasm ]; then
   rm -rf dist/teavm && mkdir -p dist/teavm
   cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
   cp -R .work/teavm/out/templates dist/teavm/
+  # the deblur pre-step's module (teavm/deblur-build.sh); the page loads it only for warned pages
+  if [ -f .work/teavm/deblur-out/classes.wasm ]; then
+    mkdir -p dist/teavm/deblur
+    cp .work/teavm/deblur-out/classes.wasm dist/teavm/deblur/
+  fi
 fi
 # the score drawn after a read, to correct: @jdlehman/score-view (MIT, built by update-score-view.sh),
 # and Verovio (LGPL 3.0), unchanged, as files of its own
