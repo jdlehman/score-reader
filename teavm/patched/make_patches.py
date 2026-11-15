@@ -909,7 +909,7 @@ write(R2[37], text)
 
 # --- OcrUtil: no OCR in WASM (kills the BrowserOCR/TesseractOCR refs) ---
 text = copy_src("org/audiveris/omr/text/OcrUtil.java")
-text = sub(text, 'private static final OCR ocr = Boolean.getBoolean("scorereader.inBrowser") ? BrowserOCR.getInstance()\n            : TesseractOCR.getInstance();',
+text = sub(text, 'private static final OCR ocr = TesseractOCR.getInstance();',
            'private static final OCR ocr = null; // TEAVM: no OCR (Tesseract/JNA unavailable)')
 text = sub(text, "origin.translate(-margin, -margin);",
            "origin.x -= margin; origin.y -= margin; // TEAVM: Point.translate missing")
@@ -927,13 +927,11 @@ print("All round-2 patches applied.")
 # Copy the repo's own patched sources as-is (0001-score-reader.patch).
 # The source tree is patched but .work/lib/audiveris.jar is upstream, so
 # compiling patched Sheet/Book against the jar fails (e.g. Picture.lighten).
-# These 13 are the patch files not already handled above (Book/Sheet/OcrUtil
-# are patched in rounds 1-2).
+# These are the patch files not already handled above (Book/Sheet are patched
+# in rounds 1-2; OcrUtil, stock, too).
 # ---------------------------------------------------------------------------
 COPY_ASIS = [
     "org/audiveris/omr/CLI.java",
-    "org/audiveris/omr/Main.java",
-    "org/audiveris/omr/ScoreReaderHook.java",
     "org/audiveris/omr/image/FlatMorphology.java",
     "org/audiveris/omr/image/MorphoProcessor.java",
     "org/audiveris/omr/image/Template.java",
@@ -2125,7 +2123,8 @@ text = sub(text,
             new TreeSet<>(List.of("eng", "deu", "fra", "ita", "spa", "lat"));''')
 text = sub(text,
            '''    /**
-     * Implemented by the web page (a CheerpJ native): read the text in a grey image.
+     * Read the text in a grey image: answered by the web page (the browser build replaces this
+     * with the text tesseract.js read, teavm/patched/make_patches.py).
      *
      * @return one line per item, in order: "L x0 y0 x1 y1 bx0 by0 bx1 by1 height" for a text line
      *         (its bounds, baseline and row height), "W x0 y0 x1 y1 confidence text" for each of
@@ -2136,7 +2135,7 @@ text = sub(text,
                                        int height,
                                        String languages,
                                        int pageSegMode);''',
-           '''    // TEAVM (§23): no CheerpJ native call. The OCR text is pre-run in JS
+           '''    // TEAVM (§23): no native call. The OCR text is pre-run in JS
     // (tesseract.js, async in the runner) and handed back via a global;
     // see TeavmMain's two-phase run. @JSBody is synchronous, so a live
     // await inside Wasm is impossible; the split-phase design is the
@@ -2162,8 +2161,8 @@ text = sub(text,
         // TEAVM (§23): two-phase OCR. Phase 1: no prefed text yet — export
         // the clean image (already white-margined by OcrUtil.scan) for the
         // runner's tesseract.js and return no lines. Phase 2: parse the
-        // prefed L/W/C text exactly as the CheerpJ path parses the page's
-        // answer. Coordinates are in the margined image; the topLeft
+        // prefed L/W/C text exactly as a native call's answer would be
+        // parsed. Coordinates are in the margined image; the topLeft
         // translation below (stock) shifts them back to sheet coordinates.
         final String prefed = readOcrText();
         System.out.println("DIAG24 BrowserOCR prefed len=" + ((prefed == null) ? -1 : prefed.length()));

@@ -1,5 +1,5 @@
 diff --git a/app/src/main/java/org/audiveris/omr/CLI.java b/app/src/main/java/org/audiveris/omr/CLI.java
-index c2379bc..dc0d478 100644
+index c2379bc..c7c7d71 100644
 --- a/app/src/main/java/org/audiveris/omr/CLI.java
 +++ b/app/src/main/java/org/audiveris/omr/CLI.java
 @@ -842,7 +842,9 @@ public class CLI
@@ -13,56 +13,9 @@ index c2379bc..dc0d478 100644
  
                  // Make sure stubs are available
                  if (book.getStubs().isEmpty()) {
-@@ -961,7 +963,8 @@ public class CLI
-                     if (cancelled) {
-                         // Make a backup if needed, then save book "in its current status"
-                         book.store(BookManager.getDefaultSavePath(book), true);
--                    } else {
-+                    } else if (!Boolean.getBoolean("scorereader.inBrowser")) {
-+                        // score reader: in the browser only the exported score is wanted
-                         book.store(BookManager.getDefaultSavePath(book), false);
-                     }
- 
-diff --git a/app/src/main/java/org/audiveris/omr/Main.java b/app/src/main/java/org/audiveris/omr/Main.java
-index a076f34..1ba57ab 100644
---- a/app/src/main/java/org/audiveris/omr/Main.java
-+++ b/app/src/main/java/org/audiveris/omr/Main.java
-@@ -271,6 +271,11 @@ public class Main
-             // Run the required tasks, if any (and remember if at least one task failed)
-             final boolean failure = runBatchTasks();
- 
-+            // score reader: in the browser, tell the page and stop here (the shutdown below never ends there)
-+            if (Boolean.getBoolean("scorereader.inBrowser")) {
-+                ScoreReaderHook.finished(failure);
-+            }
-+
-             // At this point all tasks have completed (except timeout...)
-             // So shutdown gracefully the executors
-             final boolean timeout = !OmrExecutors.shutdown();
-diff --git a/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java b/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java
-new file mode 100644
-index 0000000..8e85854
---- /dev/null
-+++ b/app/src/main/java/org/audiveris/omr/ScoreReaderHook.java
-@@ -0,0 +1,15 @@
-+package org.audiveris.omr;
-+
-+/**
-+ * Score reader: tells the web page that Audiveris has finished. Implemented in JavaScript (a
-+ * CheerpJ native), which keeps the calling thread waiting for good.
-+ */
-+public final class ScoreReaderHook
-+{
-+    private ScoreReaderHook ()
-+    {
-+    }
-+
-+    /** @param failure true if a task failed */
-+    public static native void finished (boolean failure);
-+}
 diff --git a/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
 new file mode 100644
-index 0000000..7f0fa7b
+index 0000000..f116864
 --- /dev/null
 +++ b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
 @@ -0,0 +1,334 @@
@@ -77,8 +30,8 @@ index 0000000..7f0fa7b
 + * (the circles Audiveris uses): a maximum over the element, then a minimum, with pixels outside
 + * the image left out. The element is split into its rows; each row's run is a sliding window,
 + * done with the van Herk / Gil-Werman method (three comparisons a pixel, whatever the length);
-+ * the rows are then combined. Maximum and minimum have separate methods with steady branches, as
-+ * CheerpJ (Java in the browser) compiles only the branches it has seen taken.
++ * the rows are then combined. Maximum and minimum have separate methods with steady branches
++ * (written for CheerpJ, the page's first Java runtime, which compiled only branches seen taken).
 + */
 +final class FlatMorphology
 +{
@@ -975,10 +928,10 @@ index 2757b77..48ca03a 100644
          if (!peaks.isEmpty()) {
              final int peak = peaks.get(0);
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
-index 3efeee8..5b1eb0c 100644
+index 3efeee8..dfd3c9b 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
-@@ -1012,6 +1012,25 @@ public class Sheet
+@@ -1012,6 +1012,26 @@ public class Sheet
          return lastPersistentId;
      }
  
@@ -988,9 +941,10 @@ index 3efeee8..5b1eb0c 100644
 +    /**
 +     * Score reader: once the sheet is done, let go of what only its steps need.
 +     * <p>
-+     * In the browser (CheerpJ) objects held only by weak references are never freed, so each
-+     * sheet kept all its images and every glyph ever tried. The export needs neither: only the
-+     * picture's size, and inters keep their own glyphs. A glyph index is made afresh if asked.
++     * Written for CheerpJ, the page's first Java runtime, which never freed objects held only by
++     * weak references, so each sheet kept all its images and every glyph ever tried; the browser
++     * build still calls it once a page is read. The export needs neither: only the picture's size,
++     * and inters keep their own glyphs. A glyph index is made afresh if asked.
 +     */
 +    public void lightenForExport ()
 +    {
@@ -1701,10 +1655,10 @@ index e8cd5fd..55eae71 100644
      //--------//
 diff --git a/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
 new file mode 100644
-index 0000000..48e6db2
+index 0000000..a349e56
 --- /dev/null
 +++ b/app/src/main/java/org/audiveris/omr/text/BrowserOCR.java
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,209 @@
 +package org.audiveris.omr.text;
 +
 +import org.audiveris.omr.sheet.Sheet;
@@ -1720,9 +1674,10 @@ index 0000000..48e6db2
 +import java.util.TreeSet;
 +
 +/**
-+ * Score Reader: OCR in the browser. Tesseract's native code can't run in CheerpJ, so the web page
-+ * reads the text with tesseract.js (the same Tesseract, compiled to WebAssembly, running the legacy
-+ * engine as TesseractOrder does) and hands back its lines, words and characters.
++ * Score Reader: OCR in the browser. Tesseract is native code, so the web page reads the text with
++ * tesseract.js (the same Tesseract, compiled to WebAssembly, running the legacy engine as
++ * TesseractOrder does) and hands back its lines, words and characters. The browser build's OcrUtil
++ * uses it (teavm/patched/make_patches.py); on the desktop Tesseract reads the text.
 + * <p>
 + * Tesseract.js gives no font attributes, so each word gets a plain font whose size comes from its
 + * line's height; TextWord fits the size to the word's bounds anyway.
@@ -1751,7 +1706,8 @@ index 0000000..48e6db2
 +    }
 +
 +    /**
-+     * Implemented by the web page (a CheerpJ native): read the text in a grey image.
++     * Read the text in a grey image: answered by the web page (the browser build replaces this
++     * with the text tesseract.js read, teavm/patched/make_patches.py).
 +     *
 +     * @return one line per item, in order: "L x0 y0 x1 y1 bx0 by0 bx1 by1 height" for a text line
 +     *         (its bounds, baseline and row height), "W x0 y0 x1 y1 confidence text" for each of
@@ -1912,21 +1868,6 @@ index 0000000..48e6db2
 +        return lines;
 +    }
 +}
-diff --git a/app/src/main/java/org/audiveris/omr/text/OcrUtil.java b/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
-index 2d8925f..d08de99 100644
---- a/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
-+++ b/app/src/main/java/org/audiveris/omr/text/OcrUtil.java
-@@ -51,7 +51,9 @@ public abstract class OcrUtil
-     private static final Logger logger = LoggerFactory.getLogger(OcrUtil.class);
- 
-     /** The related OCR. */
--    private static final OCR ocr = TesseractOCR.getInstance();
-+    // Score Reader: in the browser, the page reads the text (Tesseract is native code)
-+    private static final OCR ocr = Boolean.getBoolean("scorereader.inBrowser") ? BrowserOCR.getInstance()
-+            : TesseractOCR.getInstance();
- 
-     //~ Constructors -------------------------------------------------------------------------------
-     /** Not meant to be instantiated. */
 diff --git a/app/src/main/java/org/audiveris/omr/util/Table.java b/app/src/main/java/org/audiveris/omr/util/Table.java
 index b8368e4..946079f 100644
 --- a/app/src/main/java/org/audiveris/omr/util/Table.java
