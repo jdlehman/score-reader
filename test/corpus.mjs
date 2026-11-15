@@ -1,25 +1,33 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// Reads the test corpus with desktop Audiveris, patched and set up as the page reads (see
-// app/settings.js), scores each read against its answer (test/score.mjs), and compares the
-// scores with the last saved ones (test/corpus/baseline.json).
+// Reads the test corpus as the page does (Audiveris in WebAssembly, the page's settings in
+// app/settings.js, the words read with tesseract.js), scores each read against its answer
+// (test/score.mjs), and compares the scores with the last saved ones (test/corpus/baseline.json).
 //
 //   node test/corpus.mjs                    read and score everything, compare with the baseline
 //   node test/corpus.mjs lieder chorale     only cases whose name contains one of these
 //   EXTRA=~/Downloads/choral-test-set node test/corpus.mjs
 //                                           also the pieces that can't be in the repo (licences)
 //   SAVE=1 node test/corpus.mjs             save these scores as the new baseline
-//   JOBS=3 (default 2) Java processes at once; REUSE=1 scores the reads of the last run again
+//   JOBS=n reads at once (default 4; desktop 2); REUSE=1 scores the reads of the last run again
 //   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
 //   HOLDOUT=1 also reads the held-out pages (test/holdout), HOLDOUT=only reads only them: to confirm
 //     a fix made without looking at them, never to make one
-//   PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with more settings, after
-//     the page's (app/settings.js), so one of the same name replaces it (desktop only);
 //   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
-//   ENGINE=teavm reads with Audiveris in WebAssembly (teavm/node/read.mjs), from the grey pixels the
-//     page would hand it (test/grey.py), against the desktop's baseline; PDFs are left out (the page
-//     draws them with PDF.js). Needs teavm/build.sh first; never saved as the baseline.
+//   WASM=<dir> reads with another WebAssembly build than .work/teavm/out (teavm/build.sh with
+//     TEAVM_WORK), to compare it with this one
+//   OCR=0 leaves the words out (faster; lyrics aren't scored); OCR=deu reads every case's words as
+//     German; by default each case's are read in its language (cases.mjs, languageOf), as a reader
+//     would pick it on the page
+//   ENGINE=desktop reads with desktop Audiveris instead (Java, a few times faster, with Audiveris's
+//     logs and .omr files; words left out), against its own baseline (baseline-desktop.json):
+//     PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with more settings, after
+//     the page's (app/settings.js), so one of the same name replaces it
 //
-// Needs ./setup.sh and ./build.sh first (the Audiveris jars and our patched classes in .work/).
+// How the page reads, here: an image is made grey as the page makes it (test/grey.py), a PDF is
+// drawn by the page's own code in Chrome (test/pdf-grey.mjs), and teavm/node/read.mjs reads them
+// with the build the page serves (byte for byte the same output as in Chrome).
+// Needs ./setup.sh and ./build.sh first (the Audiveris jars, our patched classes and the
+// WebAssembly build in .work/, PDF.js in dist/).
 // A case is an image or a PDF. Next to it, <name>.json is its answer (every pitched note, by
 // bar); without one only "was it read" and the part count are reported. In EXTRA, photos in
 // photo-synthetic/ take their answer from pages/<page>.json.
@@ -28,18 +36,22 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { basename, extname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { READING, asArgs } from '../app/settings.js'
-import { ROOT, allCases, joined, reads } from './cases.mjs'
+import { ROOT, allCases, joined, languageOf, reads } from './cases.mjs'
 import { parseMusicXml, score } from './score.mjs'
 
 const WORK = join(ROOT, '.work')
 const OUT = join(WORK, 'corpus', process.env.RUN ?? 'last')
-const BASELINE = join(ROOT, 'test', 'corpus', 'baseline.json')
-const JOBS = Number(process.env.JOBS ?? 2)
-const TEAVM = process.env.ENGINE === 'teavm'
-if (TEAVM && process.env.SAVE) {
-  console.error('The baseline is the desktop\'s: ENGINE=teavm compares with it, and is never saved.')
+const ENGINE = process.env.ENGINE ?? 'teavm'
+if (!['teavm', 'desktop'].includes(ENGINE)) {
+  console.error(`ENGINE is teavm (the default) or desktop, not ${ENGINE}`)
   process.exit(2)
 }
+const TEAVM = ENGINE === 'teavm'
+// each engine against its own: they read a few notes differently (HANDOFF/NOTES: within a point)
+const BASELINE = join(ROOT, 'test', 'corpus', TEAVM ? 'baseline.json' : 'baseline-desktop.json')
+const JOBS = Number(process.env.JOBS ?? (TEAVM ? 4 : 2))
+/** The words' language for a case, or '' to leave them out. */
+const wordsOf = c => (!TEAVM || process.env.OCR === '0' ? '' : process.env.OCR || languageOf(c))
 const filters = process.argv.slice(2)
 
 const java = join(WORK, 'jdk', readdirSync(join(WORK, 'jdk')).find(d => d.startsWith('jdk')), 'Contents', 'Home', 'bin', 'java')
@@ -82,8 +94,9 @@ async function read(batch) {
 }
 
 /**
- * Reads one case with Audiveris in WebAssembly, as the page would: its image made grey as the
- * page makes it (test/grey.py), then teavm/node/read.mjs, into OUT/batch-<n>/.
+ * Reads one case with Audiveris in WebAssembly, as the page would, into OUT/batch-<n>/: its image
+ * made grey as the page makes it (test/grey.py), or a PDF's pages drawn by the page's own code
+ * (test/pdf-grey.mjs), then teavm/node/read.mjs, with the words read in the case's language.
  */
 async function readWasm(batch) {
   const [c] = batch
@@ -93,15 +106,19 @@ async function readWasm(batch) {
   const radix = join(dir, basename(c.input, extname(c.input)))
   const started = Date.now()
   let log = ''
+  let pages = [radix]
   try {
-    await promisify(execFile)('python3', ['-I', join(ROOT, 'test', 'grey.py'), c.input, radix])
-    const r = await promisify(execFile)(process.execPath, ['--experimental-wasm-exnref', join(ROOT, 'teavm', 'node', 'read.mjs'), radix + '.musicxml', radix + '.grey', radix + '.json'],
-      { maxBuffer: 1 << 28, timeout: 30 * 60_000, env: { ...process.env, OCR: '' } })
-    log = r.stdout + r.stderr
+    if (/\.pdf$/i.test(c.input)) {
+      const r = await promisify(execFile)(process.execPath, [join(ROOT, 'test', 'pdf-grey.mjs'), c.input, radix], { maxBuffer: 1 << 20 })
+      pages = Array.from({ length: Number(r.stdout.trim()) }, (_, i) => `${radix}-p${i + 1}`)
+    } else await promisify(execFile)('python3', ['-I', join(ROOT, 'test', 'grey.py'), c.input, radix])
+    const r = await promisify(execFile)(process.execPath, ['--experimental-wasm-exnref', join(ROOT, 'teavm', 'node', 'read.mjs'), radix + '.musicxml', ...pages.flatMap(p => [p + '.grey', p + '.json'])],
+      { maxBuffer: 1 << 28, timeout: (20 + 10 * pages.length) * 60_000, env: { ...process.env, OCR: wordsOf(c) } }) // minutes: a dense orchestral page can take 25
+    log = `words: ${wordsOf(c) || 'left out'}\n` + r.stdout + r.stderr
   } catch (e) {
     log = (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message
   }
-  rmSync(radix + '.grey', { force: true })
+  for (const p of pages) rmSync(p + '.grey', { force: true })
   writeFileSync(join(dir, 'log.txt'), log)
   return { dir, seconds: Math.round((Date.now() - started) / 1000) }
 }
@@ -109,7 +126,6 @@ async function readWasm(batch) {
 /** The MusicXML files Audiveris wrote for one case (.mxl; .musicxml from WebAssembly): one, or one per movement. */
 const all = allCases().filter(c => !filters.length || filters.some(f => c.name.includes(f)))
   .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
-  .filter(c => !TEAVM || !/\.pdf$/i.test(c.input))
   .filter(c => process.env.HOLDOUT !== 'only' || c.name.startsWith('holdout/'))
 if (process.env.LIST) {
   for (const c of all) console.log(c.answer ? 'answer ' : '       ', c.name)
@@ -158,7 +174,10 @@ for (const [i, batch] of batches.entries()) {
     const r = { read: files.length > 0, movements: files.length }
     if (files.length) {
       const xml = joined(files)
-      if (c.answer) Object.assign(r, score(JSON.parse(readFileSync(c.answer, 'utf8')), xml), { lyrics: undefined }) // no OCR here
+      if (c.answer) {
+        Object.assign(r, score(JSON.parse(readFileSync(c.answer, 'utf8')), xml))
+        if (!wordsOf(c)) r.lyrics = undefined // words left out
+      }
       else r.parts = parseMusicXml(xml).length
     }
     results[c.name] = r
@@ -175,8 +194,9 @@ for (const [name, r] of Object.entries(results).sort()) {
   const b = baseline[name]
   let mark = ''
   if (b) {
-    // worse: fewer notes found, fewer in their part, more notes that aren't there, or fewer on time
-    const keys = ['notes', 'inPart', 'precision', 'rhythm']
+    // worse: fewer notes found, fewer in their part, more notes that aren't there, fewer on time,
+    // or fewer syllables
+    const keys = ['notes', 'inPart', 'precision', 'rhythm', 'lyrics']
     const both = keys.filter(k => b[k] != null) // a baseline from before a score was counted
     const drop = both.some(k => b[k] - (r[k] ?? 0) > 0.01) || (b.read && !r.read)
     const gain = !drop && (both.some(k => (r[k] ?? 0) - b[k] > 0.01) || (!b.read && r.read))
