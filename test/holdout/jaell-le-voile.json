@@ -1,0 +1,516 @@
+{
+ "page": "jaell-le-voile",
+ "title": "Jaëll, Marie, Les Orientales, 7 Le voile, bars 1-12",
+ "source": "OpenScore Lieder Corpus (CC0 1.0), scores/Jaëll,_Marie/Les_Orientales/7_Le_voile/lc6218315.mxl",
+ "beats": 2,
+ "beat_type": 4,
+ "bars": 12,
+ "parts": [
+  {
+   "id": "P1",
+   "name": "Chant\nVoice",
+   "note_count": 18,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "F#4",
+     "midi": 66,
+     "lyric": "Qu’a",
+     "onset": 1.333333
+    },
+    {
+     "bar": 1,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "vez",
+     "onset": 1.666667
+    },
+    {
+     "bar": 2,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": "vous,",
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": "qu’a",
+     "onset": 1.333333
+    },
+    {
+     "bar": 3,
+     "pitch": "B4",
+     "midi": 71,
+     "lyric": "vez",
+     "onset": 1.666667
+    },
+    {
+     "bar": 4,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "vous,",
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "mes",
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "frè",
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "- res?",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "B4",
+     "midi": 71,
+     "lyric": "Vous",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "B4",
+     "midi": 71,
+     "lyric": "bais",
+     "onset": 0.5
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": "sez",
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": "des",
+     "onset": 1.5
+    },
+    {
+     "bar": 10,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "fronts",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "sou",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "ci",
+     "onset": 1.5
+    },
+    {
+     "bar": 11,
+     "pitch": "C#4",
+     "midi": 61,
+     "lyric": "eux.",
+     "onset": 0
+    }
+   ]
+  },
+  {
+   "id": "P2",
+   "name": "Piano",
+   "note_count": 52,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "F#4",
+     "midi": 66,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "E4",
+     "midi": 64,
+     "lyric": null,
+     "onset": 1.666667
+    },
+    {
+     "bar": 1,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "E3",
+     "midi": 52,
+     "lyric": null,
+     "onset": 1.666667
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "F#3",
+     "midi": 54,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": null,
+     "onset": 1.666667
+    },
+    {
+     "bar": 3,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "F#3",
+     "midi": 54,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 1.666667
+    },
+    {
+     "bar": 4,
+     "pitch": "F#4",
+     "midi": 66,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "F#3",
+     "midi": 54,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "F#2",
+     "midi": 42,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "A4",
+     "midi": 69,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "F#2",
+     "midi": 42,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "F#3",
+     "midi": 54,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "B3",
+     "midi": 59,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "C#4",
+     "midi": 61,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "F#4",
+     "midi": 66,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "B3",
+     "midi": 59,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "B3",
+     "midi": 59,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "C#4",
+     "midi": 61,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "B2",
+     "midi": 47,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "A2",
+     "midi": 45,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "G#2",
+     "midi": 44,
+     "lyric": null,
+     "onset": 1
+    }
+   ]
+  }
+ ],
+ "total_notes": 70,
+ "total_lyrics": 17
+}
