@@ -1376,18 +1376,73 @@ index 69c2f0f..7f4c3be 100644
  
              if (inter instanceof TupletInter tupletInter) {
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
-index 4c062c1..77a2d5e 100644
+index 4c062c1..a0a1f96 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/rhythm/StackRhythm.java
-@@ -22,6 +22,7 @@
+@@ -21,7 +21,10 @@
+ // </editor-fold>
  package org.audiveris.omr.sheet.rhythm;
  
++import org.audiveris.omr.constant.Constant;
++import org.audiveris.omr.constant.ConstantSet;
  import org.audiveris.omr.math.Rational;
 +import org.audiveris.omr.sheet.ProcessingSwitch;
  import org.audiveris.omr.sheet.Staff;
  import org.audiveris.omr.sig.inter.AbstractChordInter;
  
-@@ -124,7 +125,15 @@ public class StackRhythm
+@@ -47,6 +50,8 @@ public class StackRhythm
+ {
+     //~ Static fields/initializers -----------------------------------------------------------------
+ 
++    private static final Constants constants = new Constants();
++
+     private static final Logger logger = LoggerFactory.getLogger(StackRhythm.class);
+ 
+     //~ Instance fields ----------------------------------------------------------------------------
+@@ -108,6 +113,42 @@ public class StackRhythm
+         return true;
+     }
+ 
++    //---------//
++    // endsBar //
++    //---------//
++    /**
++     * score-reader: whether a chord ends right at the end of its measure.
++     */
++    private static boolean endsBar (Measure measure,
++                                    AbstractChordInter chord)
++    {
++        final Rational expected = measure.getStack().getExpectedDuration();
++
++        return (expected != null) && !chord.isMeasureRest() && (chord.getTimeOffset() != null)
++                && expected.equals(chord.getEndTime());
++    }
++
++    //-------------//
++    // voiceEnders //
++    //-------------//
++    /**
++     * score-reader: the last chords of the measure's voices that fill it exactly.
++     */
++    private static List<AbstractChordInter> voiceEnders (Measure measure)
++    {
++        final List<AbstractChordInter> enders = new ArrayList<>();
++
++        for (Voice voice : measure.getVoices()) {
++            final AbstractChordInter last = voice.getLastChord();
++
++            if ((last != null) && endsBar(measure, last)) {
++                enders.add(last);
++            }
++        }
++
++        return enders;
++    }
++
+     //-----------//
+     // doProcess //
+     //-----------//
+@@ -124,7 +165,30 @@ public class StackRhythm
  
          // Process measure by measure
          for (Measure measure : stack.getMeasures()) {
@@ -1399,11 +1454,45 @@ index 4c062c1..77a2d5e 100644
 +            // Only then: looking for them in every measure upsets the voices of some that fit.
 +            if (!measureOk && !measure.getStack().getSystem().getSheet().getStub()
 +                    .getProcessingSwitches().getValue(ProcessingSwitch.implicitTuplets)) {
++                final List<AbstractChordInter> enders = constants.checkTupletVoices.isSet()
++                        ? voiceEnders(measure)
++                        : null;
 +                measureOk = new MeasureRhythm(measure, true).process();
++
++                // A tuplet not drawn shortens a voice that was too long. If reading one leaves a
++                // voice that filled the bar short, the bar was too long for another reason (a
++                // false note): keep the first reading (the plain process drops the tuplets). A
++                // voice is known by its last chord then, wherever that chord is now. Off: on the
++                // corpus it fixed one page and cost another (StackRhythm.checkTupletVoices).
++                if (measureOk && (enders != null)
++                        && !enders.stream().allMatch(ch -> (ch.getVoice() != null)
++                                && (ch.getVoice().getLastChord() != null)
++                                && endsBar(measure, ch.getVoice().getLastChord()))) {
++                    measureOk = new MeasureRhythm(measure).process();
++                }
 +            }
  
              if (!measureOk) {
                  measure.setAbnormal(true);
+@@ -257,4 +321,18 @@ public class StackRhythm
+             logger.warn("StackRhythm. Error visiting " + stack + " " + ex, ex);
+         }
+     }
++
++    //~ Inner Classes ------------------------------------------------------------------------------
++
++    //-----------//
++    // Constants //
++    //-----------//
++    private static class Constants
++            extends ConstantSet
++    {
++        private final Constant.Boolean checkTupletVoices = new Constant.Boolean(
++                false,
++                "Score Reader: keep an implicit-tuplet reading only if every voice that"
++                        + " filled the measure still does");
++    }
+ }
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java b/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
 index 1bb36a3..bb77e78 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/rhythm/Voices.java
