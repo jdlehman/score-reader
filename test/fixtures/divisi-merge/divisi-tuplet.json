@@ -1,0 +1,596 @@
+{
+ "page": "divisi-tuplet",
+ "parts": [
+  {
+   "id": "P1",
+   "name": "Soprano/Alto",
+   "note_count": 40,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "F4",
+     "midi": 65,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "half",
+     "voice": 3,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "F3",
+     "midi": 53,
+     "type": "half",
+     "voice": 3,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "F4",
+     "midi": 65,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "A3",
+     "midi": 57,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "half",
+     "voice": 3,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "half",
+     "voice": 3,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "F4",
+     "midi": 65,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "C4",
+     "midi": 60,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "E4",
+     "midi": 64,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 65,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G4",
+     "midi": 67,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "A4",
+     "midi": 69,
+     "type": "eighth",
+     "voice": 2,
+     "lyric": null
+    }
+   ]
+  },
+  {
+   "id": "P2",
+   "name": "Tenor/Bass",
+   "note_count": 32,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "F3",
+     "midi": 53,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "F2",
+     "midi": 41,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 1,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "B3",
+     "midi": 59,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "F3",
+     "midi": 53,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "F2",
+     "midi": 41,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 2,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 3,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "type": "quarter",
+     "voice": 1,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "G2",
+     "midi": 43,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    },
+    {
+     "bar": 4,
+     "pitch": "C3",
+     "midi": 48,
+     "type": "quarter",
+     "voice": 2,
+     "lyric": null
+    }
+   ]
+  }
+ ],
+ "total_notes": 72
+}

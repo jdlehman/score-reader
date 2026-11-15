@@ -235,7 +235,67 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
     npm run corpus                      # read test/corpus/ with desktop Audiveris, score it (see its README)
     ENGINE=teavm npm run corpus         # read the corpus with the browser's Audiveris instead
+    node tools/merge.mjs audiveris.mxl tromr-dir/ out.musicxml  # gated TrOMR merge, below
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
 in `lib/`, `classpath.txt`, a Temurin 25 JDK in `jdk/` and TeaVM's jars in `teavm-lib/`:
 `./setup.sh` makes it.
+
+## Gated TrOMR merge (app/merge.js, tools/merge.mjs)
+
+Audiveris is the authority. Polyphonic-TrOMR, run on staff crops, is consulted only
+where Audiveris's own output is broken, and only under a gate: a staff slice of a
+measure is replaced only when Audiveris's slice is duration-invalid or missing, the
+TrOMR replacement is itself duration-valid, AND TrOMR's distinct pitches match
+Audiveris's distinct pitches for that slice exactly — neither side may add or drop
+a pitch. Never a note-list union; a valid Audiveris measure is never touched; only
+one staff in a measure is ever replaced. System bar ranges come from Audiveris's own
+`<print new-system="yes">` markers, so no Verovio SVG is needed; staff order is
+top-to-bottom per system.
+
+Why equality, not one-way cover: the ungated spike merge fixed a real SATB page's
+validity (41/57 -> 56/56) but lost pitch (217 -> 213), because Audiveris's "invalid"
+measures were invalid only in rest durations while their pitches were right. A cover check (every
+Audiveris pitch also in TrOMR's set) fixes that drop, but still lets TrOMR add a
+pitch Audiveris never had — a note where Audiveris had a rest — which duration
+validity does not catch. Equality closes that hole: the replacement can only fix
+rhythm, never change pitch content. An empty Audiveris pitch set is not a licence
+to invent notes either: a rest-only invalid slice is replaced only by a rest-only
+valid one (rest durations fixed, no notes invented).
+
+Measured (2026-11-15, `node /tmp/validate-merge.mjs` against ground truth; exact
+pitch per bar, validity per (bar, voice) pair — the same conventions as
+test/merge.test.mjs). No page loses exact pitch; every replacement on these pages
+has identical pitch sets on both sides, so the equality gate costs nothing here:
+
+- Divisi-tuplet (synthetic): exact pitch 72/72 -> 72/72; valid pairs 10 -> 12,
+  invalid pairs 14 -> 4 (the total pairs drop 24 -> 16 because the 5-voice bass
+  bars collapse to single-voice bars); 2 replaced, 2 refused (TrOMR-invalid
+  triplet bars).
+- Hymn (clean control): exact pitch 128/128 -> 128/128; valid 32/32 -> 32/32;
+  nothing replaced — a clean page is untouched.
+- Gute Nacht (clean control): exact pitch 223/223 -> 223/223; invalid pairs
+  2 -> 1 (one stray 2-tick rest in voice 2 of bar 8, removed by the replacement);
+  1 replaced, 1 refused (TrOMR-invalid).
+
+Not validated: Lindenbaum. TrOMR's staff detection over-segments the page (9
+staves detected against Audiveris's 2 parts), so the staff files do not line up
+with the merge's expected layout (system order, top-to-bottom staff per system)
+and the merge was not run there. A page whose TrOMR staff detection disagrees
+with Audiveris's staff structure is out of scope for this merge until the crop
+layout is reconciled.
+
+Pitches are resolved through the key signature: TrOMR writes no `<alter>` elements
+(it relies on the key — F# and C# in D major are bare `<step>F</step>`), while
+Audiveris writes them explicitly, so raw steps would call those different pitches
+and refuse nearly every replacement in a sharp or flat key. The pitch check is a
+set of distinct pitches, not a multiset: Audiveris splits one sounding pitch across
+voices in divisi, so multiplicity would refuse the divisi case the merge exists for.
+
+What it is not: the merge is not wired into the read flow yet. TrOMR has no
+in-browser runner in the repo (the spikes used its native `focr` CLI), so
+`tools/merge.mjs` runs it offline for now, and no model weights are vendored
+(TrOMR is ~61 MB). The natural follow-up is a TrOMR runner plus a hook into the
+note-checking flow (app/check.js), so a reader can apply the second opinion to
+the measures the check flags. Transcoda is deliberately not a source: it scored
+0/218 on a real SATB page.

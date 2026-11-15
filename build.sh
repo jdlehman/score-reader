@@ -41,7 +41,7 @@ else
   mkdir -p dist/licenses/teavm-0.16.0 && cp node_modules/pdfjs-dist/LICENSE dist/licenses/teavm-0.16.0/LICENSE
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/merge.js app/zip-mxl.js app/style.css app/*.svg app/*.png dist/
 if [ -f .work/teavm/out/classes.wasm ]; then
   rm -rf dist/teavm && mkdir -p dist/teavm
   cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
