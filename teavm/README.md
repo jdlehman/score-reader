@@ -6,7 +6,7 @@ The page reads music with Audiveris, a Java program, built into WebAssembly with
 under a licence they can change.)
 
 The port is robbie-muse's [score-reader-teavm](https://github.com/robbie-muse/score-reader-teavm)
-(imported at 9b7e935); `FORK_FIX.md` is its log of every defect found and fixed, which the code's
+(imported at 2395307); `FORK_FIX.md` is its log of every defect found and fixed, which the code's
 § numbers refer to.
 
 ## Build

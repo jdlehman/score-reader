@@ -5999,6 +5999,303 @@ text = replace_method(text, r"public boolean isThreadSafe \(\)", """public boole
 write("org/audiveris/omr/run/RunTableFactory.java", text)
 print("  RunTableFactory.isThreadSafe without annotations (ROUND 51, strict mode)")
 
+# ============================================================ ROUND 57 (§46.1: DIAG54 hymnal −28)
+# Hymnal page (open-music/wasm110): desktop 125 pitched / 13 raw measures,
+# Wasm 97 / 11. Per-part split: P1 (odd staves) −8, P2 (even staves) −20;
+# clefs identical both sides (same "no recognized header clef" warnings on
+# staves 2/3/5/6, same .mxl clefs) — clefs ruled out. The Wasm log deletes
+# two "half" barline columns desktop keeps (S2 x≈878, S3 x≈339) — that
+# explains the 13→11 regrouping, not the −28 note loss (S1 loses 12 notes
+# with no barline deletion). DIAG54 localises the loss to HEADS vs SYMBOLS
+# (per-staff HeadInter counts at each step end) and dumps every barline
+# column's per-staff groups (absent staff barline vs grouping failure).
+# All three files pristine (no earlier ROUND touched them): copy_src for
+# HeadsStep/MeasuresBuilder (not in patched/src before), read_out for
+# SymbolsStep (R2 copy list, unmodified by any ROUND). Print-only.
+# DIAG54 is fresh: DIAG53 is reserved for BWV p14 (§44.4), DIAG52 used.
+# ---------------------------------------------------------------------------
+text = copy_src("org/audiveris/omr/sheet/note/HeadsStep.java")
+text = sub(text, """        // Analyze seed-head data
+        HeadSeedTally.analyze(sheet, context.tallies.values());
+    }""",
+"""        // Analyze seed-head data
+        HeadSeedTally.analyze(sheet, context.tallies.values());
+
+        // DIAG54: per-staff head counts at end of HEADS (print-only).
+        for (SystemInfo system : sheet.getSystems()) {
+            java.util.Map<Integer, Integer> d54counts = new java.util.TreeMap<>();
+            java.util.Map<Integer, Long> d54checks = new java.util.TreeMap<>();
+            for (org.audiveris.omr.sig.inter.Inter inter : system.getSig().inters(
+                    org.audiveris.omr.sig.inter.HeadInter.class)) {
+                int d54staff = (inter.getStaff() == null) ? -1 : inter.getStaff().getId();
+                Integer d54n = d54counts.get(d54staff);
+                d54counts.put(d54staff, (d54n == null) ? 1 : (d54n + 1));
+                java.awt.Rectangle d54b = inter.getBounds();
+                long d54c = (long) d54b.x + d54b.y + d54b.width + d54b.height;
+                Long d54s = d54checks.get(d54staff);
+                d54checks.put(d54staff, (d54s == null) ? d54c : (d54s + d54c));
+            }
+            System.out.println("DIAG54 HEADS-END sys=" + system.getId() + " counts=" + d54counts
+                    + " check=" + d54checks);
+        }
+    }""")
+write("org/audiveris/omr/sheet/note/HeadsStep.java", text)
+print("  HeadsStep DIAG54 HEADS-END (§46.1)")
+
+text = read_out("org/audiveris/omr/sheet/symbol/SymbolsStep.java")
+text = sub(text, """        if (constants.printWatch.isSet()) {
+            watch.print();
+        }
+    }
+
+    //~ Inner Classes ------------------------------------------------------------------------------""",
+"""        if (constants.printWatch.isSet()) {
+            watch.print();
+        }
+    }
+
+    //----------//
+    // doEpilog //
+    //----------//
+    // DIAG54: per-staff head counts at end of SYMBOLS (print-only).
+    @Override
+    protected void doEpilog (Sheet sheet,
+                             Context context)
+        throws StepException
+    {
+        for (SystemInfo system : sheet.getSystems()) {
+            java.util.Map<Integer, Integer> d54counts = new java.util.TreeMap<>();
+            java.util.Map<Integer, Long> d54checks = new java.util.TreeMap<>();
+            for (org.audiveris.omr.sig.inter.Inter inter : system.getSig().inters(
+                    org.audiveris.omr.sig.inter.HeadInter.class)) {
+                int d54staff = (inter.getStaff() == null) ? -1 : inter.getStaff().getId();
+                Integer d54n = d54counts.get(d54staff);
+                d54counts.put(d54staff, (d54n == null) ? 1 : (d54n + 1));
+                java.awt.Rectangle d54b = inter.getBounds();
+                long d54c = (long) d54b.x + d54b.y + d54b.width + d54b.height;
+                Long d54s = d54checks.get(d54staff);
+                d54checks.put(d54staff, (d54s == null) ? d54c : (d54s + d54c));
+            }
+            System.out.println("DIAG54 SYMBOLS-END sys=" + system.getId() + " counts=" + d54counts
+                    + " check=" + d54checks);
+        }
+    }
+
+    //~ Inner Classes ------------------------------------------------------------------------------""")
+write("org/audiveris/omr/sheet/symbol/SymbolsStep.java", text)
+print("  SymbolsStep DIAG54 SYMBOLS-END (§46.1)")
+
+text = copy_src("org/audiveris/omr/sheet/rhythm/MeasuresBuilder.java")
+text = sub(text, """        for (Column column : columns) {
+            final int groupCount = column.groups.size();
+
+            if (groupCount < staffCount) {""",
+"""        for (Column column : columns) {
+            final int groupCount = column.groups.size();
+
+            System.out.println("DIAG54 COLUMN sys=" + system.getId() + " x="
+                    + column.getDeskewedAbscissa() + " groups=" + groupCount + " staffCount="
+                    + staffCount + column);
+
+            if (groupCount < staffCount) {""")
+write("org/audiveris/omr/sheet/rhythm/MeasuresBuilder.java", text)
+print("  MeasuresBuilder DIAG54 COLUMN (§46.1)")
+
+# ============================================================ ROUND 58 (§47: DIAG55 hymnal −28 split)
+# DIAG55 is fresh (no DIAG55 print exists anywhere; DIAG54 was §46).
+# Two parts:
+# (a) TEXTS-crash inter ID — SOLVED BY INSPECTION before any new print:
+#     the crash is SheetScanner.getCleanImage:143, i.e. the DIAG24 dead
+#     block (ROUND 20, §23 trap 4) calling img.getRGB(xx, yy) over the
+#     hard-coded ROI x 1854..1929, y 574..609. The hymnal page is 1196 px
+#     wide, so x=1854 is out of bounds on the first pixel. There is NO
+#     out-of-bounds inter: TextsCleaner.eraseInters (line 130) is not on
+#     the failing path — §46's "(via TextsCleaner.eraseInters)" attribution
+#     was wrong; the stack trace names getCleanImage:143, which is the
+#     DIAG24 getRGB. The block computes bx/ix that nothing reads, so it
+#     is dead code; it survived the §43 strip because tier 1 only removes
+#     System.out prints. Removing it restores the repo-original
+#     getCleanImage (verified: the ONLY patched-vs-repo diff in
+#     SheetScanner.java is this block) and unblocks the desktop harness
+#     on any page narrower than 1929 px. Harness-only artefact, not a
+#     TeaVM divergence and not a real Audiveris bug. SheetScanner is
+#     read_out (already patched by ROUND 20), per §39.1.
+# (b) Per-staff HeadInter counts at the end of REDUCTION, MEASURES,
+#     CHORDS, CURVES (same shape as DIAG54 HEADS/SYMBOLS-END, so the
+#     numbers are directly comparable across steps) to bracket the flip
+#     inside STEMS..SYMBOLS, plus barline presence at end of GRID
+#     (BarlineInter per system, x -> staff list, sorted by x).
+#     ReductionStep/MeasuresStep/ChordsStep/CurvesStep are pristine
+#     (not in patched/src before): copy_src. GridStep is read_out
+#     (R2 displayUI no-op only). Print-only apart from (a).
+# ---------------------------------------------------------------------------
+def diag55_heads(label):
+    return """        // DIAG55: per-staff head counts at end of """ + label + """ (print-only).
+        for (org.audiveris.omr.sheet.SystemInfo system : sheet.getSystems()) {
+            java.util.Map<Integer, Integer> d55counts = new java.util.TreeMap<>();
+            java.util.Map<Integer, Long> d55checks = new java.util.TreeMap<>();
+            for (org.audiveris.omr.sig.inter.Inter inter : system.getSig().inters(
+                    org.audiveris.omr.sig.inter.HeadInter.class)) {
+                int d55staff = (inter.getStaff() == null) ? -1 : inter.getStaff().getId();
+                Integer d55n = d55counts.get(d55staff);
+                d55counts.put(d55staff, (d55n == null) ? 1 : (d55n + 1));
+                java.awt.Rectangle d55b = inter.getBounds();
+                long d55c = (long) d55b.x + d55b.y + d55b.width + d55b.height;
+                Long d55s = d55checks.get(d55staff);
+                d55checks.put(d55staff, (d55s == null) ? d55c : (d55s + d55c));
+            }
+            System.out.println("DIAG55 """ + label + """-END sys=" + system.getId() + " counts=" + d55counts
+                    + " check=" + d55checks);
+        }
+"""
+
+text = read_out("org/audiveris/omr/text/SheetScanner.java")
+text = sub(text, """        // DIAG24 (§23 trap 4): buffer vs img foreground in the "fore" ROI
+        {
+            int bx = 0;
+            int ix = 0;
+
+            for (int yy = 574; yy < 609; yy++) {
+                for (int xx = 1854; xx < 1929; xx++) {
+                    if (buffer.getPixel(xx, yy) == 0) {
+                        bx++;
+                    }
+
+                    if ((img.getRGB(xx, yy) & 0xffffff) == 0) {
+                        ix++;
+                    }
+                }
+            }
+
+            System.out.println("DIAG24 cleanCheck bufferFore=" + bx + " imgFore=" + ix);
+        }""",
+"""        // DIAG55 (§47): DIAG24 "fore" ROI block removed — it called
+        // img.getRGB on hard-coded x 1854..1929, out of bounds on any page
+        // narrower than 1929 px (hymnal is 1196 wide); bx/ix were never
+        // read. Stock getCleanImage restored.""")
+write("org/audiveris/omr/text/SheetScanner.java", text)
+print("  SheetScanner DIAG24 dead block removed (§47)")
+
+text = read_out("org/audiveris/omr/sheet/grid/GridStep.java")
+text = sub(text, """        watch.start("book.updateScores");
+        sheet.getStub().getBook().updateScores(sheet.getStub());
+
+        if (constants.printWatch.isSet())
+            watch.print();
+    }""",
+"""        watch.start("book.updateScores");
+        sheet.getStub().getBook().updateScores(sheet.getStub());
+
+        if (constants.printWatch.isSet())
+            watch.print();
+
+        // DIAG55: barline presence at end of GRID (print-only).
+        for (org.audiveris.omr.sheet.SystemInfo system : sheet.getSystems()) {
+            java.util.Map<Integer, java.util.List<Integer>> d55bars = new java.util.TreeMap<>();
+            for (org.audiveris.omr.sig.inter.Inter inter : system.getSig().inters(
+                    org.audiveris.omr.sig.inter.BarlineInter.class)) {
+                int d55staff = (inter.getStaff() == null) ? -1 : inter.getStaff().getId();
+                java.awt.Point d55c = inter.getCenter();
+                int d55x = (d55c == null) ? -1 : (int) Math.round(d55c.getX());
+                java.util.List<Integer> d55list = d55bars.get(d55x);
+                if (d55list == null) {
+                    d55list = new java.util.ArrayList<>();
+                    d55bars.put(d55x, d55list);
+                }
+                d55list.add(d55staff);
+            }
+            System.out.println("DIAG55 GRID-END sys=" + system.getId() + " bars(x->[staff])=" + d55bars);
+        }
+    }""")
+write("org/audiveris/omr/sheet/grid/GridStep.java", text)
+print("  GridStep DIAG55 GRID-END (§47)")
+
+text = copy_src("org/audiveris/omr/step/ReductionStep.java")
+text = sub(text, """        final GlyphIndex glyphIndex = sheet.getGlyphIndex();
+        glyphIndex.getEntities().forEach(glyph -> {
+            if (!toKeep.contains(glyph)) {
+                glyphIndex.remove(glyph);
+            }
+        });
+    }
+
+    //----------//
+    // doSystem //""",
+"""        final GlyphIndex glyphIndex = sheet.getGlyphIndex();
+        glyphIndex.getEntities().forEach(glyph -> {
+            if (!toKeep.contains(glyph)) {
+                glyphIndex.remove(glyph);
+            }
+        });
+
+""" + diag55_heads("REDUCTION") + """    }
+
+    //----------//
+    // doSystem //""")
+write("org/audiveris/omr/step/ReductionStep.java", text)
+print("  ReductionStep DIAG55 REDUCTION-END (§47)")
+
+text = copy_src("org/audiveris/omr/sheet/rhythm/MeasuresStep.java")
+text = sub(text, """        // Assign basic measure ids
+        for (Page page : sheet.getPages()) {
+            page.numberMeasures();
+            page.dumpMeasureCounts();
+        }
+    }
+
+    //----------//
+    // doSystem //""",
+"""        // Assign basic measure ids
+        for (Page page : sheet.getPages()) {
+            page.numberMeasures();
+            page.dumpMeasureCounts();
+        }
+
+""" + diag55_heads("MEASURES") + """    }
+
+    //----------//
+    // doSystem //""")
+write("org/audiveris/omr/sheet/rhythm/MeasuresStep.java", text)
+print("  MeasuresStep DIAG55 MEASURES-END (§47)")
+
+text = copy_src("org/audiveris/omr/sheet/note/ChordsStep.java")
+text = sub(text, """        // Gather all system notes (heads & rests) into chords
+        new ChordsBuilder(system).buildHeadChords();
+    }
+}""",
+"""        // Gather all system notes (heads & rests) into chords
+        new ChordsBuilder(system).buildHeadChords();
+    }
+
+    //----------//
+    // doEpilog //
+    //----------//
+    // DIAG55: per-staff head counts at end of CHORDS (print-only).
+    @Override
+    protected void doEpilog (org.audiveris.omr.sheet.Sheet sheet,
+                             Void context)
+        throws org.audiveris.omr.step.StepException
+    {
+""" + diag55_heads("CHORDS") + """    }
+}""")
+write("org/audiveris/omr/sheet/note/ChordsStep.java", text)
+print("  ChordsStep DIAG55 CHORDS-END (§47)")
+
+text = copy_src("org/audiveris/omr/sheet/curve/CurvesStep.java")
+text = sub(text, """    public void doit (Sheet sheet)
+        throws StepException
+    {
+        new Curves(sheet).buildCurves();
+    }""",
+"""    public void doit (Sheet sheet)
+        throws StepException
+    {
+        new Curves(sheet).buildCurves();
+
+""" + diag55_heads("CURVES") + """    }""")
+write("org/audiveris/omr/sheet/curve/CurvesStep.java", text)
+print("  CurvesStep DIAG55 CURVES-END (§47)")
+
 # ============================================================ ROUND 49 (§43: clean build)
 # Strip ALL DIAG prints (DIAG14 through DIAG48) from the freshly
 # generated patched sources. The DIAG prints were left in deliberately
