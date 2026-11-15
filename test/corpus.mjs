@@ -12,7 +12,8 @@
 //   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
 //   HOLDOUT=1 also reads the held-out pages (test/holdout), HOLDOUT=only reads only them: to confirm
 //     a fix made without looking at them, never to make one
-//   PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with other settings;
+//   PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with more settings, after
+//     the page's (app/settings.js), so one of the same name replaces it (desktop only);
 //   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
 //   ENGINE=teavm reads with Audiveris in WebAssembly (teavm/node/read.mjs), from the grey pixels the
 //     page would hand it (test/grey.py), against the desktop's baseline; PDFs are left out (the page
@@ -96,7 +97,7 @@ async function read(batch) {
     // the page reads words with tesseract.js; here Tesseract stays off (its native libraries
     // aren't in the page's jar list), so lyrics aren't scored on the desktop
     ...asArgs(['org.audiveris.omr.text.tesseract.TesseractOCR.useOCR=false']),
-    ...asArgs(process.env.CONSTANTS ? process.env.CONSTANTS.split(',') : READING), '-transcribe', '-export', '-output', dir,
+    ...asArgs([...READING, ...(process.env.CONSTANTS ? process.env.CONSTANTS.split(',') : [])]), '-transcribe', '-export', '-output', dir,
     ...batch.map(c => c.input),
   ]
   const started = Date.now()
