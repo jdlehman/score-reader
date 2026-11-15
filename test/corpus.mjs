@@ -25,12 +25,12 @@
 // photo-synthetic/ take their answer from pages/<page>.json.
 import { execFile } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { basename, dirname, extname, join, relative, resolve } from 'node:path'
+import { basename, extname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { READING, asArgs } from '../app/settings.js'
-import { musicXmlText, parseMusicXml, score } from './score.mjs'
+import { ROOT, allCases, joined, reads } from './cases.mjs'
+import { parseMusicXml, score } from './score.mjs'
 
-const ROOT = resolve(import.meta.dirname, '..')
 const WORK = join(ROOT, '.work')
 const OUT = join(WORK, 'corpus', process.env.RUN ?? 'last')
 const BASELINE = join(ROOT, 'test', 'corpus', 'baseline.json')
@@ -41,37 +41,6 @@ if (TEAVM && process.env.SAVE) {
   process.exit(2)
 }
 const filters = process.argv.slice(2)
-
-const INPUT = /\.(png|jpe?g|tiff?|pdf)$/i
-
-/** An answer file: <name>.gt.json, or <name>.json if it lists parts (not just an image's size). */
-function answerFor(input) {
-  for (const f of [input.replace(INPUT, '.gt.json'), input.replace(INPUT, '.json')]) {
-    try {
-      if (Array.isArray(JSON.parse(readFileSync(f, 'utf8')).parts)) return f
-    } catch {}
-  }
-  return null
-}
-
-/** Cases in a corpus folder: { name, input, answer? }, named by their path in it. */
-function cases(dir, prefix = '') {
-  const out = []
-  const walk = d => {
-    for (const f of readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      const path = join(d, f.name)
-      if (f.isDirectory()) walk(path)
-      else if (INPUT.test(f.name)) {
-        const name = prefix + relative(dir, path).replace(INPUT, '')
-        let answer = answerFor(path)
-        if (!answer && basename(d) === 'photo-synthetic') answer = answerFor(join(dirname(d), 'pages', basename(f.name).replace(/-photo-\w+\.\w+$/, '.png')))
-        out.push({ name, input: path, answer })
-      }
-    }
-  }
-  walk(dir)
-  return out
-}
 
 const java = join(WORK, 'jdk', readdirSync(join(WORK, 'jdk')).find(d => d.startsWith('jdk')), 'Contents', 'Home', 'bin', 'java')
 const classpath = [resolve(process.env.PATCHED ?? join(WORK, 'patched.jar')), ...readFileSync(join(WORK, 'classpath.txt'), 'utf8').trim().split(':').map(j => join(ROOT, j.replace(/^\/app\//, '')))].join(':')
@@ -138,43 +107,7 @@ async function readWasm(batch) {
 }
 
 /** The MusicXML files Audiveris wrote for one case (.mxl; .musicxml from WebAssembly): one, or one per movement. */
-function reads(dir, c) {
-  const radix = basename(c.input, extname(c.input))
-  const where = [join(dir, radix), dir]
-  for (const d of where) {
-    if (!existsSync(d)) continue
-    const files = readdirSync(d).filter(f => /\.(mxl|musicxml)$/.test(f) && (f === radix + '.mxl' || f === radix + '.musicxml' || f.startsWith(radix + '.mvt'))).sort()
-    if (files.length) return files.map(f => join(d, f))
-  }
-  return []
-}
-
-/** Joins movements into one list of parts, measure lists end to end, for scoring. */
-function joined(files) {
-  const xmls = files.map(f => musicXmlText(readFileSync(f)))
-  if (xmls.length === 1) return xmls[0]
-  // score each movement's parts as continuing the first's, by position (good enough for a check)
-  const parts = xmls.map(parseMusicXml)
-  const widest = parts.reduce((a, b) => (b.length > a.length ? b : a))
-  const out = widest.map((p, i) => ({ ...p, measures: parts.flatMap(ps => ps[i]?.measures ?? []) }))
-  return toXml(out)
-}
-
-/** Minimal MusicXML from parsed parts (only what score.mjs reads back). */
-function toXml(parts) {
-  const steps = ['C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B']
-  const alters = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0]
-  const note = n => `<note><pitch><step>${steps[n.midi % 12]}</step>${alters[n.midi % 12] ? '<alter>1</alter>' : ''}<octave>${Math.floor(n.midi / 12) - 1}</octave></pitch>${n.lyric ? `<lyric><text>${n.lyric}</text></lyric>` : ''}</note>`
-  return `<score-partwise><part-list>${parts.map(p => `<score-part id="${p.id}"><part-name>${p.name}</part-name></score-part>`).join('')}</part-list>${parts.map(p => `<part id="${p.id}">${p.measures.map(m => `<measure>${m.notes.map(note).join('')}</measure>`).join('')}</part>`).join('')}</score-partwise>`
-}
-
-const all = [
-  ...cases(join(ROOT, 'test', 'corpus')),
-  // the extra folder's copies of pieces the repo has are left out
-  ...(process.env.EXTRA ? cases(resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)), 'extra/') : []),
-  // the held-out pages, only when asked for (test/holdout/README.md)
-  ...(process.env.HOLDOUT ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
-].filter((c, i, list) => !c.name.startsWith('extra/') || !list.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input))).filter(c => !filters.length || filters.some(f => c.name.includes(f)))
+const all = allCases().filter(c => !filters.length || filters.some(f => c.name.includes(f)))
   .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
   .filter(c => !TEAVM || !/\.pdf$/i.test(c.input))
   .filter(c => process.env.HOLDOUT !== 'only' || c.name.startsWith('holdout/'))
