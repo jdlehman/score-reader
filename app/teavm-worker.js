@@ -2,14 +2,17 @@
 // Reads a score with Audiveris in WebAssembly (teavm.js), away from the page: each page is a
 // minute or more of work that can't be interrupted, which would freeze the page.
 //
-// The page sends { pages, constants, languages } and gets back, as they come:
+// The page sends { pages, constants, languages, deblur } and gets back, as they come:
 //   { log }               a line Audiveris printed
 //   { step: [page, id] }  a step of a page starts (page 0: the export)
 //   { ocr, id }           an image whose words the page should read (ocr.js); it answers { id, text }
 //   { done }              { scores, failed }, as readScore returns them
 //   { error }             the reading failed
+// `deblur` is the pages the quick look warned about (reader.js): they are sharpened first
+// (deblur.js), in this worker, before Audiveris reads them.
 
 import { readScore } from './teavm.js'
+import { loadDeblur } from './deblur.js'
 
 // Audiveris prints to the console: the page shows it, and learns from it which pages failed
 for (const level of ['log', 'info', 'warn', 'error']) {
@@ -32,6 +35,28 @@ onmessage = async ({ data }) => {
   try {
     const { load } = await import(new URL('teavm/runtime.mjs', import.meta.url).href)
     const teavm = await load(new URL('teavm/classes.wasm', import.meta.url).href)
+    // Sharpen the warned pages first (deblur.js): a page the quick look flagged as blurred
+    // reads far better sharpened, and the sharpening only ever runs on flagged pages. A page
+    // that fails to sharpen is read as it was, so a deblur failure can't lose a page; if the
+    // module itself can't load (an old dist/), every page is read as it was.
+    if (data.deblur?.length) {
+      let deblur = null
+      try {
+        deblur = await loadDeblur(load, new URL('teavm/deblur/classes.wasm', import.meta.url).href)
+      } catch (e) {
+        console.warn('The sharpening module could not load, reading the pages as they were:', e)
+      }
+      for (const i of data.deblur) {
+        const page = data.pages[i]
+        if (!page || !deblur) continue
+        postMessage({ log: `Sharpening page ${i + 1} before the read (it looked blurred)…` })
+        try {
+          page.grey = await deblur(page.grey, page.w, page.h)
+        } catch (e) {
+          console.warn(`Sharpening page ${i + 1} failed, reading it as it was:`, e)
+        }
+      }
+    }
     const done = await readScore({
       teavm,
       pages: data.pages,

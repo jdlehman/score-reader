@@ -85,7 +85,7 @@ function askToRead(checks) {
   const none = pages('no-staves'), small = pages('too-small')
   if (!none.length && !small.length) return Promise.resolve(true)
   const why = []
-  if (none.length) why.push(`No staves could be found on ${list(none)}: ${none.length > 1 && checks.length > 1 ? 'they' : 'it'} may be blurred, too faint, too small or not music.`)
+  if (none.length) why.push(`No staves could be found on ${list(none)}: ${none.length > 1 && checks.length > 1 ? 'they' : 'it'} may be blurred, too faint, too small or not music. If you read anyway, blurred pages are sharpened first (about 15–30 seconds a page) — pages too small to read are not.`)
   if (small.length) why.push(`The music on ${list(small)} is too small to read: take the photo closer, or use a bigger image.`)
   $('check-why').textContent = why.join(' ')
   $('check').hidden = false
@@ -213,7 +213,11 @@ async function read(files) {
         else if (data.error) reject(new Error(data.error))
       }
       worker.onerror = e => reject(new Error(e.message || 'the reader stopped'))
-      worker.postMessage({ pages: input.pages, constants: READING, languages: ocrLanguage }, input.pages.map(p => p.grey.buffer))
+      // deblur: the pages the quick look warned about (no staves found), sharpened in the worker
+      // before Audiveris reads them (deblur.js); 'too-small' pages are not sharpened, sharpening
+      // can't make small music bigger
+      const deblur = input.checks.flatMap((c, i) => c?.warn === 'no-staves' ? [i] : [])
+      worker.postMessage({ pages: input.pages, constants: READING, languages: ocrLanguage, deblur }, input.pages.map(p => p.grey.buffer))
     })
     for (const n of failed) progress.failedPages.add(n)
     clearInterval(timer)

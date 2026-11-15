@@ -102,3 +102,6 @@ jc -proc:none -cp ".work/patched.jar:.work/lib/*" -d $W/dump teavm/generate/Temp
 "$J/java" -Djava.awt.headless=true -cp ".work/patched.jar:.work/lib/*:$W/dump" TemplateDump $W/out/templates 32 200 Bravura Leland > $W/dump/log.txt 2>&1 \
   || { tail -20 $W/dump/log.txt >&2; exit 1; }
 echo "teavm: $(du -h $W/out/classes.wasm | cut -f1) $(grep -o 'Classes compiled: [0-9]*' $W/compile.log), $(ls $W/out/templates | wc -l | tr -d ' ') template files"
+
+# 10. the deblur pre-step (deblur.js): its own small module, built the same way
+teavm/deblur-build.sh
