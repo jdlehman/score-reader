@@ -69,13 +69,13 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   79% to 81% (25 pages better, 5 a little worse). It can still squeeze a measure
   that failed for another reason: on the Verborgenheit 8va page a false half note made bar 4
   too long, and its eighths became triplets to make room (rhythm 99% to 92%). Nothing found
-  tells those apart yet (a drawn 3 on the page doesn't: that page has two). A check, off
-  (`StackRhythm.checkTupletVoices`): keep the second reading only if every voice that filled the
-  measure in the first still does, known by its last chord. It brings Verborgenheit back to 99%
-  but costs the Cantique p01 3 points of notes and 4 of rhythm (both readings of its bar 9 are
-  wrong), and changes no other page: too few to call. A first version tested the chord, not its
-  voice, and cost Frühling 5 points: the first reading drops the chords it has no time for, so a
-  cut-short voice can end at the barline.
+  tells those apart yet (a drawn 3 on the page doesn't: that page has two). Tried and dropped
+  (2026-11-15): keep the second reading only if every voice that filled the measure in the first
+  still does, known by its last chord. By test/compare.mjs it changed no sung bar on the whole
+  corpus; in accompaniment it fixed Verborgenheit's piano bar 4 (36 notes back on time) and cost
+  the Cantique organ's bar 9, already wrong, 6 notes. A first version tested the chord, not its
+  voice, and cost Frühling 5 points of rhythm: the first reading drops the chords it has no time
+  for, so a cut-short voice can end at the barline.
 - Whole notes are matched with Leland's template as well as Bravura's, the better kept
   (`NoteHeadsBuilder`, `wholeCatalog`). Bravura's whole note is wider than MuseScore's or
   LilyPond's, and matched them too badly to keep: the Cantique (MuseScore) lost nearly all of
