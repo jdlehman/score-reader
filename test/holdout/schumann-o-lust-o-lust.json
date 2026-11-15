@@ -1,0 +1,1692 @@
+{
+ "page": "schumann-o-lust-o-lust",
+ "title": "Schumann, Clara, 6 Lieder, Op.23, 6 O Lust, o Lust, bars 1-12",
+ "source": "OpenScore Lieder Corpus (CC0 1.0), scores/Schumann,_Clara/6_Lieder,_Op.23/6_O_Lust,_o_Lust/lc5142768.mxl",
+ "beats": 6,
+ "beat_type": 8,
+ "bars": 12,
+ "parts": [
+  {
+   "id": "P1",
+   "name": "Voice",
+   "note_count": 18,
+   "notes": [
+    {
+     "bar": 5,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "1.  O",
+     "onset": 1
+    },
+    {
+     "bar": 5,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Lust,",
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "o",
+     "onset": 2.5
+    },
+    {
+     "bar": 6,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "Lust",
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 6,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "vom",
+     "onset": 2.5
+    },
+    {
+     "bar": 7,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": "Berg ",
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 7,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "ein",
+     "onset": 2.5
+    },
+    {
+     "bar": 8,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "Lied",
+     "onset": 0
+    },
+    {
+     "bar": 8,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "in's",
+     "onset": 1.5
+    },
+    {
+     "bar": 9,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Land",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "hin",
+     "onset": 1.5
+    },
+    {
+     "bar": 10,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "ab",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": "zu",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "sin",
+     "onset": 1.5
+    },
+    {
+     "bar": 11,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "gen !",
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Der",
+     "onset": 2.5
+    }
+   ]
+  },
+  {
+   "id": "P2",
+   "name": "Piano",
+   "note_count": 220,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 1,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 1,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 1,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 1,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 1,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 1,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 1,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 1,
+     "pitch": "D#2",
+     "midi": 39,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 1,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 1,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 1,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 1,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 1,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 1,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 1,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 1,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 1,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 2,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 2,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 2,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 2,
+     "pitch": "G2",
+     "midi": 43,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 2,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 3,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 3,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 3,
+     "pitch": "A#5",
+     "midi": 82,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 3,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 3,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 3,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 3,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 3,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 3,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 4,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 4,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 4,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 4,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 4,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "A#1",
+     "midi": 34,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 4,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 5,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 5,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 5,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 5,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 5,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 5,
+     "pitch": "D#2",
+     "midi": 39,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 5,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 5,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 5,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 5,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 5,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 5,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 6,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 6,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 6,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 6,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 6,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 6,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 6,
+     "pitch": "G2",
+     "midi": 43,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 6,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 6,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 6,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 6,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 6,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 7,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 7,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 7,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 7,
+     "pitch": "G5",
+     "midi": 79,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 7,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 7,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 7,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 7,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 7,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 7,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 7,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 8,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 8,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 8,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 8,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 8,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 8,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 8,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 8,
+     "pitch": "C3",
+     "midi": 48,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 8,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 8,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 8,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 8,
+     "pitch": "G#2",
+     "midi": 44,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 8,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 8,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 8,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 9,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 9,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 9,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 9,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 9,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 9,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 9,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 9,
+     "pitch": "G2",
+     "midi": 43,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 9,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 9,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 9,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "D#2",
+     "midi": 39,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 9,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 9,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 9,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 9,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 10,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 10,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 10,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 10,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 10,
+     "pitch": "A3",
+     "midi": 57,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 10,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 10,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 10,
+     "pitch": "F2",
+     "midi": 41,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "F1",
+     "midi": 29,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 10,
+     "pitch": "F2",
+     "midi": 41,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 11,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 0.25
+    },
+    {
+     "bar": 11,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 11,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 11,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 11,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 11,
+     "pitch": "A#1",
+     "midi": 34,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 11,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 1.75
+    },
+    {
+     "bar": 11,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 2.25
+    },
+    {
+     "bar": 11,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 12,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "F5",
+     "midi": 77,
+     "lyric": null,
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 12,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": null,
+     "onset": 0.75
+    },
+    {
+     "bar": 12,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": null,
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 12,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 1.5
+    },
+    {
+     "bar": 12,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": null,
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": null,
+     "onset": 2.5
+    },
+    {
+     "bar": 12,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": null,
+     "onset": 2.5
+    }
+   ]
+  }
+ ],
+ "total_notes": 238,
+ "total_lyrics": 16
+}

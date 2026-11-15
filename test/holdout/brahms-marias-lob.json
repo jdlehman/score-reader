@@ -1,0 +1,999 @@
+{
+ "page": "brahms-marias-lob",
+ "title": "Brahms, Johannes, Marienlieder, Op.22, 7 Marias Lob, bars 1-12",
+ "source": "OpenScore Lieder Corpus (CC0 1.0), scores/Brahms,_Johannes/Marienlieder,_Op.22/7_Marias_Lob/lc8718660.mxl",
+ "beats": 4,
+ "beat_type": 4,
+ "bars": 12,
+ "parts": [
+  {
+   "id": "P1",
+   "name": "Soprano",
+   "note_count": 41,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "1. Ma",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "ri",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": "a,",
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "wah",
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "re",
+     "onset": 3
+    },
+    {
+     "bar": 3,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Him",
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 3,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "mels",
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "freud’,",
+     "onset": 2
+    },
+    {
+     "bar": 3,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "der",
+     "onset": 3
+    },
+    {
+     "bar": 4,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Welt",
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 4,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "Er",
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "götz",
+     "onset": 2
+    },
+    {
+     "bar": 4,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "lich",
+     "onset": 3
+    },
+    {
+     "bar": 5,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "keit!",
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "Wer",
+     "onset": 2
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "wollt’",
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "dich",
+     "onset": 1
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "nicht",
+     "onset": 2
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "lie",
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "ben,",
+     "onset": 1
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "du",
+     "onset": 2
+    },
+    {
+     "bar": 8,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "stehst",
+     "onset": 0
+    },
+    {
+     "bar": 8,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 8,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "mir",
+     "onset": 1
+    },
+    {
+     "bar": 8,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "ge",
+     "onset": 2
+    },
+    {
+     "bar": 9,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "schrie",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": null,
+     "onset": 0.5
+    },
+    {
+     "bar": 9,
+     "pitch": "D5",
+     "midi": 74,
+     "lyric": "ben,",
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "ja",
+     "onset": 2
+    },
+    {
+     "bar": 10,
+     "pitch": "F5",
+     "midi": 77,
+     "lyric": "bist",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "D#5",
+     "midi": 75,
+     "lyric": "mir",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "C#5",
+     "midi": 73,
+     "lyric": "ge",
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "gra",
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "ben",
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "mit",
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "C#5",
+     "midi": 73,
+     "lyric": "tie",
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "fen",
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "Buch",
+     "onset": 2
+    }
+   ]
+  },
+  {
+   "id": "P2",
+   "name": "Alto",
+   "note_count": 36,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "2. Wie",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "schmel",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "zet",
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "ein",
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "Kar",
+     "onset": 3
+    },
+    {
+     "bar": 3,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "fun",
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "kel",
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "stein",
+     "onset": 2
+    },
+    {
+     "bar": 3,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "im",
+     "onset": 3
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "Lor",
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "beer",
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "krän",
+     "onset": 2
+    },
+    {
+     "bar": 4,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "ze",
+     "onset": 3
+    },
+    {
+     "bar": 5,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "lein,",
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "so",
+     "onset": 2
+    },
+    {
+     "bar": 6,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "geht",
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "es",
+     "onset": 1
+    },
+    {
+     "bar": 6,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "mir",
+     "onset": 2
+    },
+    {
+     "bar": 7,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "e",
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "ben,",
+     "onset": 1
+    },
+    {
+     "bar": 7,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "mein",
+     "onset": 2
+    },
+    {
+     "bar": 8,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "Seel’",
+     "onset": 0
+    },
+    {
+     "bar": 8,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "und",
+     "onset": 1
+    },
+    {
+     "bar": 8,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "mein",
+     "onset": 2
+    },
+    {
+     "bar": 9,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "Le",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "ben",
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "vor",
+     "onset": 2
+    },
+    {
+     "bar": 10,
+     "pitch": "C#5",
+     "midi": 73,
+     "lyric": "Lieb’",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "C5",
+     "midi": 72,
+     "lyric": "sich",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "zer",
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "tren",
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "nen",
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "und",
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "A#4",
+     "midi": 70,
+     "lyric": "in",
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "G#4",
+     "midi": 68,
+     "lyric": "sich",
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "ver",
+     "onset": 2
+    }
+   ]
+  },
+  {
+   "id": "P3",
+   "name": "Tenor",
+   "note_count": 36,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "3. Der",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "gan",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "zen",
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "Schö",
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "pfung",
+     "onset": 3
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "rei",
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "che",
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "Zier",
+     "onset": 2
+    },
+    {
+     "bar": 3,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "ver",
+     "onset": 3
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "gleicht",
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "sich",
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "nicht",
+     "onset": 2
+    },
+    {
+     "bar": 4,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "mit",
+     "onset": 3
+    },
+    {
+     "bar": 5,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "dir.",
+     "onset": 0
+    },
+    {
+     "bar": 5,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": "Es",
+     "onset": 2
+    },
+    {
+     "bar": 6,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "dür",
+     "onset": 0
+    },
+    {
+     "bar": 6,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "fen",
+     "onset": 1
+    },
+    {
+     "bar": 6,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": "die",
+     "onset": 2
+    },
+    {
+     "bar": 7,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": "Blu",
+     "onset": 0
+    },
+    {
+     "bar": 7,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "men",
+     "onset": 1
+    },
+    {
+     "bar": 7,
+     "pitch": "D4",
+     "midi": 62,
+     "lyric": "ihr’",
+     "onset": 2
+    },
+    {
+     "bar": 8,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "Schön",
+     "onset": 0
+    },
+    {
+     "bar": 8,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "heit",
+     "onset": 1
+    },
+    {
+     "bar": 8,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "nicht",
+     "onset": 2
+    },
+    {
+     "bar": 9,
+     "pitch": "F4",
+     "midi": 65,
+     "lyric": "rüh",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "men,",
+     "onset": 1
+    },
+    {
+     "bar": 9,
+     "pitch": "G4",
+     "midi": 67,
+     "lyric": "sie",
+     "onset": 2
+    },
+    {
+     "bar": 10,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "müs",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "sen",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "sich",
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "schä",
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "men,",
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "C#4",
+     "midi": 61,
+     "lyric": "du",
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "tu",
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "est",
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "be",
+     "onset": 2
+    }
+   ]
+  },
+  {
+   "id": "P4",
+   "name": "Bass",
+   "note_count": 24,
+   "notes": [
+    {
+     "bar": 1,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "4. Des",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": "Him",
+     "onset": 0
+    },
+    {
+     "bar": 2,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": "mels",
+     "onset": 1
+    },
+    {
+     "bar": 2,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": "Ster",
+     "onset": 2
+    },
+    {
+     "bar": 2,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": "nen",
+     "onset": 3
+    },
+    {
+     "bar": 3,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "An",
+     "onset": 0
+    },
+    {
+     "bar": 3,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "ge",
+     "onset": 1
+    },
+    {
+     "bar": 3,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "sicht",
+     "onset": 2
+    },
+    {
+     "bar": 3,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": "und",
+     "onset": 3
+    },
+    {
+     "bar": 4,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "al",
+     "onset": 0
+    },
+    {
+     "bar": 4,
+     "pitch": "A#2",
+     "midi": 46,
+     "lyric": "ler",
+     "onset": 1
+    },
+    {
+     "bar": 4,
+     "pitch": "C3",
+     "midi": 48,
+     "lyric": "Son",
+     "onset": 2
+    },
+    {
+     "bar": 4,
+     "pitch": "G#2",
+     "midi": 44,
+     "lyric": "nen",
+     "onset": 3
+    },
+    {
+     "bar": 5,
+     "pitch": "D#3",
+     "midi": 51,
+     "lyric": "Licht,",
+     "onset": 0
+    },
+    {
+     "bar": 9,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "die",
+     "onset": 2
+    },
+    {
+     "bar": 10,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": "Per",
+     "onset": 0
+    },
+    {
+     "bar": 10,
+     "pitch": "G#3",
+     "midi": 56,
+     "lyric": "len,",
+     "onset": 1
+    },
+    {
+     "bar": 10,
+     "pitch": "A#3",
+     "midi": 58,
+     "lyric": "Ko",
+     "onset": 2
+    },
+    {
+     "bar": 11,
+     "pitch": "C4",
+     "midi": 60,
+     "lyric": "ral",
+     "onset": 0
+    },
+    {
+     "bar": 11,
+     "pitch": "D#4",
+     "midi": 63,
+     "lyric": "len,",
+     "onset": 1
+    },
+    {
+     "bar": 11,
+     "pitch": "C#4",
+     "midi": 61,
+     "lyric": "Gold,",
+     "onset": 2
+    },
+    {
+     "bar": 12,
+     "pitch": "E3",
+     "midi": 52,
+     "lyric": "Sil",
+     "onset": 0
+    },
+    {
+     "bar": 12,
+     "pitch": "F3",
+     "midi": 53,
+     "lyric": "ber,",
+     "onset": 1
+    },
+    {
+     "bar": 12,
+     "pitch": "G3",
+     "midi": 55,
+     "lyric": "sie",
+     "onset": 2
+    }
+   ]
+  }
+ ],
+ "total_notes": 137,
+ "total_lyrics": 132
+}

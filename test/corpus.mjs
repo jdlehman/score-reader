@@ -10,6 +10,8 @@
 //   SAVE=1 node test/corpus.mjs             save these scores as the new baseline
 //   JOBS=3 (default 2) Java processes at once; REUSE=1 scores the reads of the last run again
 //   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
+//   HOLDOUT=1 also reads the held-out pages (test/holdout), HOLDOUT=only reads only them: to confirm
+//     a fix made without looking at them, never to make one
 //   PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with other settings;
 //   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
 //   ENGINE=teavm reads with Audiveris in WebAssembly (teavm/node/read.mjs), from the grey pixels the
@@ -169,9 +171,12 @@ const all = [
   ...cases(join(ROOT, 'test', 'corpus')),
   // the extra folder's copies of pieces the repo has are left out
   ...(process.env.EXTRA ? cases(resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)), 'extra/') : []),
+  // the held-out pages, only when asked for (test/holdout/README.md)
+  ...(process.env.HOLDOUT ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
 ].filter((c, i, list) => !c.name.startsWith('extra/') || !list.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input))).filter(c => !filters.length || filters.some(f => c.name.includes(f)))
   .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
   .filter(c => !TEAVM || !/\.pdf$/i.test(c.input))
+  .filter(c => process.env.HOLDOUT !== 'only' || c.name.startsWith('holdout/'))
 if (process.env.LIST) {
   for (const c of all) console.log(c.answer ? 'answer ' : '       ', c.name)
   process.exit(0)

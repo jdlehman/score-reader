@@ -12,6 +12,11 @@ every bar has the same notes in both.
 
     node test/corpus.mjs                       # read, score, compare with baseline.json
     EXTRA=~/Downloads/choral-test-set node test/corpus.mjs   # also the pieces kept out of git
+    HOLDOUT=only node test/corpus.mjs          # the held-out pages, to confirm a fix
+
+Fixes are made against these pages, so they can come to fit them. `test/holdout/` has 20 more
+pages, drawn at random, that no fix is made against: a fix is confirmed there once, and its
+README has the rules.
 
 Only music that anyone may copy is here. Collected on 2026-11-08 and 2026-11-10 for the
 Score Reader spikes (the "open-music" test set); the answers come from the same MusicXML the

@@ -1,0 +1,43 @@
+# Songs for the held-out pages (build.mjs takes the first 20 that build), in this order: a draw
+# with Python's random.Random(20261113).sample(paths, 40) from the corpus's .mxl paths (sorted),
+# leaving out the songs test/corpus already has. Drawn 2026-11-13, not chosen by hand.
+scores/Davies,_Walford/8_New_Nursery_Rhymes,_Op.23/5_The_fly_and_the_humble_bee/lc6218734.mxl
+scores/Beach,_Amy/4_Songs,_Op.51/4_Je_demande_à_l’oiseau/lc6245974.mxl
+scores/Chaminade,_Cécile/_/Alleluia/lc6260992.mxl
+scores/Jaëll,_Marie/Les_Orientales/7_Le_voile/lc6218315.mxl
+scores/Shield,_William/_/The_Maid_of_Lodi/lc6445119.mxl
+scores/Bantock,_Granville/5_Songs_from_the_Chinese_Poets,_1st_Series/5_Return_of_Spring/lc6211561.mxl
+scores/Mendelssohn,_Felix/6_Duets,_Op.63/2_Abschiedslied_der_Zugvögel,_MWV_J_9/lc7076589.mxl
+scores/Brahms,_Johannes/5_Lieder,_Op.49/1_Am_Sonntag_Morgen/lc5700433.mxl
+scores/Reichardt,_Louise/12_Gesänge/01_Erinnrung_zum_Bach/lc5087917.mxl
+scores/Chaminade,_Cécile/_/Au_pays_bleu/lc6261607.mxl
+scores/Brahms,_Johannes/8_Lieder_und_Gesänge,_Op.59/3_Regenlied/lc5058091.mxl
+scores/Boulanger,_Lili/Clairières_dans_le_ciel/13_Demain_fera_un_an/lc5902873.mxl
+scores/Kralik,_Mathilde/Jugend-Lieder/04_Morgengesang/lc6207025.mxl
+scores/Boulton,_Harold/12_New_Songs/04_Truant_Wings/lc6404394.mxl
+scores/Schubert,_Franz/4_Gesänge_aus_„Wilhelm_Meister“,_D.877/4_Lied_der_Mignon_(Nur_wer_die_Sehnsucht_kennt)/lc5093803.mxl
+scores/Brahms,_Johannes/Marienlieder,_Op.22/7_Marias_Lob/lc8718660.mxl
+scores/Schumann,_Clara/6_Lieder,_Op.23/6_O_Lust,_o_Lust/lc5142768.mxl
+scores/Hensel,_Fanny/6_Lieder,_Op.1/5_Morgenständchen/lc5004650.mxl
+scores/Bizet,_Georges/20_Mélodies,_Op.21/05_Rêve_de_la_bien-aimée/lc6888209.mxl
+scores/Hensel,_Fanny/3_Songs/2_Italien/lc6022185.mxl
+scores/Quilter,_Roger/To_Julia,_Op.8/1_Prelude/lc29093051.mxl
+scores/Beach,_Amy/3_Browning_Songs,_Op.44/1_The_Year’s_at_the_Spring/lc6212179.mxl
+scores/Stanford,_Charles_Villiers/Songs_of_the_Fleet_(Piano),_Op.117/5_Fare_Well/lc31240310.mxl
+scores/Warlock,_Peter/Songs/08_Walking_the_woods/lc6197437.mxl
+scores/Webern,_Anton/5_Lieder_nach_Gedichten_von_Stefan_George,_Op.4/5_Ihr_tratet_zu_dem_Herde/lc6726319.mxl
+scores/Hensel,_Fanny/6_Lieder,_Op.1/2_Wanderlied/lc5004632.mxl
+scores/Reichardt,_Louise/12_Deutsche_und_Italiänische_Romantische_Gesänge/02_Wenn_ich_ihn_nur_habe/lc5100067.mxl
+scores/Wolf,_Hugo/Goethe-Lieder/40_Hoch_beglückt_in_deiner_Liebe/lc4945676.mxl
+scores/Lehmann,_Liza/Songs_of_Love_and_Spring/04_Dawning_Love/lc6762153.mxl
+scores/Gonzaga,_Chiquinha/_/Dona_Adelaide/lc6610193.mxl
+scores/Boulanger,_Lili/Clairières_dans_le_ciel/10_Deux_ancolies/lc5887314.mxl
+scores/Parratt,_Walter/Choral_Songs_in_Honour_of_Her_Majesty_Queen_Victoria/10_To_her_beneath_whose_stedfast_star/lc6686265.mxl
+scores/Kralik,_Mathilde/Jugend-Lieder/10_Lied_des_Gefangenen/lc6207095.mxl
+scores/Holmès,_Augusta_Mary_Anne/Les_Sept_Ivresses/6_Le_Désir/lc5661740.mxl
+scores/Webern,_Anton/5_Lieder_aus_“Der_siebente_Ring”,_Op.3/5_Kahl_reckt_der_Baum/lc6716631.mxl
+scores/Greger,_Luise/_/Liebeslied/lc6176486.mxl
+scores/Chaminade,_Cécile/_/Avril_s’éveille/lc6262544.mxl
+scores/Cornelius,_Peter/An_Bertha,_Op.15/3_In_der_Ferne/lc5062159.mxl
+scores/Brahms,_Johannes/6_Songs,_Op.3/4_Lied_aus_dem_Gedicht_„Ivan“/lc5667849.mxl
+scores/Jaëll,_Marie/4_Mélodies/3_Les_petits_oiseaux/lc5840072.mxl
