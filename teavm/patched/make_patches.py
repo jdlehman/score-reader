@@ -2352,43 +2352,10 @@ text = sub(text,
 write("org/audiveris/omr/text/TextBuilder.java", text)
 print("  TextBuilder charGlyph/wordGlyph DIAG24 (§23 trap 4)")
 
-# ============================================================ ROUND 20 (§23 trap 4 diagnostic: buffer vs img pixels)
-# The Wasm clean IMAGE agrees pixel-for-pixel with desktop in the lyric
-# area, yet the sections built from the ByteProcessor `buffer` are
-# systematically sparser (char glyphs ~1px smaller, some chars empty).
-# getCleanImage holds both objects (buffer shares img's raster array on
-# desktop via DataBufferByte); count foreground pixels in the "fore" ROI
-# (1854,574,75x35, hymn crop) from each side to see whether the sharing
-# breaks under TeaVM. Same file compiled into phase23/classes for desktop.
-# ---------------------------------------------------------------------------
-text = copy_src("org/audiveris/omr/text/SheetScanner.java")
-text = sub(text,
-           '''        TextsCleaner cleaner = new TextsCleaner(buffer, img.createGraphics(), sheet);
-        cleaner.eraseInters();''',
-           '''        TextsCleaner cleaner = new TextsCleaner(buffer, img.createGraphics(), sheet);
-        cleaner.eraseInters();
-
-        // DIAG24 (§23 trap 4): buffer vs img foreground in the "fore" ROI
-        {
-            int bx = 0;
-            int ix = 0;
-
-            for (int yy = 574; yy < 609; yy++) {
-                for (int xx = 1854; xx < 1929; xx++) {
-                    if (buffer.getPixel(xx, yy) == 0) {
-                        bx++;
-                    }
-
-                    if ((img.getRGB(xx, yy) & 0xffffff) == 0) {
-                        ix++;
-                    }
-                }
-            }
-
-            System.out.println("DIAG24 cleanCheck bufferFore=" + bx + " imgFore=" + ix);
-        }''')
-write("org/audiveris/omr/text/SheetScanner.java", text)
-print("  SheetScanner cleanCheck DIAG24 (§23 trap 4)")
+# ============================================================ ROUND 20 (removed 2026-11-15)
+# A diagnostic counted pixels at fixed coordinates in SheetScanner.getCleanImage (the hymn's
+# "fore" crop); with its print stripped (ROUND 49) the loops stayed, read but unused, and outside
+# a page narrower than 1929 pixels. SheetScanner is stock again (robbie-muse PR #6 found it).
 
 
 # ============================================================ ROUND 21 (\u00a724: trap 4 diagnostic — per-word section lists)
