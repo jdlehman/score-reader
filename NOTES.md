@@ -20,9 +20,6 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
 
 - Keep sheets in memory (`scorereader.keepSheets`): batch mode saves each sheet and reloads it to
   export, which took 5 minutes in the browser.
-- `ScoreReaderHook.finished`: Audiveris's shutdown never ends in CheerpJ, so it tells the page
-  when it is done (a JavaScript native) and is parked there.
-- No project file saved at the end in the browser (`scorereader.inBrowser`).
 - A page Audiveris can't read is left out, not the whole score (`scorereader.skipFailedPages`,
   `Book.skipFailed`), and stays out: leaving a page out undoes its steps, so every later book
   step read it again (3 times before the export), failing each time. That took seconds on the
@@ -109,17 +106,19 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   helper per pixel whose erosion branch CheerpJ never compiled (it compiles only branches seen
   taken), so half the calls ran in the interpreter. Same output (checked against the original on
   the page and 300 random images); beams went from 73 s to 6 s.
-- `BrowserOCR`: reading text (words, titles, part names) in the browser. `OcrUtil` picks it when
-  `scorereader.inBrowser` is set. It hands the page each image Audiveris would give Tesseract, as
-  grey bytes (a CheerpJ native), and the page reads it with tesseract.js, the same Tesseract in
-  WebAssembly, with its legacy engine as `TesseractOrder` uses and the language data the score
-  was picked in (`app/ocr.js`, `app/language.js`). Lines, words and characters come back with their boxes and baselines, but no
-  font attributes: a word's font size comes from its line's height, and `TextWord` fits the size
-  to the word's bounds anyway. On four test pieces (clean pages) it reads 64–77% of the
-  syllables, against 76–86% for desktop Audiveris on the same pages, and all the part names; on a
-  scan and on photos, 76%. Both use the same engine and data, and on the same image tesseract.js
-  reads what desktop Tesseract reads; most of the gap was the page's antialiasing (below), and the
-  rest is still to find.
+- `BrowserOCR`: reading text (words, titles, part names) in the browser, where the browser build's
+  `OcrUtil` uses it (`teavm/patched/make_patches.py`; until November 2026 a switch,
+  `scorereader.inBrowser`, picked it under CheerpJ, which also stopped Audiveris saving a project
+  file and called `ScoreReaderHook` when done, its shutdown never ending there). It hands the page
+  each image Audiveris would give Tesseract, as grey bytes, and the page reads it with tesseract.js,
+  the same Tesseract in WebAssembly, with its legacy engine as `TesseractOrder` uses and the
+  language data the score was picked in (`app/ocr.js`, `app/language.js`). Lines, words and
+  characters come back with their boxes and baselines, but no font attributes: a word's font size
+  comes from its line's height, and `TextWord` fits the size to the word's bounds anyway. On four
+  test pieces (clean pages) it reads 64–77% of the syllables, against 76–86% for desktop Audiveris
+  on the same pages, and all the part names; on a scan and on photos, 76%. Both use the same engine
+  and data, and on the same image tesseract.js reads what desktop Tesseract reads; most of the gap
+  was the page's antialiasing (below), and the rest is still to find.
 - `MetronomeInter.isParsed`: a line that only looks like a tempo mark (OCR read "J: 88" for
   "J = 88") is exported as plain words. Before, its export failed on a null model.
 - `PeakGraph.joinByLeftLines`: staves that no bar line connects but a thin line left of their

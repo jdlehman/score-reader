@@ -162,7 +162,7 @@ public class TeavmMain
                 }
             }
 
-            // keep the page, but only what the score needs (as the page's CheerpJ reading does)
+            // keep the page, but only what the score needs (Sheet.lightenForExport)
             stub.getSheet().lightenForExport();
 
             return true;

@@ -55,7 +55,7 @@ const state = await tab.evaluate(() => ({
 }))
 if (state.done) {
   const [download] = await Promise.all([tab.waitForEvent('download'), tab.click('#downloads a')])
-  await download.saveAs(join(out, `${name}.${download.suggestedFilename().split('.').pop()}`)) // .musicxml (it was .mxl from CheerpJ)
+  await download.saveAs(join(out, `${name}.${download.suggestedFilename().split('.').pop()}`)) // .musicxml
 }
 console.log(JSON.stringify({ name, seconds, finished, ...state, errors }, null, 1))
 await browser.close()

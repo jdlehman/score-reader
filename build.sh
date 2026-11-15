@@ -18,8 +18,8 @@ else
   # starts from them (teavm/build.sh), and the corpus test reads with them (test/corpus.mjs)
   rm -rf .work/classes && mkdir -p .work/classes
   "$J/javac" -nowarn -proc:none -cp ".work/lib/*" -d .work/classes \
-    $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java $SRC/Main.java $SRC/ScoreReaderHook.java \
-    $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/OcrUtil.java $SRC/text/BrowserOCR.java \
+    $SRC/sheet/Book.java $SRC/sheet/Sheet.java $SRC/sheet/Picture.java $SRC/CLI.java \
+    $SRC/image/MorphoProcessor.java $SRC/image/FlatMorphology.java $SRC/text/BrowserOCR.java \
     $SRC/sig/inter/MetronomeInter.java $SRC/score/PartwiseBuilder.java $SRC/image/Template.java $SRC/util/Table.java \
     $SRC/sheet/rhythm/MeasureStack.java $SRC/sheet/grid/PeakGraph.java $SRC/score/PartCollation.java $SRC/sheet/rhythm/Voices.java $SRC/sig/inter/KeyInter.java $SRC/sheet/clef/ClefBuilder.java $SRC/sig/inter/OctaveShiftInter.java \
     $SRC/sheet/rhythm/MeasureRhythm.java $SRC/sheet/rhythm/StackRhythm.java $SRC/sheet/note/NoteHeadsBuilder.java $SRC/sheet/ScaleBuilder.java 2>&1 | grep -v '^Note:' || true
