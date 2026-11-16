@@ -347,6 +347,22 @@ test('no TrOMR files at all: everything is kept, output equals input', () => {
   assert.equal(xml, serialiseXml(parseXml(aud)))
 })
 
+test('a null TrOMR staff file (a staff the runner could not read) is skipped, not a crash', () => {
+  // The runner passes null for a staff TrOMR fails on (tromr.js); the merge used to
+  // throw inside parseXml on it, losing the whole read instead of keeping Audiveris.
+  const aud = twoPartScore([
+    [[noteXml('C5', 12), noteXml('D5', 12), noteXml('E5', 12)],
+     [noteXml('C5', 12), noteXml('D5', 12), noteXml('E5', 12), noteXml('G5', 12)]],
+    [[noteXml('C3', 12), noteXml('D3', 12), noteXml('E3', 12), noteXml('G3', 12)],
+     [noteXml('C3', 12), noteXml('D3', 12), noteXml('E3', 12), noteXml('G3', 12)]],
+  ])
+  const { xml, report } = mergeMusicXml(aud, [null, null])
+  assert.equal(report.replaced.length, 0)
+  assert.equal(report.skipped.length, 1)
+  assert.equal(report.skipped[0].reason, 'no-tromr-staff')
+  assert.equal(xml, serialiseXml(parseXml(aud)))
+})
+
 // --- real files -----------------------------------------------------------------
 
 test('divisi-tuplet: gated merge keeps all 72 pitches and improves validity', async () => {

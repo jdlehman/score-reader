@@ -292,10 +292,88 @@ and refuse nearly every replacement in a sharp or flat key. The pitch check is a
 set of distinct pitches, not a multiset: Audiveris splits one sounding pitch across
 voices in divisi, so multiplicity would refuse the divisi case the merge exists for.
 
-What it is not: the merge is not wired into the read flow yet. TrOMR has no
-in-browser runner in the repo (the spikes used its native `focr` CLI), so
-`tools/merge.mjs` runs it offline for now, and no model weights are vendored
-(TrOMR is ~61 MB). The natural follow-up is a TrOMR runner plus a hook into the
-note-checking flow (app/check.js), so a reader can apply the second opinion to
-the measures the check flags. Transcoda is deliberately not a source: it scored
+What it is not: the merge never changes pitch content — it can only fix rhythm.
+The runner below wires it into the read flow; `tools/merge.mjs` still runs it
+offline for a single page. Transcoda is deliberately not a source: it scored
 0/218 on a real SATB page.
+
+## TrOMR in the browser (app/tromr.js, app/tromr-worker.js, app/tromr-convert.js, app/staves.js)
+
+The merge above is now wired into the read flow: after Audiveris produces one
+movement's MusicXML, the page runs TrOMR as a second opinion on the same pages
+(app/reader.js), converts its tokens, and merges under the same gate. Audiveris
+stays the authority; the second opinion only ever fixes bars Audiveris got wrong.
+The done summary says how many bars it fixed; a read the second opinion does not
+apply to, or that it fails on, is exactly the Audiveris read.
+
+The runner is CrispEmbed's deployed WebAssembly build of TrOMR
+(crispembed_ocr.js + crispembed_ocr.wasm, MIT, from crispstrobe/CrispEmbed) with
+the TrOMR model (tromr-q8_0.gguf, 32 MB, Apache-2.0, from Hugging Face). Neither
+is committed to the repo: `teavm/tromr-fetch.sh` downloads them from pinned
+sources with SHA-256 checksums into `.work/tromr/` (build.sh copies them to
+`dist/tromr/`), so the site serves its own copies at read time and no request
+goes to anyone else's server during a read. The model is pinned to a Hugging
+Face commit, not the moving main branch, so a new upload cannot silently change
+what the site reads.
+
+Architecture: the reader runs in a classic worker (app/tromr-worker.js), away
+from the page — one staff crop is 10-30 seconds of work that would freeze it.
+The worker loads the UMD module with importScripts, fetches the .wasm and the
+model from the site, passes the .wasm as `wasmBinary` to the factory, writes the
+model into the module's filesystem and starts it — the same calls the headless
+spike proved (score-reader-spikes/crispembed-wasm/run_wasm.cjs): `wasm_ocr_init`
+with `/model.gguf`, then `wasm_ocr_recognize_copy` per crop. The page detects
+the staves and cuts the crops itself (app/staves.js), converts the tokens
+(app/tromr-convert.js) and merges (app/merge.js). The worker only recognises.
+
+Staff detection is a JS port of the spike's robust detector (open_detect.py):
+pair candidates for a staff's outer lines, needing 4 of 5 predicted positions,
+so it tolerates a spurious row and one missing line. The classic consecutive-5
+detector misses a staff on the Gute Nacht page (5 of 6 — it merges the second
+system's piano staves); this one finds all 6, and the same 6 the focr validation
+material was cut with. Crops follow the spike's crop_staff exactly, so a crop cut
+here is the crop the spike measured.
+
+Gates, in order: the run happens only when the staves found across the read's
+pages are exactly the score's systems x pairs (from Audiveris's own system and
+staff structure) — a missed staff, a failed page or several movements stays
+Audiveris-only; then, per staff, a TrOMR failure leaves that staff as Audiveris
+read it (the merge skips a null staff file); then the merge's own gate, per
+(staff, measure). The reader's grey buffers are copied to the Audiveris worker,
+not transferred, so they are still there for the detector after the read.
+
+The converter's dialect is the one the spike's scorer parses, with two things
+the model actually writes that the scorer's notation does not say: the accidental
+comes after the octave (`note-C4#_eighth`, not `note-C#4_eighth`), and the
+thirty-second is written `thirty_second`. A rest inside a chord group (a
+two-voice staff where one voice rests, as the WASM model writes on Gute Nacht
+staff1 bar 1) is transcribed as a chord rest, not dropped; the merge ignores
+chord notes in its voice sums, so it is merge-neutral. `multirest-N` becomes N
+whole-measure rests at the file's own time signature — the model reads 2/4
+where focr wrote 4/4 on Gute Nacht staff0, and the file's own signature is the
+right one. Unknown tokens are warned about and skipped, never interpolated.
+
+Measured (2026-11-15, `score-reader-spikes/tromr-runner/validate.mjs`, the same
+scorer as the merge section, WASM outputs from the deployed build in Node):
+
+- Divisi-tuplet (synthetic): the WASM merge is identical to the focr merge —
+  exact pitch 72/72, valid pairs 10/24 -> 12/16, 2 replaced (bass bars 3, 4),
+  2 refused (TrOMR-invalid). Recognise: 24.4 s + 33.2 s, 57.6 s for the page.
+- Gute Nacht (CC0): the WASM merge is identical to the focr merge — exact pitch
+  223/223, valid pairs 38/40 -> 38/39, 1 replaced (voice bar 8), 1 refused
+  (TrOMR-invalid). Recognise: 10.4-34.0 s a staff, 142.8 s for the 6 staves.
+- The converter matches the focr staff files note for note wherever the model
+  agrees (4 of 6 Gute Nacht staves identical, both divisi staves identical);
+  where the WASM model reads a note differently from focr (Gute Nacht staff1
+  bar 1 chord-rests, staff4 bar 4 A5 for F5), the converter transcribes the
+  WASM model faithfully and the merge gate refuses the disagreement — no pitch
+  is lost on either page.
+
+Not measured: live-browser timing. Node is single-threaded at ~19 s a staff
+(~10x the native focr CLI); the threaded and WebGPU builds are unbuilt and
+unmeasured, so the in-browser time per page is unknown until the site is read
+in Chrome. The check is: read a two-system page in Chrome, note the time from
+the second opinion starting to the done summary, and the peak memory (the
+Audiveris worker is still alive while the TrOMR worker reads, plus the 32 MB
+model). Single movement only, for now: with several movements the staves cannot
+be told which movement they belong to.

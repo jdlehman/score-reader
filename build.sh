@@ -28,6 +28,10 @@ else
   # Audiveris in WebAssembly (teavm/README.md), copied into dist/ below
   teavm/build.sh
 
+  # TrOMR's second reader: its .wasm, loader and model, fetched from pinned sources with
+  # checksums into .work/tromr/ (teavm/tromr-fetch.sh), copied into dist/ below
+  teavm/tromr-fetch.sh
+
   rm -rf dist
   mkdir -p dist/source dist/licenses
   # the source of the copyleft libraries (see NOTICE.txt)
@@ -41,11 +45,18 @@ else
   mkdir -p dist/licenses/teavm-0.16.0 && cp node_modules/pdfjs-dist/LICENSE dist/licenses/teavm-0.16.0/LICENSE
 fi
 
-cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/merge.js app/zip-mxl.js app/style.css app/*.svg app/*.png dist/
+cp app/index.html app/reader.js app/pdf.js app/ocr.js app/language.js app/preflight.js app/settings.js app/teavm.js app/teavm-worker.js app/merge.js app/zip-mxl.js app/tromr.js app/tromr-worker.js app/tromr-convert.js app/staves.js app/style.css app/*.svg app/*.png dist/
 if [ -f .work/teavm/out/classes.wasm ]; then
   rm -rf dist/teavm && mkdir -p dist/teavm
   cp .work/teavm/out/classes.wasm .work/teavm/out/runtime.mjs dist/teavm/
   cp -R .work/teavm/out/templates dist/teavm/
+fi
+# TrOMR's second reader (tromr-fetch.sh, in the full build): its .wasm, the UMD loader and
+# the model it reads, served from the site itself. Only copied when .work/tromr/ exists, so a
+# page-only rebuild never deletes a working dist/tromr/ it did not fetch.
+if [ -d .work/tromr ]; then
+  rm -rf dist/tromr && mkdir -p dist/tromr
+  cp .work/tromr/* dist/tromr/
 fi
 # the score drawn after a read, to correct: @jdlehman/score-view (MIT, built by update-score-view.sh),
 # and Verovio (LGPL 3.0), unchanged, as files of its own

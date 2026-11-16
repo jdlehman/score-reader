@@ -310,7 +310,9 @@ export function mergeMusicXml(audiverisXml, tromrStaffXmls, opts = {}) {
   const systems = barsPerSystem(root)
   const pairs = staffPairs(root)
   const parts = children(root, 'part')
-  const tromr = tromrStaffXmls.map(x => parseXml(x))
+  // A null entry is a staff TrOMR could not read: it stays Audiveris (tromrStaff
+  // returns null for it, and the merge records a no-tromr-staff skip).
+  const tromr = tromrStaffXmls.map(x => (x ? parseXml(x) : null))
 
   const report = { replaced: [], kept: 0, skipped: [] }
 
