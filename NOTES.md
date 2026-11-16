@@ -96,6 +96,19 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   percussion clef in the corpus; the one drum page was already read with an F clef. No score
   changed, on the corpus or the held-out pages: a choir reader has no use for it, and a real drum
   staff read with another clef costs only a part no singer reads.
+- Barlines found in every staff of a system are kept (`BarsRetriever.freezeFullColumns`), as a
+  barline connected to the next staff already is. A choir's barlines stop at each staff, clear
+  of the words, so none is connected: on a choir-and-organ scan (private, not in the corpus) a
+  barline was later read as a stem, with void heads beside it in the staff spaces, which
+  outgraded it, and a column that lost its barline in half its staves was dropped, merging two
+  bars in every staff (18 of 83 bars; now 83 on the desktop, 82 in the browser, where one faint
+  barline is still not found). Each barline must run from its staff's first line to its last,
+  within half an interline (`maxFrozenBarShortfall`): two voices' half notes on one staff, lined
+  up with a stem in the staff above, made a full column of lines stopping 0.7 short. Browser
+  build, corpus and held-out pages: 7 pages with fewer notes wrong, none with more; 6 sung bars
+  now right, none broken (the motet p01, p02, p03, p09 and p24, and the hard Lindenbaum photo,
+  whose piano also has 8 fewer notes missing and 8 fewer extra; p16 has 2 fewer missing); the
+  held-out pages unchanged.
 - Lighten each sheet once it is done (`Sheet.lightenForExport`, with keepSheets): drop its
   images and its glyph index. CheerpJ never frees objects held only by weak references (a test
   held 5 weakly referenced arrays through 10 rounds of garbage; desktop Java freed them at

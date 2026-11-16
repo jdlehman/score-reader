@@ -1082,6 +1082,88 @@ index 00f766d..65751cf 100644
      //------------//
      // purgeClefs //
      //------------//
+diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
+index a1705b2..105c195 100644
+--- a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
++++ b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
+@@ -2008,6 +2008,9 @@ public class BarsRetriever
+         watch.start("createConnectionInters");
+         createConnectionInters(); // Create barline and bracket connection across staves
+ 
++        watch.start("freezeFullColumns");
++        freezeFullColumns(); // Score Reader: freeze full columns of a multi-staff system
++
+         watch.start("groupBarlines");
+         groupBarlines(); // Detect grouped barlines
+ 
+@@ -2028,6 +2031,54 @@ public class BarsRetriever
+         }
+     }
+ 
++    //-------------------//
++    // freezeFullColumns //
++    //-------------------//
++    /**
++     * Score Reader: freeze the barlines of each column found in every staff of a system of
++     * several staves, as a connection between two of them does (extendConnection).
++     * <p>
++     * A choir's barlines stop at each staff, clear of the words, so none is connected. A barline
++     * not frozen was later read as a stem, with void heads in the staff spaces beside it, which
++     * outgraded it; and a column that lost a barline in half its staves was deleted (MEASURES),
++     * which merged two bars in every staff (18 of 83 bars on one choir-and-organ score).
++     * <p>
++     * Each barline must run from its staff's first line to its last, as a barline does: two
++     * voices' half notes on one staff, a stem up and a stem down, lined up with a stem in the
++     * staff above, made a full column of lines both stopping 0.7 interline short of the last.
++     */
++    private void freezeFullColumns ()
++    {
++        final double minReach = -scale.toPixelsDouble(constants.maxFrozenBarShortfall);
++
++        for (SystemInfo system : sheet.getSystems()) {
++            final List<BarColumn> columns = columnMap.get(system);
++
++            if ((columns == null) || (system.getStaves().size() < 2)) {
++                continue;
++            }
++
++            ColumnLoop:
++            for (BarColumn column : columns) {
++                if (!column.isFull()) {
++                    continue;
++                }
++
++                for (StaffPeak peak : column.getPeaks()) {
++                    if ((peak == null) || !(peak.getInter() instanceof BarlineInter bar)
++                            || bar.isRemoved() || (extensionOf(peak, TOP) < minReach)
++                            || (extensionOf(peak, BOTTOM) < minReach)) {
++                        continue ColumnLoop;
++                    }
++                }
++
++                for (StaffPeak peak : column.getPeaks()) {
++                    peak.getInter().freeze();
++                }
++            }
++        }
++    }
++
+     //-------------//
+     // projectorOf //
+     //-------------//
+@@ -2605,6 +2656,12 @@ public class BarsRetriever
+                 1.0,
+                 "Maximum extension for a barline above or below staff line");
+ 
++        // Score Reader
++        private final Scale.Fraction maxFrozenBarShortfall = new Scale.Fraction(
++                0.5,
++                "Maximum distance a barline may stop short of its staff's first or last line, to be"
++                        + " frozen in a full column of a multi-staff system");
++
+         private final Scale.Fraction maxLinesLeftToStartBar = new Scale.Fraction(
+                 0.15,
+                 "Maximum dx between left end of staff lines and start bar");
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java b/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
 index 3779932..5bdc070 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/grid/PeakGraph.java
