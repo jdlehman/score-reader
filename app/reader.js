@@ -230,6 +230,9 @@ async function read(files) {
     // the staves can't be told which movement they belong to. It runs while the elapsed
     // timer is still going, so the status line keeps moving. Any failure leaves the
     // Audiveris read exactly as it was: a page is never lost to the second reader.
+    // It only runs at all when the Audiveris score has a bar that doesn't add up:
+    // a clean read is skipped outright, with no model downloaded. The check screen
+    // can still run it on demand (the manual run below), including on a clean read.
     let results = scores.map(xml => new Blob([xml], { type: MUSICXML }))
     let second = null
     if (scores.length === 1) {
@@ -238,7 +241,7 @@ async function read(files) {
         second = await secondOpinion(input.pages, scores[0], ({ done, total }) => {
           $('status').textContent = `Second opinion: staff ${done} of ${total}…`
         })
-        if (second?.report.replaced.length) results = [new Blob([second.xml], { type: MUSICXML })]
+        if (second?.status === 'merged' && second.report.replaced.length) results = [new Blob([second.xml], { type: MUSICXML })]
       } catch (e) {
         console.warn('The second opinion failed, so the read stays as Audiveris read it:', e)
         second = null
@@ -246,7 +249,7 @@ async function read(files) {
     }
     clearInterval(timer)
     render()
-    finish(input, results, second?.report)
+    finish(input, results, second, scores.length === 1 ? (xml, onProgress) => secondOpinion(input.pages, xml, onProgress, { force: true }) : null)
   } catch (e) {
     clearInterval(timer)
     console.error(e)
@@ -276,7 +279,7 @@ async function open(files) {
   showScore([new Blob([xml], { type: MUSICXML })], stem(file.name).replace(/ \(corrected\)$/, ''))
 }
 
-function finish(input, results, secondReport) {
+function finish(input, results, second, onSecondOpinion) {
   const secs = Math.round((performance.now() - progress.t0) / 1000)
   const time = secs >= 90 ? `${Math.round(secs / 6) / 10} minutes` : `${secs} seconds`
   const pages = progress.pages ?? 1
@@ -285,7 +288,9 @@ function finish(input, results, secondReport) {
   $('done-summary').textContent = `Read ${pages} page${pages === 1 ? '' : 's'} in ${time}.` +
     (failed.length ? ` Page${failed.length === 1 ? '' : 's'} ${failed.join(', ')} couldn’t be read and ${failed.length === 1 ? 'is' : 'are'} missing.` : '') +
     (results.length > 1 ? ` The music is in ${results.length} movements, a file each: Audiveris starts a new movement where the music starts afresh, as at a new title.` : '') +
-    (secondReport?.replaced.length ? ` A second reader checked the notes and fixed ${secondReport.replaced.length} bar${secondReport.replaced.length === 1 ? '' : 's'}.` : '')
+    (second?.status === 'merged' && second.report.replaced.length ? ` A second reader checked the notes and fixed ${second.report.replaced.length} bar${second.report.replaced.length === 1 ? '' : 's'}.` : '') +
+    (second?.status === 'merged' && !second.report.replaced.length ? ' A second reader checked the notes and found nothing to fix.' : '') +
+    (second?.status === 'clean' ? ' Second opinion skipped — the read is clean.' : '')
   const box = $('downloads')
   results.forEach((blob, i) => {
     const a = document.createElement('a')
@@ -296,7 +301,7 @@ function finish(input, results, secondReport) {
     box.append(a)
   })
   show('done')
-  showScore(results, input.title) // the score drawn, to check and correct (check.js)
+  showScore(results, input.title, onSecondOpinion ? { onSecondOpinion } : undefined) // the score drawn, to check and correct (check.js)
 }
 
 function fail(why) {

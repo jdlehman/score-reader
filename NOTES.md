@@ -301,10 +301,28 @@ offline for a single page. Transcoda is deliberately not a source: it scored
 
 The merge above is now wired into the read flow: after Audiveris produces one
 movement's MusicXML, the page runs TrOMR as a second opinion on the same pages
-(app/reader.js), converts its tokens, and merges under the same gate. Audiveris
-stays the authority; the second opinion only ever fixes bars Audiveris got wrong.
-The done summary says how many bars it fixed; a read the second opinion does not
-apply to, or that it fails on, is exactly the Audiveris read.
+(app/reader.js) — but only when the read shows Audiveris might be wrong. The
+trigger is a duration-invalid (or missing) bar in Audiveris's own output
+(`invalidSlices` in app/merge.js, the merge's own notion of a broken slice):
+a clean read skips the second opinion entirely, with no model downloaded, no
+worker started and no staff recognised. The done summary says how many bars
+it fixed, that it found nothing to fix, or that the read was clean. And the
+check screen has a "Run second opinion" button, which runs it on demand on the
+movement as it stands — including a clean read, where the automatic run skips
+it — and the run is undoable, like any other change. Audiveris stays the
+authority; the second opinion only ever fixes bars Audiveris got wrong.
+
+Uncertainty signals, audited 2026-11-15: duration-invalid bars are the only
+measurable signal in the JS-side output that the merge can fix. Checked and
+not used: the check screen's long-bars flag and `voiceLengths` (the same
+duration condition, computed another way — a long bar always has an invalid
+voice sum); a missing final barline (real, but the merge can only replace notes
+inside existing measures, never add a missing last line or a barline — and when
+a last line is missed, the last bar is short and already invalid); the
+`doubtful-measures` field score-view reads (Audiveris never writes it —
+verified absent from every fixture and output); the preflight's warnings, failed
+pages and lyric failures (TrOMR cannot fix those: no lyrics, and a failed page
+has nothing to merge).
 
 The runner is CrispEmbed's deployed WebAssembly build of TrOMR
 (crispembed_ocr.js + crispembed_ocr.wasm, MIT, from crispstrobe/CrispEmbed) with
@@ -337,9 +355,13 @@ here is the crop the spike measured.
 Gates, in order: the run happens only when the staves found across the read's
 pages are exactly the score's systems x pairs (from Audiveris's own system and
 staff structure) — a missed staff, a failed page or several movements stays
-Audiveris-only; then, per staff, a TrOMR failure leaves that staff as Audiveris
+Audiveris-only; then only when the Audiveris score has a duration-invalid (or
+missing) slice, as above — a clean read is skipped outright, before the model
+downloads; then, per staff, a TrOMR failure leaves that staff as Audiveris
 read it (the merge skips a null staff file); then the merge's own gate, per
-(staff, measure). The reader's grey buffers are copied to the Audiveris worker,
+(staff, measure). The manual run (the check screen's button) forces the run
+past the invalid-bars gate only: the count gate and the merge gate still apply,
+and a run that fixes nothing leaves the score as it was. The reader's grey buffers are copied to the Audiveris worker,
 not transferred, so they are still there for the detector after the read.
 
 The converter's dialect is the one the spike's scorer parses, with two things

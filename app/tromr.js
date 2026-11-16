@@ -13,11 +13,15 @@
 // system order, top-to-bottom staff per system — the same order the spike's
 // focr runs produced — so the runner only runs when the staves found across
 // the read's pages are exactly systems × pairs; anything else (a missed staff,
-// a failed page, several movements) stays Audiveris-only.
+// a failed page, several movements) stays Audiveris-only. And it only runs at
+// all when the Audiveris score has a duration-invalid (or missing) slice: a
+// clean read has nothing for it to fix, so the model is never downloaded for
+// it. The check screen's "Run second opinion" button forces a run on demand
+// (opts.force), which is the "we think Audiveris might be wrong" path.
 
 import { detectStaves, cropStaff } from './staves.js'
 import { tokensToMusicXml } from './tromr-convert.js'
-import { mergeMusicXml, barsPerSystem, staffPairs, parseXml } from './merge.js'
+import { mergeMusicXml, barsPerSystem, staffPairs, parseXml, invalidSlices } from './merge.js'
 
 /** The TrOMR reader and model, served with the site (see teavm/tromr-fetch.sh). */
 const wasmUrl = new URL('tromr/crispembed_ocr.wasm', import.meta.url).href
@@ -77,12 +81,15 @@ export async function loadTromr() {
  * @param {{ grey: Uint8Array, w: number, h: number }[]} pages - the read's pages (pdf.js shape)
  * @param {string} audiverisXml - one movement's MusicXML, as Audiveris wrote it
  * @param {(p: { done: number, total: number }) => void} [onProgress] - per staff read
- * @returns {Promise<{ xml: string, report: object } | null>} the merged score, or
+ * @param {{ force?: boolean }} [opts] - force runs on a clean read too (the manual run)
+ * @returns {Promise<{ status: 'merged'|'clean', xml: string, report: object } | null>}
+ *   'merged' with the merged score, 'clean' when the read has no invalid bars
+ *   (the Audiveris score unchanged, and no worker started unless forced), or
  *   null when the second opinion doesn't apply to this read (staves don't line
  *   up with the score's systems, or the reader can't start). Never throws for a
  *   single staff's failure — that staff stays Audiveris.
  */
-export async function secondOpinion(pages, audiverisXml, onProgress = () => {}) {
+export async function secondOpinion(pages, audiverisXml, onProgress = () => {}, opts = {}) {
   let root
   try {
     root = parseXml(audiverisXml)
@@ -97,6 +104,14 @@ export async function secondOpinion(pages, audiverisXml, onProgress = () => {}) 
   const perPage = pages.map(p => detectStaves(p.grey, p.w, p.h))
   const total = perPage.reduce((a, s) => a + s.length, 0)
   if (total !== systems.length * pairs.length) return null
+  // The trigger: only Audiveris's own uncertainty starts the second reader.
+  // A duration-invalid (or missing) slice is the one measurable signal in the
+  // output that the merge can fix; a clean read has nothing for it to do, so
+  // the model is never downloaded for it. `force` is the manual run.
+  const audit = invalidSlices(audiverisXml)
+  if (!opts.force && !audit.invalid.length) {
+    return { status: 'clean', xml: audiverisXml, report: { replaced: [], kept: audit.checked, skipped: [] } }
+  }
   let tromr
   try {
     tromr = await loadTromr()
@@ -121,7 +136,8 @@ export async function secondOpinion(pages, audiverisXml, onProgress = () => {}) 
         onProgress({ done: ++done, total })
       }
     }
-    return mergeMusicXml(audiverisXml, staffXmls)
+    const merged = mergeMusicXml(audiverisXml, staffXmls)
+    return { status: 'merged', xml: merged.xml, report: merged.report }
   } finally {
     tromr.terminate()
   }

@@ -18,7 +18,9 @@ works for anything that opens MusicXML (MuseScore, Finale, Sibelius, Dorico).
    progress bar. When Audiveris reads text, the page reads it for it with tesseract.js
    (`app/ocr.js`). After the read, a second reader checks the notes (`app/tromr.js`): TrOMR
    reads each staff in a worker and the gated merge fixes only the bars Audiveris got wrong
-   (`NOTES.md`, "TrOMR in the browser"); a read it does not apply to stays as Audiveris read it.
+   (`NOTES.md`, "TrOMR in the browser"); it only runs when the read has a bar that doesn't
+   add up, and a read it does not apply to stays as Audiveris read it. The check screen can
+   still run it on demand.
 3. The page draws the score it read with [Verovio](https://www.verovio.org), so you can check
    the notes and fix wrong ones before downloading (`app/check.js`). Bars that don't add up to
    their time signature are shaded. A MusicXML file can be opened the same way, to fix its notes

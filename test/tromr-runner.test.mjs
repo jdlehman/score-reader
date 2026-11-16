@@ -10,10 +10,13 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
-import { parseXml, divisionsOf, readMxl } from '../app/merge.js'
+import { parseXml, divisionsOf, readMxl, invalidSlices } from '../app/merge.js'
 
 const STUB_URL = new URL('./fixtures/tromr-stub/crispembed_ocr.js', import.meta.url)
 const WORKER_URL = new URL('../app/tromr-worker.js', import.meta.url)
+
+// How many TrOMR workers have started: a clean read must start none at all.
+let workersCreated = 0
 
 // The stub's behaviour, set by the tests before a run: failOn makes the nth
 // recognition call throw; failFetch makes the worker's downloads fail.
@@ -27,6 +30,7 @@ const stubConfig = { failOn: null, failFetch: false }
  * handler); postMessage out of the worker calls this instance's onmessage (the driver's). */
 class FakeWorker {
   constructor(url) {
+    workersCreated++
     this.onmessage = null
     this.onerror = null
     const instance = this
@@ -78,6 +82,21 @@ function divisiPage(staffCount = 2) {
 const AUD = await readMxl(readFileSync(new URL('./fixtures/divisi-merge/divisi-audiveris.mxl', import.meta.url)))
 const GT = JSON.parse(readFileSync(new URL('./fixtures/divisi-merge/divisi-tuplet.json', import.meta.url), 'utf-8'))
 
+/** A clean score (synthetic): one part, one staff, two bars, every voice adding up. */
+const CLEAN_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Voice</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes><divisions>1</divisions><time><beats>4</beats><beat-type>4</beat-type></time></attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>`
+
 /** Exact pitch per bar (multiset, step+octave) and validity per (bar, voice), as in
  * test/merge.test.mjs's scorer, against the Audiveris score's beats. */
 function scoreAgainstGT(xmlText, beats) {
@@ -123,10 +142,23 @@ function scoreAgainstGT(xmlText, beats) {
   return { exact, gtTotal: gtNotes.length, valid, total }
 }
 
+test('invalidSlices finds the broken bars, and none on a clean score', () => {
+  const { invalid, checked } = invalidSlices(AUD)
+  assert.equal(checked, 8)
+  assert.deepEqual(invalid, [
+    { part: 0, bar: 3, staff: 1 },
+    { part: 0, bar: 4, staff: 1 },
+    { part: 1, bar: 3, staff: 1 },
+    { part: 1, bar: 4, staff: 1 },
+  ])
+  assert.deepEqual(invalidSlices(CLEAN_XML), { invalid: [], checked: 2 })
+})
+
 test('end to end: the second opinion merges the divisi bars, as the focr merge does', async () => {
   const progress = []
   const result = await secondOpinion([divisiPage()], AUD, p => progress.push({ ...p }))
   assert.ok(result, 'expected a merged score, not null')
+  assert.equal(result.status, 'merged')
   assert.equal(result.report.replaced.length, 2)
   assert.deepEqual(result.report.replaced.map(r => r.bar), [3, 4])
   const s = scoreAgainstGT(result.xml, 4)
@@ -135,6 +167,28 @@ test('end to end: the second opinion merges the divisi bars, as the focr merge d
   assert.equal(s.valid, 12)
   assert.equal(s.total, 16)
   assert.deepEqual(progress.at(-1), { done: 2, total: 2 })
+})
+
+test('a clean page skips the second opinion entirely', async () => {
+  const before = workersCreated
+  const result = await secondOpinion([divisiPage(1)], CLEAN_XML)
+  assert.ok(result, 'expected a clean-skip result, not null')
+  assert.equal(result.status, 'clean')
+  assert.equal(result.xml, CLEAN_XML)
+  assert.equal(result.report.replaced.length, 0)
+  assert.equal(result.report.kept, 2)
+  assert.equal(workersCreated, before, 'no worker started, so no model download and no recognition')
+})
+
+test('the manual run works on a clean page', async () => {
+  const progress = []
+  const before = workersCreated
+  const result = await secondOpinion([divisiPage(1)], CLEAN_XML, p => progress.push({ ...p }), { force: true })
+  assert.ok(result, 'expected a merged score, not null')
+  assert.equal(result.status, 'merged')
+  assert.equal(result.report.replaced.length, 0)
+  assert.equal(workersCreated, before + 1, 'the forced run starts the worker')
+  assert.deepEqual(progress.at(-1), { done: 1, total: 1 })
 })
 
 test('determinism: two runs produce byte-identical merged scores', async () => {

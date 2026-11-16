@@ -290,6 +290,40 @@ export function staffPairs(root) {
   return pairs
 }
 
+/**
+ * The (part, bar, staff) slices where Audiveris's own output is broken — the
+ * same notion the merge uses to decide a replacement: a slice whose voice sums
+ * do not add up to one bar, or a slice with no notes at all for that staff.
+ * `checked` is how many slices were looked at. The runner's trigger: the
+ * second opinion only runs when this list is non-empty, since a valid slice is
+ * never replaced and a clean read has nothing for it to fix.
+ */
+export function invalidSlices(audiverisXml, opts = {}) {
+  const root = parseXml(audiverisXml)
+  const beats = opts.beats ?? beatsOf(root)
+  const systems = barsPerSystem(root)
+  const pairs = staffPairs(root)
+  const parts = children(root, 'part')
+  const invalid = []
+  let checked = 0
+  systems.forEach((sys) => {
+    parts.forEach((partEl, pi) => {
+      const divs = divisionsOf(partEl)
+      if (!divs) return
+      const stavesHere = pairs.filter(([p]) => p === pi).map(([, s]) => s)
+      for (const meas of children(partEl, 'measure')) {
+        const bar = measureNumber(meas, -1)
+        if (bar < sys.start || bar >= sys.start + sys.bars) continue
+        for (const staff of stavesHere) {
+          checked++
+          if (!sliceValid(meas, divs, beats, staff)) invalid.push({ part: pi, bar, staff })
+        }
+      }
+    })
+  })
+  return { invalid, checked }
+}
+
 // ---------------------------------------------------------------------------
 // The merge
 // ---------------------------------------------------------------------------
