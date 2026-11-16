@@ -86,7 +86,7 @@ gen-02-open from midi_studio's recognition test, read in about 100 s there, agai
   sixteenths were read as quarters: the motet p13 rhythm 46%, p17 44%. Now a peak at the bottom
   counts when it has at least twice the runs of the best one inside the range (7 times on p13; a
   blurred photo's noise peak there, chorale 3 mild, has 1.25 and is left alone, as it must:
-  taking it cost that photo 3 points of rhythm). p13 86%, p17 83%, four more the motet pages better
+  taking it cost that photo 3 points of rhythm). p13 86%, p17 83%, four more of the motet's pages better
   (p23 83% to 99%); nothing worse; corpus rhythm 81% to 82%.
 - No percussion clef at the start of a 5-line staff (`ClefBuilder.HEADER_CLEF_SHAPES`; a 1-line
   staff still takes one). On the hard photo of the IMSLP Hallelujah, a piano page, the warp lost

@@ -36,7 +36,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { basename, extname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { READING, asArgs } from '../app/settings.js'
-import { ROOT, allCases, joined, languageOf, reads } from './cases.mjs'
+import { EXTRA, ROOT, allCases, joined, languageOf, reads } from './cases.mjs'
 import { parseMusicXml, score } from './score.mjs'
 
 const WORK = join(ROOT, '.work')
@@ -47,8 +47,13 @@ if (!['teavm', 'desktop'].includes(ENGINE)) {
   process.exit(2)
 }
 const TEAVM = ENGINE === 'teavm'
-// each engine against its own: they read a few notes differently (HANDOFF/NOTES: within a point)
-const BASELINE = join(ROOT, 'test', 'corpus', TEAVM ? 'baseline.json' : 'baseline-desktop.json')
+// each engine against its own: they read a few notes differently (HANDOFF/NOTES: within a point).
+// The repository's pages' scores are kept here, the local test set's in its own folder (EXTRA), so
+// that the repository names none of its pages.
+const BASENAME = TEAVM ? 'baseline.json' : 'baseline-desktop.json'
+const BASELINE = join(ROOT, 'test', 'corpus', BASENAME)
+const EXTRA_BASELINE = EXTRA && join(EXTRA, BASENAME)
+const isExtra = name => name.startsWith('extra/')
 const JOBS = Number(process.env.JOBS ?? (TEAVM ? 4 : 2))
 /** The words' language for a case, or '' to leave them out. */
 const wordsOf = c => (!TEAVM || process.env.OCR === '0' ? '' : process.env.OCR || languageOf(c))
@@ -185,7 +190,8 @@ for (const [i, batch] of batches.entries()) {
 }
 
 // report, against the baseline
-const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : {}
+const load = f => (f && existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : {})
+const baseline = { ...load(BASELINE), ...load(EXTRA_BASELINE) }
 const pct = x => (x == null ? '   -' : `${Math.round(100 * x)}%`.padStart(4))
 const worse = []
 const better = []
@@ -214,7 +220,10 @@ console.log(`\n${Object.values(results).filter(r => r.read).length}/${all.length
 if (Object.keys(baseline).length) console.log(`against the baseline: ${better.length} better, ${worse.length} worse${worse.length ? ': ' + worse.join(', ') : ''}`)
 writeFileSync(join(OUT, 'results.json'), JSON.stringify(results, null, 1))
 if (process.env.SAVE) {
-  writeFileSync(BASELINE, JSON.stringify({ ...baseline, ...results }, null, 1) + '\n')
+  const merged = { ...baseline, ...results }
+  const pick = extra => JSON.stringify(Object.fromEntries(Object.entries(merged).filter(([name]) => isExtra(name) === extra)), null, 1) + '\n'
+  writeFileSync(BASELINE, pick(false))
+  if (EXTRA_BASELINE) writeFileSync(EXTRA_BASELINE, pick(true))
   console.log('saved as the baseline')
 }
 process.exit(worse.length ? 1 : 0)

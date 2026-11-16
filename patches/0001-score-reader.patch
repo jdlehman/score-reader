@@ -902,7 +902,7 @@ index a3cb0f0..2390eaf 100644
      // getHeight //
      //-----------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java b/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
-index 2757b77..48ca03a 100644
+index 2757b77..42885d1 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/ScaleBuilder.java
 @@ -260,7 +260,20 @@ public class ScaleBuilder
@@ -1083,7 +1083,7 @@ index 00f766d..65751cf 100644
      // purgeClefs //
      //------------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
-index a1705b2..105c195 100644
+index a1705b2..89ab613 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
 @@ -2008,6 +2008,9 @@ public class BarsRetriever

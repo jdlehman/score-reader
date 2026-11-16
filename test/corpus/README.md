@@ -42,9 +42,33 @@ they are what a singer reads. Audiveris doesn't read every page exactly the same
 (between two runs of one build, the anthem p02 had one alto note at another time), so a note or
 two on a page the change shouldn't touch is noise: read that page again with and without it.
 
-Only music that anyone may copy is here. Collected on 2026-11-08 and 2026-11-10 for the
-Score Reader spikes (the "open-music" test set); the answers come from the same MusicXML the
-pages were drawn from.
+Collected from 2026-11-08 for the Score Reader spikes (the "open-music" test set); the answers
+come from the same MusicXML the pages were drawn from.
+
+## What may be committed
+
+This repository is public, so every file of music in it (a page, scan, photo, PDF, MusicXML, or
+an answer made from one) is checked before it is committed, here or anywhere else in the repo.
+The same goes for a pull request, whoever opens it: it names each file's source and licence, and
+the reviewer checks them.
+
+**Check the file itself**: its footer, title page or MusicXML `<rights>`, not only the site it
+came from, which can list it under another licence than the file's own. Then add it to the
+tables below (or the folder's README) with its source and licence.
+
+May be committed, and only these: music that needs no permission and comes with no conditions.
+- **Public domain**, the music and the edition both. A scan: an edition published before 1931
+  (public domain in the US), or one IMSLP tags "Public Domain" (not "Non-PD US").
+- **CC0**.
+- **Our own**: pieces our tests generate, text we set, pages we draw from the above.
+
+Everything else stays in the local test set (`EXTRA=`, below), and the repository doesn't name it
+(README, notes, code, tests, commit messages): any licence with conditions, even an open one (CC BY,
+CC BY-SA, CPDL's own licence, NonCommercial, NoDerivatives), "used by permission" or "for testing
+only", and anything whose licence can't be found.
+
+A private copy (a choir's own score, a scan someone shared) goes nowhere: not in git, not in the
+test set. Read it from where it is.
 
 ## Pages with answers (`pages/`, `gute-nacht/`)
 
@@ -55,8 +79,8 @@ Drawn with Verovio from the OpenScore Lieder Corpus (github.com/OpenScore/Lieder
 |---|---|---|
 | lieder-lindenbaum | Schubert, "Der Lindenbaum", Winterreise D.911 no. 5 | lc5016466 |
 | lieder-gute-nacht | Schubert, "Gute Nacht", Winterreise D.911 no. 1 | lc5015378 |
-| lieder-staendchen | Schubert, "Ständchen", D.957 no. 4 | |
-| lieder-fruehling | Schubert, "Frühlingssehnsucht", D.957 no. 3 (piano introduction) | |
+| lieder-staendchen | Schubert, "Ständchen", D.957 no. 4 | lc5004835 |
+| lieder-fruehling | Schubert, "Frühlingssehnsucht", D.957 no. 3 (piano introduction) | lc4985999 |
 | lieder-schumann-monat-mai | Schumann, "Im wunderschönen Monat Mai", Op. 48 no. 1 | lc4976777 |
 | lieder-schumann-widmung | Schumann, "Widmung", Op. 25 no. 1 | lc6885211 |
 | lieder-brahms-wiegenlied | Brahms, "Wiegenlied", Op. 49 no. 4 | lc5701612 |
@@ -64,7 +88,7 @@ Drawn with Verovio from the OpenScore Lieder Corpus (github.com/OpenScore/Lieder
 | lieder-schubert-erlkoenig | Schubert, "Erlkönig", D.328, bars 13–24 | lc29062370 |
 | lieder-wolf-verborgenheit | Wolf, "Verborgenheit", Mörike-Lieder no. 12 | lc29477528 |
 | gute-nacht-p01 … p04 | Schubert, "Gute Nacht", the whole song on 4 pages (bars per page in each answer's `bars_global`) | lc5015378 |
-| grace-staendchen | Schubert, "Ständchen", bars 13–24: grace notes (left out of the answer, as everywhere) | |
+| grace-staendchen | Schubert, "Ständchen", bars 13–24: grace notes (left out of the answer, as everywhere) | lc5004835 |
 | octave-verborgenheit | Wolf, "Verborgenheit", bars 13–24: an 8va line over the piano (the answer has the notes as they sound) | lc29477528 |
 
 And from the OpenScore Orchestra Corpus (github.com/MarkGotham/Hauptstimme, scores **CC0 1.0**):
@@ -90,11 +114,9 @@ From IMSLP, one page each, drawn at 300 dpi.
 
 ## Kept out of git
 
-The test set has more, which can't be copied freely; `EXTRA=<folder>` reads them from a local
-copy. Bach chorales and the motet pages (music in the public domain, but the encodings are
-"used by permission", for testing only); the anthem
-from an editor's site (CC BY-NC-SA 4.0); the motet from CPDL (CC BY-NC); Mendelssohn, "Hör
-mein Bitten" (CC BY-NC-SA 4.0); a piece for choir and organ on 13 pages with answers (a CPDL edition); a song with chord
-names and a drum page (music21's corpus, for testing). These are the SATB pages with answers, so a change to how parts
-are read should be checked with `EXTRA` too. The test set's synthetic phone photos are left out
-for size (about 4 MB each).
+`EXTRA=<folder>` also reads pages from a local test set that can't be committed. What is in it,
+and under what licence, is recorded in that folder, not here: the repository names only what it
+may hold. That folder also keeps its pages' baselines (`baseline.json`, `baseline-desktop.json`,
+written by `SAVE=1`) and the language of their words (`languages.json`: `[[pattern, language]]`,
+read by `test/cases.mjs`). The test set has most of the SATB pages with answers, so a change to
+how parts are read should be checked with `EXTRA` too.

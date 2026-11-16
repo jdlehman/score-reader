@@ -6,6 +6,8 @@ import { basename, dirname, extname, join, relative, resolve } from 'node:path'
 import { musicXmlText, parseMusicXml } from './score.mjs'
 
 export const ROOT = resolve(import.meta.dirname, '..')
+/** The local test set (EXTRA), if any: pages the repository can't hold, and doesn't name. */
+export const EXTRA = process.env.EXTRA ? resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)) : null
 
 const INPUT = /\.(png|jpe?g|tiff?|pdf)$/i
 
@@ -45,7 +47,7 @@ function cases(dir, prefix = '') {
 export function allCases(holdout = !!process.env.HOLDOUT) {
   const all = [
     ...cases(join(ROOT, 'test', 'corpus')),
-    ...(process.env.EXTRA ? cases(resolve(process.env.EXTRA.replace(/^~/, process.env.HOME)), 'extra/') : []),
+    ...(EXTRA ? cases(EXTRA, 'extra/') : []),
     ...(holdout ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
   ]
   return all.filter(c => !c.name.startsWith('extra/') || !all.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input)))
@@ -61,23 +63,29 @@ const WORDS = {
   lat: 'et in dominus domine deus qui tu est nobis dei gloria sanctus agnus pacem eleison kyrie te cum ad',
 }
 /**
- * The corpus's pieces by the language of their words, first match first. A guess from an answer
- * can't tell a word from a syllable (answers keep no hyphens): "Hal-le-lu-jah" counted as French.
+ * The repository's pieces by the language of their words, first match first. A guess from an
+ * answer can't tell a word from a syllable (answers keep no hyphens): "Hal-le-lu-jah" counted as
+ * French. The local test set has its own, in EXTRA/languages.json ([[pattern, language], ...],
+ * matched against a case's path there), so that its pieces aren't named here.
  */
 const NAMED = [
   [/faure-apres|cantique/i, 'fra'],
   [/faure-sanctus|faure-agnus|mozart-kyrie|requiem/i, 'lat'],
-  [/anthem|hymnal|chord-song/i, 'eng'],
-  [/lieder-|gute-nacht|staendchen|verborgenheit|beethoven|bwv|chorale/i, 'deu'],
+  [/hallelujah-imslp|hymnal/i, 'eng'],
+  [/lieder-|gute-nacht|staendchen|verborgenheit|beethoven/i, 'deu'],
 ]
+const EXTRA_NAMED = EXTRA && existsSync(join(EXTRA, 'languages.json'))
+  ? JSON.parse(readFileSync(join(EXTRA, 'languages.json'), 'utf8')).map(([pattern, language]) => [new RegExp(pattern, 'i'), language])
+  : []
 
 /**
  * The language a reader would pick on the page for a case's words: by its name, for the corpus's
- * pieces; else the one whose short words its answer's lyrics use most (the held-out songs); else
- * the page's default, English.
+ * pieces (the test set's hints first, for its own); else the one whose short words its answer's
+ * lyrics use most (the held-out songs); else the page's default, English.
  */
 export function languageOf(c) {
-  const named = NAMED.find(([re]) => re.test(c.name))
+  const local = c.name.startsWith('extra/') && EXTRA_NAMED.find(([re]) => re.test(c.name.slice('extra/'.length)))
+  const named = local || NAMED.find(([re]) => re.test(c.name))
   if (named) return named[1]
   if (!c.answer) return 'eng'
   const words = JSON.parse(readFileSync(c.answer, 'utf8')).parts
