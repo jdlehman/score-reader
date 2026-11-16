@@ -261,7 +261,167 @@ Tried and no help: Audiveris's parallelism off (`OmrExecutors.useParallelism=fal
     node test/e2e.mjs one score.pdf     # read a score with the page, in Chrome
     npm run corpus                      # read test/corpus/ with desktop Audiveris, score it (see its README)
     ENGINE=teavm npm run corpus         # read the corpus with the browser's Audiveris instead
+    node tools/merge.mjs audiveris.mxl tromr-dir/ out.musicxml  # gated TrOMR merge, below
 
 `.work/` (not committed) holds the Audiveris source (`git clone -b 5.11.0`, patch applied), its jars
 in `lib/`, `classpath.txt`, a Temurin 25 JDK in `jdk/` and TeaVM's jars in `teavm-lib/`:
 `./setup.sh` makes it.
+
+## Gated TrOMR merge (app/merge.js, tools/merge.mjs)
+
+Audiveris is the authority. Polyphonic-TrOMR, run on staff crops, is consulted only
+where Audiveris's own output is broken, and only under a gate: a staff slice of a
+measure is replaced only when Audiveris's slice is duration-invalid or missing, the
+TrOMR replacement is itself duration-valid, AND TrOMR's distinct pitches match
+Audiveris's distinct pitches for that slice exactly — neither side may add or drop
+a pitch. Never a note-list union; a valid Audiveris measure is never touched; only
+one staff in a measure is ever replaced. System bar ranges come from Audiveris's own
+`<print new-system="yes">` markers, so no Verovio SVG is needed; staff order is
+top-to-bottom per system.
+
+Why equality, not one-way cover: the ungated spike merge fixed a real SATB page's
+validity (41/57 -> 56/56) but lost pitch (217 -> 213), because Audiveris's "invalid"
+measures were invalid only in rest durations while their pitches were right. A cover check (every
+Audiveris pitch also in TrOMR's set) fixes that drop, but still lets TrOMR add a
+pitch Audiveris never had — a note where Audiveris had a rest — which duration
+validity does not catch. Equality closes that hole: the replacement can only fix
+rhythm, never change pitch content. An empty Audiveris pitch set is not a licence
+to invent notes either: a rest-only invalid slice is replaced only by a rest-only
+valid one (rest durations fixed, no notes invented).
+
+Measured (2026-11-15, `node /tmp/validate-merge.mjs` against ground truth; exact
+pitch per bar, validity per (bar, voice) pair — the same conventions as
+test/merge.test.mjs). No page loses exact pitch; every replacement on these pages
+has identical pitch sets on both sides, so the equality gate costs nothing here:
+
+- Divisi-tuplet (synthetic): exact pitch 72/72 -> 72/72; valid pairs 10 -> 12,
+  invalid pairs 14 -> 4 (the total pairs drop 24 -> 16 because the 5-voice bass
+  bars collapse to single-voice bars); 2 replaced, 2 refused (TrOMR-invalid
+  triplet bars).
+- Hymn (clean control): exact pitch 128/128 -> 128/128; valid 32/32 -> 32/32;
+  nothing replaced — a clean page is untouched.
+- Gute Nacht (clean control): exact pitch 223/223 -> 223/223; invalid pairs
+  2 -> 1 (one stray 2-tick rest in voice 2 of bar 8, removed by the replacement);
+  1 replaced, 1 refused (TrOMR-invalid).
+
+Not validated: Lindenbaum. TrOMR's staff detection over-segments the page (9
+staves detected against Audiveris's 2 parts), so the staff files do not line up
+with the merge's expected layout (system order, top-to-bottom staff per system)
+and the merge was not run there. A page whose TrOMR staff detection disagrees
+with Audiveris's staff structure is out of scope for this merge until the crop
+layout is reconciled.
+
+Pitches are resolved through the key signature: TrOMR writes no `<alter>` elements
+(it relies on the key — F# and C# in D major are bare `<step>F</step>`), while
+Audiveris writes them explicitly, so raw steps would call those different pitches
+and refuse nearly every replacement in a sharp or flat key. The pitch check is a
+set of distinct pitches, not a multiset: Audiveris splits one sounding pitch across
+voices in divisi, so multiplicity would refuse the divisi case the merge exists for.
+
+What it is not: the merge never changes pitch content — it can only fix rhythm.
+The runner below wires it into the read flow; `tools/merge.mjs` still runs it
+offline for a single page. Transcoda is deliberately not a source: it scored
+0/218 on a real SATB page.
+
+## TrOMR in the browser (app/tromr.js, app/tromr-worker.js, app/tromr-convert.js, app/staves.js)
+
+The merge above is now wired into the read flow: after Audiveris produces one
+movement's MusicXML, the page runs TrOMR as a second opinion on the same pages
+(app/reader.js) — but only when the read shows Audiveris might be wrong. The
+trigger is a duration-invalid (or missing) bar in Audiveris's own output
+(`invalidSlices` in app/merge.js, the merge's own notion of a broken slice):
+a clean read skips the second opinion entirely, with no model downloaded, no
+worker started and no staff recognised. The done summary says how many bars
+it fixed, that it found nothing to fix, or that the read was clean. And the
+check screen has a "Run second opinion" button, which runs it on demand on the
+movement as it stands — including a clean read, where the automatic run skips
+it — and the run is undoable, like any other change. Audiveris stays the
+authority; the second opinion only ever fixes bars Audiveris got wrong.
+
+Uncertainty signals, audited 2026-11-15: duration-invalid bars are the only
+measurable signal in the JS-side output that the merge can fix. Checked and
+not used: the check screen's long-bars flag and `voiceLengths` (the same
+duration condition, computed another way — a long bar always has an invalid
+voice sum); a missing final barline (real, but the merge can only replace notes
+inside existing measures, never add a missing last line or a barline — and when
+a last line is missed, the last bar is short and already invalid); the
+`doubtful-measures` field score-view reads (Audiveris never writes it —
+verified absent from every fixture and output); the preflight's warnings, failed
+pages and lyric failures (TrOMR cannot fix those: no lyrics, and a failed page
+has nothing to merge).
+
+The runner is CrispEmbed's deployed WebAssembly build of TrOMR
+(crispembed_ocr.js + crispembed_ocr.wasm, MIT, from crispstrobe/CrispEmbed) with
+the TrOMR model (tromr-q8_0.gguf, 32 MB, Apache-2.0, from Hugging Face). Neither
+is committed to the repo: `teavm/tromr-fetch.sh` downloads them from pinned
+sources with SHA-256 checksums into `.work/tromr/` (build.sh copies them to
+`dist/tromr/`), so the site serves its own copies at read time and no request
+goes to anyone else's server during a read. The model is pinned to a Hugging
+Face commit, not the moving main branch, so a new upload cannot silently change
+what the site reads.
+
+Architecture: the reader runs in a classic worker (app/tromr-worker.js), away
+from the page — one staff crop is 10-30 seconds of work that would freeze it.
+The worker loads the UMD module with importScripts, fetches the .wasm and the
+model from the site, passes the .wasm as `wasmBinary` to the factory, writes the
+model into the module's filesystem and starts it — the same calls the headless
+spike proved (score-reader-spikes/crispembed-wasm/run_wasm.cjs): `wasm_ocr_init`
+with `/model.gguf`, then `wasm_ocr_recognize_copy` per crop. The page detects
+the staves and cuts the crops itself (app/staves.js), converts the tokens
+(app/tromr-convert.js) and merges (app/merge.js). The worker only recognises.
+
+Staff detection is a JS port of the spike's robust detector (open_detect.py):
+pair candidates for a staff's outer lines, needing 4 of 5 predicted positions,
+so it tolerates a spurious row and one missing line. The classic consecutive-5
+detector misses a staff on the Gute Nacht page (5 of 6 — it merges the second
+system's piano staves); this one finds all 6, and the same 6 the focr validation
+material was cut with. Crops follow the spike's crop_staff exactly, so a crop cut
+here is the crop the spike measured.
+
+Gates, in order: the run happens only when the staves found across the read's
+pages are exactly the score's systems x pairs (from Audiveris's own system and
+staff structure) — a missed staff, a failed page or several movements stays
+Audiveris-only; then only when the Audiveris score has a duration-invalid (or
+missing) slice, as above — a clean read is skipped outright, before the model
+downloads; then, per staff, a TrOMR failure leaves that staff as Audiveris
+read it (the merge skips a null staff file); then the merge's own gate, per
+(staff, measure). The manual run (the check screen's button) forces the run
+past the invalid-bars gate only: the count gate and the merge gate still apply,
+and a run that fixes nothing leaves the score as it was. The reader's grey buffers are copied to the Audiveris worker,
+not transferred, so they are still there for the detector after the read.
+
+The converter's dialect is the one the spike's scorer parses, with two things
+the model actually writes that the scorer's notation does not say: the accidental
+comes after the octave (`note-C4#_eighth`, not `note-C#4_eighth`), and the
+thirty-second is written `thirty_second`. A rest inside a chord group (a
+two-voice staff where one voice rests, as the WASM model writes on Gute Nacht
+staff1 bar 1) is transcribed as a chord rest, not dropped; the merge ignores
+chord notes in its voice sums, so it is merge-neutral. `multirest-N` becomes N
+whole-measure rests at the file's own time signature — the model reads 2/4
+where focr wrote 4/4 on Gute Nacht staff0, and the file's own signature is the
+right one. Unknown tokens are warned about and skipped, never interpolated.
+
+Measured (2026-11-15, `score-reader-spikes/tromr-runner/validate.mjs`, the same
+scorer as the merge section, WASM outputs from the deployed build in Node):
+
+- Divisi-tuplet (synthetic): the WASM merge is identical to the focr merge —
+  exact pitch 72/72, valid pairs 10/24 -> 12/16, 2 replaced (bass bars 3, 4),
+  2 refused (TrOMR-invalid). Recognise: 24.4 s + 33.2 s, 57.6 s for the page.
+- Gute Nacht (CC0): the WASM merge is identical to the focr merge — exact pitch
+  223/223, valid pairs 38/40 -> 38/39, 1 replaced (voice bar 8), 1 refused
+  (TrOMR-invalid). Recognise: 10.4-34.0 s a staff, 142.8 s for the 6 staves.
+- The converter matches the focr staff files note for note wherever the model
+  agrees (4 of 6 Gute Nacht staves identical, both divisi staves identical);
+  where the WASM model reads a note differently from focr (Gute Nacht staff1
+  bar 1 chord-rests, staff4 bar 4 A5 for F5), the converter transcribes the
+  WASM model faithfully and the merge gate refuses the disagreement — no pitch
+  is lost on either page.
+
+Not measured: live-browser timing. Node is single-threaded at ~19 s a staff
+(~10x the native focr CLI); the threaded and WebGPU builds are unbuilt and
+unmeasured, so the in-browser time per page is unknown until the site is read
+in Chrome. The check is: read a two-system page in Chrome, note the time from
+the second opinion starting to the done summary, and the peak memory (the
+Audiveris worker is still alive while the TrOMR worker reads, plus the 32 MB
+model). Single movement only, for now: with several movements the staves cannot
+be told which movement they belong to.

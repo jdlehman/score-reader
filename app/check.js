@@ -14,17 +14,19 @@ const STEP_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
 const SIGNS = { [-2]: '♭♭', [-1]: '♭', 0: '', 1: '♯', 2: '♯♯' }
 const BASE = { whole: 4, half: 2, quarter: 1, eighth: 0.5, '16th': 0.25 }
 
-/** Show the score read, to correct: `results` are the MusicXML files Audiveris wrote (one, or one a movement). */
-export async function showScore(results, title) {
+/** Show the score read, to correct: `results` are the MusicXML files Audiveris wrote (one, or one a movement).
+ * `opts.onSecondOpinion`, when given, is (xml, onProgress) => secondOpinion result for the one
+ * movement: the check screen's "Run second opinion" button, for a run on demand. */
+export async function showScore(results, title, opts = {}) {
   try {
     const scores = await Promise.all(results.map(blob => blob.text()))
-    start(scores, title)
+    start(scores, title, opts)
   } catch (e) {
     console.warn('The score could not be shown:', e)
   }
 }
 
-function start(scores, title) {
+function start(scores, title, opts) {
   // each movement: the score as read, as it is now, as last downloaded with changes, what is
   // selected, and the scores before each change
   const movements = scores.map(xml => ({ original: xml, xml, saved: xml, selected: null, past: [] }))
@@ -36,15 +38,18 @@ function start(scores, title) {
   let score = null
   let rests = []
   let drawn = false
+  /** A status line that survives the next drawing (a drawing clears the line): the manual
+   * second opinion's outcome, until the next edit. */
+  let statusNote = ''
   const now = () => movements[at]
 
   $('fix').hidden = false
   const view = createScoreView($('fix-score'), {
     engrave,
     onTap: target => { now().selected = target; view.select(target); controls() },
-    onDraw: () => { drawn = true; $('fix-status').textContent = '' },
+    onDraw: () => { drawn = true; $('fix-status').textContent = statusNote },
     onStatus: ({ drawing, error }) => {
-      $('fix-status').textContent = error ? `The score couldn’t be drawn: ${error}` : drawing && !drawn ? 'Drawing the score…' : ''
+      $('fix-status').textContent = error ? `The score couldn’t be drawn: ${error}` : drawing && !drawn ? 'Drawing the score…' : statusNote
     },
   })
 
@@ -73,6 +78,7 @@ function start(scores, title) {
       m.past.push({ xml: m.xml, selected: m.selected })
       m.xml = out.xml
       m.selected = out.select
+      statusNote = '' // a new edit supersedes the second opinion's outcome line
       redraw()
     } catch (e) {
       console.warn('That change couldn’t be made:', e)
@@ -86,6 +92,7 @@ function start(scores, title) {
     if (!last) return
     m.xml = last.xml
     m.selected = last.selected
+    statusNote = ''
     redraw()
   }
 
@@ -165,6 +172,48 @@ function start(scores, title) {
     downloaded = true
     controls()
   })
+  // A second opinion on demand: the same reader the read flow runs only when
+  // the score has a bar that doesn't add up, forced on the movement as it
+  // stands now — including a clean read, where the automatic run skips it.
+  // Single movement only: with several, the staves cannot be told which
+  // movement they belong to. The run is undoable, like any other change: the
+  // score before it goes on the undo stack, and the download button offers
+  // the merged score with the user's changes.
+  if (movements.length === 1 && opts.onSecondOpinion) {
+    const btn = $('fix-second-opinion')
+    btn.hidden = false
+    btn.addEventListener('click', async () => {
+      if (btn.disabled) return
+      btn.disabled = true
+      statusNote = 'Second opinion: starting the second reader…'
+      $('fix-status').textContent = statusNote
+      try {
+        const result = await opts.onSecondOpinion(now().xml, ({ done, total }) => {
+          statusNote = `Second opinion: staff ${done} of ${total}…`
+          $('fix-status').textContent = statusNote
+        })
+        if (!result) {
+          statusNote = 'The second reader couldn’t run on this score.'
+        } else if (result.report.replaced.length) {
+          const m = now()
+          m.past.push({ xml: m.xml, selected: m.selected })
+          m.xml = result.xml
+          m.selected = null
+          const n = result.report.replaced.length
+          statusNote = `Second opinion fixed ${n} bar${n === 1 ? '' : 's'}.`
+          redraw()
+        } else {
+          statusNote = 'Second opinion found nothing to fix.'
+        }
+      } catch (e) {
+        console.warn('The second opinion failed:', e)
+        statusNote = `The second reader couldn’t run: ${e.message || e}`
+      }
+      $('fix-status').textContent = statusNote
+      btn.disabled = false
+      controls()
+    })
+  }
   // changes live only in this page: ask before leaving it (or reading another score) with some not downloaded
   window.addEventListener('beforeunload', e => {
     if (unsaved()) e.preventDefault()

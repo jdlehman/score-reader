@@ -9,6 +9,7 @@ import { readText, startOcr } from './ocr.js'
 import { resolveOcrLanguage } from './language.js'
 import { imagePages, pdfPages } from './pdf.js'
 import { READING } from './settings.js'
+import { secondOpinion } from './tromr.js'
 
 /** Audiveris's steps for each page, with roughly how long each takes (seconds, in Chrome on a laptop). */
 const STEPS = [
@@ -213,13 +214,42 @@ async function read(files) {
         else if (data.error) reject(new Error(data.error))
       }
       worker.onerror = e => reject(new Error(e.message || 'the reader stopped'))
-      worker.postMessage({ pages: input.pages, constants: READING, languages: ocrLanguage }, input.pages.map(p => p.grey.buffer))
+      // The pages' grey stays on the page for the second opinion (tromr.js),
+      // so it is copied to the worker, not transferred: transferring it would
+      // neuter the buffers and leave nothing for the staff detector to read.
+      worker.postMessage({ pages: input.pages, constants: READING, languages: ocrLanguage })
     })
     for (const n of failed) progress.failedPages.add(n)
+    if (!scores.length) {
+      clearInterval(timer)
+      render()
+      return fail('Audiveris couldn’t find music it could read. Check the file is sheet music with five-line staves, and try a clearer scan or the original PDF.')
+    }
+    // A second opinion on the notes (tromr.js): TrOMR reads each staff, and the gated
+    // merge only replaces bars Audiveris got wrong. One movement only — with several,
+    // the staves can't be told which movement they belong to. It runs while the elapsed
+    // timer is still going, so the status line keeps moving. Any failure leaves the
+    // Audiveris read exactly as it was: a page is never lost to the second reader.
+    // It only runs at all when the Audiveris score has a bar that doesn't add up:
+    // a clean read is skipped outright, with no model downloaded. The check screen
+    // can still run it on demand (the manual run below), including on a clean read.
+    let results = scores.map(xml => new Blob([xml], { type: MUSICXML }))
+    let second = null
+    if (scores.length === 1) {
+      try {
+        $('status').textContent = 'Second opinion: starting the second reader…'
+        second = await secondOpinion(input.pages, scores[0], ({ done, total }) => {
+          $('status').textContent = `Second opinion: staff ${done} of ${total}…`
+        })
+        if (second?.status === 'merged' && second.report.replaced.length) results = [new Blob([second.xml], { type: MUSICXML })]
+      } catch (e) {
+        console.warn('The second opinion failed, so the read stays as Audiveris read it:', e)
+        second = null
+      }
+    }
     clearInterval(timer)
     render()
-    if (!scores.length) return fail('Audiveris couldn’t find music it could read. Check the file is sheet music with five-line staves, and try a clearer scan or the original PDF.')
-    finish(input, scores.map(xml => new Blob([xml], { type: MUSICXML })))
+    finish(input, results, second, scores.length === 1 ? (xml, onProgress) => secondOpinion(input.pages, xml, onProgress, { force: true }) : null)
   } catch (e) {
     clearInterval(timer)
     console.error(e)
@@ -249,7 +279,7 @@ async function open(files) {
   showScore([new Blob([xml], { type: MUSICXML })], stem(file.name).replace(/ \(corrected\)$/, ''))
 }
 
-function finish(input, results) {
+function finish(input, results, second, onSecondOpinion) {
   const secs = Math.round((performance.now() - progress.t0) / 1000)
   const time = secs >= 90 ? `${Math.round(secs / 6) / 10} minutes` : `${secs} seconds`
   const pages = progress.pages ?? 1
@@ -257,7 +287,10 @@ function finish(input, results) {
   $('done-title').textContent = failed.length ? 'Done, with gaps' : 'Done'
   $('done-summary').textContent = `Read ${pages} page${pages === 1 ? '' : 's'} in ${time}.` +
     (failed.length ? ` Page${failed.length === 1 ? '' : 's'} ${failed.join(', ')} couldn’t be read and ${failed.length === 1 ? 'is' : 'are'} missing.` : '') +
-    (results.length > 1 ? ` The music is in ${results.length} movements, a file each: Audiveris starts a new movement where the music starts afresh, as at a new title.` : '')
+    (results.length > 1 ? ` The music is in ${results.length} movements, a file each: Audiveris starts a new movement where the music starts afresh, as at a new title.` : '') +
+    (second?.status === 'merged' && second.report.replaced.length ? ` A second reader checked the notes and fixed ${second.report.replaced.length} bar${second.report.replaced.length === 1 ? '' : 's'}.` : '') +
+    (second?.status === 'merged' && !second.report.replaced.length ? ' A second reader checked the notes and found nothing to fix.' : '') +
+    (second?.status === 'clean' ? ' Second opinion skipped — the read is clean.' : '')
   const box = $('downloads')
   results.forEach((blob, i) => {
     const a = document.createElement('a')
@@ -268,7 +301,7 @@ function finish(input, results) {
     box.append(a)
   })
   show('done')
-  showScore(results, input.title) // the score drawn, to check and correct (check.js)
+  showScore(results, input.title, onSecondOpinion ? { onSecondOpinion } : undefined) // the score drawn, to check and correct (check.js)
 }
 
 function fail(why) {
