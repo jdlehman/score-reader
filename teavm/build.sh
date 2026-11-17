@@ -19,7 +19,7 @@ TEAVM_JARS="$L/teavm-interop-0.16.0.jar:$L/teavm-jso-0.16.0.jar:$L/teavm-jso-api
 rm -rf $W && mkdir -p $W
 jc() { "$J/javac" -nowarn "$@" > $W/javac.log 2>&1 || { cat $W/javac.log >&2; exit 1; }; }
 
-# 1. TeaVM's own bugs, fixed (teavm/fork/, see FORK_FIX.md): those classes of its release, patched and
+# 1. TeaVM's own bugs, fixed (teavm/fork/, see FIXES.md): those classes of its release, patched and
 # compiled to go before the release's jars
 mkdir -p $W/fork-src
 grep -h '^+++ b/' teavm/fork/*.patch | sed 's|^+++ b/[a-z]*/src/main/java/||' | sort -u | while read -r f; do

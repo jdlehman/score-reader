@@ -19,7 +19,7 @@ The onsets come from the MusicXML each page was drawn from: `node test/onsets.mj
 <source.musicxml> --write` pairs each answer note with the source's, and writes nothing unless
 every bar has the same notes in both.
 
-    node test/corpus.mjs                       # read, score, compare with baseline.json (~70 min)
+    node test/corpus.mjs                       # read, score, compare with baseline.json (over an hour)
     EXTRA=~/Downloads/choral-test-set node test/corpus.mjs   # also the pieces kept out of git
     HOLDOUT=only node test/corpus.mjs          # the held-out pages, to confirm a fix
 
@@ -38,12 +38,9 @@ compare the two runs bar by bar:
 
 It counts the bars (one answer part's bar) each run gets right, separately for sung parts and
 accompaniment, and the notes missing, at the wrong time, or extra. Judge the sung parts first:
-they are what a singer reads. Audiveris doesn't read every page exactly the same way twice
-(between two runs of one build, the anthem p02 had one alto note at another time), so a note or
-two on a page the change shouldn't touch is noise: read that page again with and without it.
-
-Collected from 2026-11-08 for the Score Reader spikes (the "open-music" test set); the answers
-come from the same MusicXML the pages were drawn from.
+they are what a singer reads. Audiveris doesn't read every page exactly the same way twice (a
+note can land at another time from one run of a build to the next), so a note or two on a page the
+change shouldn't touch is noise: read that page again with and without it.
 
 ## What may be committed
 
@@ -110,11 +107,11 @@ the original).
 
 Next to the drawn pages of the same songs (`pages/`, `gute-nacht/`), these show what a real scan
 costs: the same music, printed by engravers in the 1870s-1920s and scanned.
-`real/drawn-vs-scan.mjs <run> <run>` reads off both for the bars the drawn pages hold. First read
-(2026-11-16, the site's build): over those bars, notes 100% drawn against 92% scanned, rhythm 98%
-against 78%; the 21 scan pages on their own, notes 87%, rhythm 60%, words about half. Worst: the
-Fauré (a 2400-pixel-wide scan from about 1878), 57-74% of notes; Erlkönig and Lindenbaum keep their
-notes but lose rhythm (their piano triplets).
+`real/drawn-vs-scan.mjs <run> <run>` compares the two over the bars the drawn pages hold.
+Measured 2026-11-16 with the site's build: over those bars, notes 100% drawn and 92% scanned,
+rhythm 98% and 78%. The 21 scan pages on their own: notes 87%, rhythm 60%, words about half. The
+Fauré (a 2400-pixel-wide scan of an 1878 print) reads worst, 57-74% of notes; Erlkönig and
+Lindenbaum keep their notes but lose rhythm in their piano triplets.
 
 | Pages | Piece | Bars on each page | Scan (IMSLP file, PDF pages) | Edition | Licence |
 |---|---|---|---|---|---|
@@ -151,4 +148,5 @@ and under what licence, is recorded in that folder, not here: the repository nam
 may hold. That folder also keeps its pages' baselines (`baseline.json`, `baseline-desktop.json`,
 written by `SAVE=1`) and the language of their words (`languages.json`: `[[pattern, language]]`,
 read by `test/cases.mjs`). The test set has most of the SATB pages with answers, so a change to
-how parts are read should be checked with `EXTRA` too.
+how parts are read should be checked with `EXTRA` too. Its `holdout/` folder is held out like
+`test/holdout`.

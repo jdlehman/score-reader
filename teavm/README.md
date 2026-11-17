@@ -2,12 +2,8 @@
 
 The page reads music with Audiveris, a Java program, built into WebAssembly with
 [TeaVM](https://teavm.org) 0.16 (WebAssembly GC, Apache-2.0), so the site serves everything itself.
-(Until November 2026 it ran the Java with CheerpJ, whose runtime loads from its maker's servers
-under a licence they can change.)
-
-The port is robbie-muse's [score-reader-teavm](https://github.com/robbie-muse/score-reader-teavm)
-(imported at 9b7e935); `FORK_FIX.md` is its log of every defect found and fixed, which the code's
-§ numbers refer to.
+`FIXES.md` lists what the build changes so that Audiveris runs under TeaVM; the code cites its
+entries by § number.
 
 ## Build
 
@@ -28,10 +24,10 @@ What it builds from:
 - **`shims/`**: the JDK classes TeaVM's class library lacks (AWT, Swing, XML), as stubs.
 - **`entry/`**: what the page calls (`TeavmMain`), a MusicXML writer (`MxlWriter`: JAXB can't run
   here), and Audiveris's classifier and font metrics, saved as data (there are no fonts here).
-- **Note-head templates**: desktop Audiveris draws them from its fonts at every point size from 32
-  to 200 (`generate/TemplateDump.java`, run by `build.sh`), a file a font and size; the page
-  fetches the one a page needs (`PreRenderedTemplates`). The port's five sizes made most pages use
-  a neighbouring size, up to 12% off, and lose heads (the anthem p05 88% of notes, now 100%).
+- **Note-head templates**: there are no fonts to draw them from here, so desktop Audiveris draws
+  them from Bravura and Leland at every point size from 32 to 200 (`generate/TemplateDump.java`,
+  run by `build.sh`), one file a font and size, and the page fetches the one a page needs
+  (`PreRenderedTemplates`).
 - **`policy/`**: the reflection TeaVM must keep. **`tools/RewriteJars.java`**: bytecode fixes to
   five of the release's jars.
 

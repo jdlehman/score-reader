@@ -35,10 +35,6 @@ Limits: a page takes about a minute (a crowded orchestral page much longer), and
 about 1 GB. The first visit downloads about 30 MB (Audiveris, and Tesseract with its English
 data). Tested in Chrome.
 
-Until November 2026 the page ran Audiveris's Java with [CheerpJ](https://cheerpj.com), loaded from
-Leaning Technologies' servers; WebAssembly reads the test corpus as well (`NOTES.md`), a little
-faster, and from this site alone.
-
 ## Building
 
 Needs Node, git and curl, on macOS or Linux. `./setup.sh` makes `.work/` (not committed): the
@@ -51,7 +47,7 @@ Audiveris 5.11.0 source with `patches/0001-score-reader.patch` applied, the jars
     npm run dev          # http://127.0.0.1:8787/
     node test/e2e.mjs pdf1 some-score.pdf   # read a score in Chrome; results in .work/e2e/
     npm run e2e:edit     # the note editor in Chrome, on a MusicXML file opened as it is (seconds)
-    npm run corpus       # read the test corpus, with desktop Audiveris or (ENGINE=teavm) the browser's
+    npm run corpus       # read the test corpus as the site reads it, and score it (test/corpus/README.md)
 
 `.github/workflows/pages.yml` does the same on GitHub and publishes `dist/` with GitHub Pages.
 

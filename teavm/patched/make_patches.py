@@ -2055,7 +2055,7 @@ print("All round-15 (§19 pre-rendered symbol metrics) patches applied.")
 
 # ============================================================ ROUND 16 (§23 TextsStep / OCR bridge) ======
 # Un-neuter TextsStep and wire BrowserOCR to tesseract.js via JS globals.
-# Design (see FORK_FIX §23): TeaVM @JSBody is synchronous and tesseract.js
+# Design (see teavm/FIXES.md §23): TeaVM @JSBody is synchronous and tesseract.js
 # is async, so a live await inside Wasm is impossible. Two-phase run:
 #   phase 1 (TeavmMain, no __ocrText): run LOAD..TEXTS; SheetScanner builds
 #     the clean image (NO_STAFF, inters erased, staff cores blanked) exactly
