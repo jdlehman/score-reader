@@ -295,7 +295,7 @@
      "bar": 11,
      "pitch": "A4",
      "midi": 69,
-     "lyric": null,
+     "lyric": "la",
      "onset": 1
     },
     {
@@ -1485,5 +1485,5 @@
   }
  ],
  "total_notes": 209,
- "total_lyrics": 44
+ "total_lyrics": 45
 }

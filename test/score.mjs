@@ -94,7 +94,7 @@ export function parseMusicXml(xml) {
           const alter = Number(tag(pitch, 'alter') ?? 0)
           if (!(step in STEPS) || !Number.isFinite(octave)) continue
           // a tied-on note is the same note held: the answer counts it as a note too
-          const lyric = body.match(/<lyric\b[^>]*>[\s\S]*?<text>([^<]*)<\/text>/)?.[1]
+          const lyric = body.match(/<lyric\b[^>]*>[\s\S]*?<text\b[^>]*>([^<]*)<\/text>/)?.[1] // <text font-size=...> too
           notes.push({ midi: 12 * (octave + 1) + STEPS[step] + Math.round(alter), lyric, onset: onset / divisions })
         }
       }
