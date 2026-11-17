@@ -19,11 +19,8 @@ public abstract class RectangularShape implements Shape, Cloneable {
     public double getMaxY() { return getY() + getHeight(); }
     public double getCenterX() { return getX() + getWidth() / 2.0; }
     public double getCenterY() { return getY() + getHeight() / 2.0; }
-    // §31 (DIAG36): JDK RectangularShape.getBounds, verbatim from OpenJDK 25.
-    // The old truncation ((int) getX(), (int) getWidth(), ...) shrank the
-    // fill window by up to 1 px on the right/bottom: the §30 ROUND 33
-    // ellipse fill missed the right/bottom strips entirely (the 791 px
-    // left on Wasm after the fill in DIAG36 live counts).
+    // §31: JDK RectangularShape.getBounds, from OpenJDK 25: floor and ceil, so the bounds cover
+    // the whole shape (§30's ellipse fill needs its right and bottom pixels).
     @Override public Rectangle getBounds() {
         double width = getWidth();
         double height = getHeight();
@@ -46,14 +43,9 @@ public abstract class RectangularShape implements Shape, Cloneable {
         return x + w > getX() && y + h > getY() && x < getMaxX() && y < getMaxY();
     }
     @Override public boolean intersects(Rectangle2D r) { return intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()); }
-    // §31 (DIAG36): four-corner test. The old two-corner form
-    // (contains(x,y) && contains(x+w,y+h)) is NOT JDK-faithful: JDK
-    // Ellipse2D and RoundRectangle2D both override contains(x,y,w,h)
-    // with the four-corner test (verified on JDK 25: rect [6,1,3,3] on
-    // ellipse (0,0,10,10) is false — both diagonal corners inside, one
-    // off-diagonal corner outside — while two-corner says true). For a
-    // rectangle the two forms coincide, so this changes nothing for
-    // rectangular shapes; Ellipse2D carries its own verbatim override.
+    // §31: the four-corner test, as JDK 25's Ellipse2D and RoundRectangle2D use (two diagonal
+    // corners inside isn't enough: rect [6,1,3,3] on ellipse (0,0,10,10) is outside). For a
+    // rectangle it equals the two-corner test; Ellipse2D carries its own copy of the JDK's.
     @Override public boolean contains(double x, double y, double w, double h) {
         return contains(x, y) && contains(x + w, y)
                 && contains(x, y + h) && contains(x + w, y + h);

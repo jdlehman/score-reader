@@ -5,12 +5,9 @@ import java.util.List;
 /**
  * Minimal java.awt.geom.Path2D (double/float storage, segment list).
  *
- * §26 (TeaVM grid gap): contains()/intersects() used to be bounds-based
- * (getBounds2D().contains), which is wrong for any non-rectangular path
- * (e.g. slanted beam parallelograms: the bounds box counts pixels outside
- * the shape). They are now exact point-in-path / rect tests on the
- * flattened segments, honouring the winding rule. getPathIterator(at,
- * flatness) now actually flattens curves (it used to ignore flatness).
+ * §26: contains() and intersects() test the flattened segments exactly, with the winding
+ * rule (a slanted beam's bounding box holds pixels outside the beam), and
+ * getPathIterator(at, flatness) flattens curves.
  *
  * Flattened-polygon results are cached; the cache is keyed on
  * (coords.size, types.size, windingRule, flatness) and is cleared by

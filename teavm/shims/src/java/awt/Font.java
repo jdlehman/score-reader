@@ -52,8 +52,7 @@ public class Font {
     @Override public String toString() { return name + " style=" + style + " size=" + size; }
     public Font(Font font) { this(font.name, font.style, font.pointSize); }
     public Font deriveFont(java.awt.geom.AffineTransform trans) { return this; }
-    // §23: used to return null; OmrFont.computeSize dereferences the result
-    // (glyphVector.getVisualBounds()), which trapped on the first OCR word.
+    // §23: OmrFont.computeSize measures text by the glyph vector's visual bounds.
     public java.awt.font.GlyphVector createGlyphVector(java.awt.font.FontRenderContext frc, String str) { return new java.awt.font.SimpleGlyphVector(this, frc, str); }
     public java.awt.font.GlyphVector createGlyphVector(java.awt.font.FontRenderContext frc, char[] chars) { return new java.awt.font.SimpleGlyphVector(this, frc, new String(chars)); }
     public java.awt.font.GlyphVector createGlyphVector(java.awt.font.FontRenderContext frc, java.text.CharacterIterator ci) {

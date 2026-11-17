@@ -11,8 +11,8 @@ import java.awt.geom.Rectangle2D;
  * desktop (22 multi-code strings compose with 0.0 error). Any other font,
  * or a code point not in the table, falls back to the stub values below.
  * getAscent/getDescent stay stub values: no pipeline caller uses them
- * (verified by grep over the Audiveris sources); getBounds() no longer
- * derives from them for Bravura strings. TextLayout.draw stays a no-op:
+ * (checked over the Audiveris sources), and getBounds() doesn't use them for
+ * Bravura strings. TextLayout.draw stays a no-op:
  * painting is not needed in the pipeline (symbol images stay blank;
  * the centroid is fixed separately by the patched ShapeSymbol). */
 public class TextLayout implements Cloneable {

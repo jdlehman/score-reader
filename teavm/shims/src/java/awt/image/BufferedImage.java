@@ -71,20 +71,13 @@ public class BufferedImage extends java.awt.Image {
         out.setRect(raster);
         return out;
     }
-    // TEAVM §13: getRGB/setRGB branch on the raster's actual DataBuffer
-    // runtime type, NOT on imageType. The (ColorModel, WritableRaster,
-    // ...) ctor sets imageType = TYPE_CUSTOM unconditionally, so a
-    // byte-backed raster (e.g. ij ByteProcessor.createBufferedImage, the
-    // §12 trap in Picture.buildNoStaffBuffer) used to fall into the
-    // DataBufferInt branch and trap with an illegal cast under WasmGC.
-    // Behaviour for correctly-typed images is unchanged: byte rasters
-    // take the sample path they always took (grey ramp via the colour
-    // model — for TYPE_BYTE_GRAY and ImageJ's grey IndexColorModel the
-    // palette lookup returns exactly the old 0xff000000|(v<<16)|(v<<8)|v;
-    // for a non-grey indexed palette it returns the palette colour, which
-    // the old grey ramp got wrong), and int rasters take the raw packed-
-    // pixel path they always took (TemplateFactory's getRGB == FORE/BACK/
-    // HOLE comparisons rely on the stored value, alpha included).
+    // TEAVM §13: getRGB/setRGB go by the raster's actual DataBuffer type, not by imageType,
+    // which the (ColorModel, WritableRaster, ...) constructor sets to TYPE_CUSTOM whatever the
+    // raster (ImageJ's ByteProcessor.createBufferedImage makes such images over byte rasters).
+    // Byte rasters go through the colour model (for TYPE_BYTE_GRAY and ImageJ's grey
+    // IndexColorModel that is 0xff000000|(v<<16)|(v<<8)|v; an indexed palette gives its
+    // colour), and int rasters return the stored packed pixel, alpha included
+    // (TemplateFactory compares getRGB with FORE/BACK/HOLE).
     // No DataBufferUShort/SHORT/FLOAT/DOUBLE shims exist; the fallback
     // below takes the sample path for any such buffer rather than casting.
     public int getRGB(int x, int y) {

@@ -15,7 +15,7 @@ index c2379bc..c7c7d71 100644
                  if (book.getStubs().isEmpty()) {
 diff --git a/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
 new file mode 100644
-index 0000000..f116864
+index 0000000..7e42e87
 --- /dev/null
 +++ b/app/src/main/java/org/audiveris/omr/image/FlatMorphology.java
 @@ -0,0 +1,334 @@
@@ -30,8 +30,8 @@ index 0000000..f116864
 + * (the circles Audiveris uses): a maximum over the element, then a minimum, with pixels outside
 + * the image left out. The element is split into its rows; each row's run is a sliding window,
 + * done with the van Herk / Gil-Werman method (three comparisons a pixel, whatever the length);
-+ * the rows are then combined. Maximum and minimum have separate methods with steady branches
-+ * (written for CheerpJ, the page's first Java runtime, which compiled only branches seen taken).
++ * the rows are then combined. Maximum and minimum have separate methods, each with one steady
++ * branch, which runs fast.
 + */
 +final class FlatMorphology
 +{
@@ -928,10 +928,10 @@ index 2757b77..42885d1 100644
          if (!peaks.isEmpty()) {
              final int peak = peaks.get(0);
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
-index 3efeee8..dfd3c9b 100644
+index 3efeee8..58572c6 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/Sheet.java
-@@ -1012,6 +1012,26 @@ public class Sheet
+@@ -1012,6 +1012,25 @@ public class Sheet
          return lastPersistentId;
      }
  
@@ -941,10 +941,9 @@ index 3efeee8..dfd3c9b 100644
 +    /**
 +     * Score reader: once the sheet is done, let go of what only its steps need.
 +     * <p>
-+     * Written for CheerpJ, the page's first Java runtime, which never freed objects held only by
-+     * weak references, so each sheet kept all its images and every glyph ever tried; the browser
-+     * build still calls it once a page is read. The export needs neither: only the picture's size,
-+     * and inters keep their own glyphs. A glyph index is made afresh if asked.
++     * A sheet holds all its images and every glyph tried, which is most of its memory. The export
++     * needs neither: only the picture's size, and inters keep their own glyphs. A glyph index is
++     * made afresh if asked.
 +     */
 +    public void lightenForExport ()
 +    {

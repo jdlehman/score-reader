@@ -5,26 +5,18 @@ import java.util.List;
 /**
  * Minimal java.awt.geom.Area, backed by a Path2D.
  *
- * §26 (TeaVM grid gap): add/subtract/intersect/exclusiveOr used to be
- * no-ops (subtract/intersect/xor) or a bare path append (add), and
- * contains() was bounds-based via Path2D. That made BeamItem.getBeltArea
- * return the belt WITH the core still in it, so computeImpacts rejected
- * every good beam (beltRatio 0.71 vs maxBelt 0.4) and BeamsBuilder created
- * zero beams — hence zero MultipleRestInter and the anthem grid gap.
+ * §26: Audiveris needs real area arithmetic: a beam is judged by its belt minus its core
+ * (BeamItem.getBeltArea), and a bounding-box approximation keeps the core in and rejects
+ * every beam.
  *
- * Boolean ops are now real polygon operations on the flattened path
+ * Boolean ops are polygon operations on the flattened path
  * (flatness 0.5): Sutherland–Hodgman clipping when the clip polygon is
  * convex, Greiner–Hormann clipping when it is not. Results are stored as
  * ordinary subpaths; contains() is the exact Path2D point-in-path test
  * (winding rule honoured), so a multi-subpath union/difference reads
  * correctly. Degenerate (zero-area) polygons are dropped.
- *
- * NOTE on the earlier triangulation approach (removed): subtracting a
- * non-convex clip by triangulating it and subtracting triangles
- * sequentially makes the piece count grow ~3x per triangle — for a staff
- * core path (~100 triangles) that is an exponential blowup (OOM in
- * BenchTri on page-minus-staff). Greiner–Hormann handles concave clips
- * directly in O(n*m + k) with no triangulation.
+ * Greiner–Hormann handles a concave clip directly, in O(n*m + k); subtracting it triangle
+ * by triangle would multiply the pieces with each one (a staff's core is about 100).
  */
 public class Area implements Shape, Cloneable {
     private Path2D path;
@@ -178,10 +170,9 @@ public class Area implements Shape, Cloneable {
     /** subjectList minus a convex clip polygon: P - Q = union over Q's edges of (P outside that edge).
      * The pieces MUST be disjoint: the naive union (P outside H_i) for each
      * edge overlaps at the corners, so the Area stores the overlap twice
-     * and the next subtract splits each copy again — the piece count
-     * grows ~x2.2 per subtract (DIAG31: 20, 65, 180, ..., 286,655
-     * segments after 12 staff strips, vs 65 on desktop) and any later
-     * fill/contains over the area stalls. Piece i is therefore clipped
+     * and the next subtract splits each copy again: the piece count
+     * roughly doubles with each subtract, and any later fill/contains over
+     * the area stalls. Piece i is therefore clipped
      * to the INSIDE of every earlier half-plane H_j (j < i): the pieces
      * are pairwise disjoint (piece i is outside H_i, piece j>i is inside
      * H_i) and their union is still P - Q (a point of P - Q is outside

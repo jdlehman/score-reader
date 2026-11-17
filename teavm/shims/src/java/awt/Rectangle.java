@@ -36,13 +36,10 @@ public class Rectangle extends Rectangle2D {
     public void grow(int h, int v) { x -= h; y -= v; width += 2 * h; height += 2 * v; }
     public boolean contains(int px, int py) { return px >= x && px < x + width && py >= y && py < y + height; }
     public boolean contains(Point p) { return contains(p.x, p.y); }
-    // TEAVM §24 trap 4: JDK Rectangle.contains(int,int,int,int) is INCLUSIVE
-    // on the far edge (x+w <= maxX, y+h <= maxY) and false for w<=0/h<=0.
-    // The shim previously had no int overload, so contains(Rectangle)
-    // resolved to Rectangle2D.contains(double,double,double,double), whose
-    // half-open point test (contains(x+w,y+h)) rejected every section
-    // touching the char box's right or bottom edge — 741/741 missed
-    // sections in TextBuilder.retrieveSections. Verified against JDK 25.
+    // TEAVM §24: as in the JDK, the far edge is inside (x+w <= maxX, y+h <= maxY) and an empty
+    // rectangle is never contained. Without this int overload, contains(Rectangle) would take
+    // Rectangle2D's half-open test and miss every section touching a character box's right or
+    // bottom edge (TextBuilder.retrieveSections).
     public boolean contains(int x, int y, int w, int h) {
         return w > 0 && h > 0 && x >= this.x && y >= this.y
                 && (x + w) <= this.x + width && (y + h) <= this.y + height;

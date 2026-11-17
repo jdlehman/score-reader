@@ -141,11 +141,9 @@ public class BufferedImageGraphics extends Graphics2D {
     @Override public void fill(Shape s) {
         Rectangle b = s.getBounds();
         if ((b.width <= 0) || (b.height <= 0)) return;
-        // Scanline fill (§26, TeaVM grid gap): the old per-pixel loop called
-        // s.contains() once per pixel — O(pixels * edges). After the §26
-        // Area fix, a real page-minus-staff area has thousands of edges, so
-        // StemScaler.getBuffer()'s g.fill(area) (2480x3509 page) stalled
-        // for 5+ minutes at 100% CPU. The scanline sweep below reproduces
+        // Scanline fill (§26): testing s.contains() for each pixel costs pixels x edges, and a page
+        // minus its staves (StemScaler.getBuffer's g.fill(area)) has thousands of edges. The
+        // scanline sweep below reproduces
         // s.contains(xx+0.5, yy+0.5) exactly (same half-open crossing rule
         // as Path2D.contains: an edge contributes iff it crosses the
         // scanline in the half-open y-range and its x-intercept is strictly

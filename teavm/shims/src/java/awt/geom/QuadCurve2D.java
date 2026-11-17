@@ -35,11 +35,8 @@ public abstract class QuadCurve2D implements Shape, Cloneable {
     @Override public boolean intersects(Rectangle2D r) { return false; }
     @Override public boolean contains(double x, double y, double w, double h) { return false; }
     @Override public boolean contains(Rectangle2D r) { return false; }
-    // TEAVM §12: these used to return null. NaturalSpline.interpolate()
-    // builds a QuadCurve2D for a 3-point interpolation, and its ctor appends
-    // the curve via Path2D.append -> getPathIterator(null) -> it.isDone()
-    // on the null iterator traps under TeaVM WasmGC (GRID step, first seen
-    // in full-out16). Mirror the CubicIterator in CubicCurve2D.java.
+    // TEAVM §12: a real path iterator, like CubicCurve2D's: NaturalSpline.interpolate() builds a
+    // QuadCurve2D for three points and appends it to a Path2D through getPathIterator.
     @Override public PathIterator getPathIterator(AffineTransform at) { return new QuadIterator(this, at); }
     @Override public PathIterator getPathIterator(AffineTransform at, double flatness) { return getPathIterator(at); }
     static final class QuadIterator implements PathIterator {

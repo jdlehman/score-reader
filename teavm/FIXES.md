@@ -77,9 +77,10 @@ Audiveris depends on the behaviour.
   measure is still written.
 - **§44** A key cancellation with no fifths writes no `<key>`.
 
-## Diagnostics
+## Tools that made the data (generate/)
 
-`make_patches.py` also carries print-only diagnostic rounds (DIAG14 to DIAG51, citing §14, §15,
-§25, §28, §29, §36, §38, §39, §41, §43), and `patched/strip_diag.py` takes their prints out of
-every build. `node/run-fullout-noocr.mjs`, `node/run-fullout-ocr.mjs` and `node/save-mxl.mjs`
-(§23, §37) are runners nothing uses; `node/read.mjs` is the one in use.
+- `TemplateDump.java`: the note-head templates (§17), run by `build.sh`.
+- `phase-font/gen_symbol_metrics.py` with `SymbolMetricsDump.java`: the Bravura metrics table
+  (§19); `phase55/LineCodeDump.java` its U+E010 entry (§45). The other programs in `phase-font/`
+  check the shims' text measurements against the real font on the desktop.
+- `phasec/gen_classifier.py`: the classifier's network as Java data (§18).

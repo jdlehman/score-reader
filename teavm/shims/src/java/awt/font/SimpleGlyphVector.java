@@ -6,10 +6,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 /**
  * Minimal concrete GlyphVector for the TeaVM shim.
- * §23: Font.createGlyphVector used to return null, and OmrFont.computeSize
- * dereferences the result (glyphVector.getVisualBounds()) — the first 'W'
- * row of any OCR text trapped with a null-pointer dereference in
- * BrowserOCR.parse. Visual bounds reuse the TextLayout model exactly
+ * §23: what Font.createGlyphVector returns, for OmrFont.computeSize, which measures each
+ * OCR'd word by the glyph vector's visual bounds. Visual bounds reuse the TextLayout model exactly
  * (Bravura composed advance when applicable, else 0.5 * size per char;
  * ascent 0.8 * size, descent 0.2 * size), so computeSize's fitted point
  * size is consistent with TextLayout-based measurement elsewhere.

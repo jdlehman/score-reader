@@ -17,11 +17,8 @@ public abstract class Rectangle2D implements Shape, Cloneable {
     public double getCenterX() { return getX() + getWidth() / 2; }
     public double getCenterY() { return getY() + getHeight() / 2; }
     public Rectangle2D getBounds2D() { return new Double(getX(), getY(), getWidth(), getHeight()); }
-    // §31 (DIAG36): JDK RectangularShape.getBounds, verbatim from OpenJDK 25
-    // (Rectangle2D inherits it in the JDK; the shim's Rectangle2D is
-    // standalone, so it needs its own copy). The old truncation shrank the
-    // fill window by up to 1 px on the right/bottom, same defect as
-    // RectangularShape.getBounds.
+    // §31: JDK RectangularShape.getBounds, from OpenJDK 25 (the JDK's Rectangle2D inherits it;
+    // this one stands alone): floor and ceil, so the bounds cover the whole shape.
     public java.awt.Rectangle getBounds() {
         double width = getWidth();
         double height = getHeight();
@@ -41,19 +38,9 @@ public abstract class Rectangle2D implements Shape, Cloneable {
         return x >= getX() && x < getMaxX() && y >= getY() && y < getMaxY();
     }
     public boolean contains(Point2D p) { return contains(p.getX(), p.getY()); }
-    // TEAVM §24 trap 4: JDK Rectangle2D.Double/Float.contains(x,y,w,h) is
-    // INCLUSIVE on the far edge and false for w<=0/h<=0 (verified on JDK 25).
-    // The old half-open two-corner test rejected every rectangle touching
-    // the far edge. (Correction, §31: the §24 note's claim that
-    // RectangularShape's two-corner form is "JDK-faithful for
-    // non-rectangular shapes such as Ellipse2D" was wrong — JDK Ellipse2D
-    // overrides contains(x,y,w,h) with the four-corner test, verified on
-    // JDK 25: rect [6,1,3,3] on ellipse (0,0,10,10) is false, while the
-    // two-corner test says true. Ellipse2D now carries the verbatim JDK
-    // four-corner override, and RectangularShape's form is four-corner.
-    // A zero-size rect at an interior point IS contained by an ellipse —
-    // the four-corner test has no w<=0/h<=0 guard, unlike this rectangle
-    // version — which the differential test confirms.)
+    // TEAVM §24: as in JDK 25's Rectangle2D.Double/Float, the far edge is inside and an empty
+    // rectangle is never contained. (Ellipse2D and RectangularShape use the JDK's four-corner
+    // test instead, which has no empty-rectangle guard.)
     public boolean contains(double x, double y, double w, double h) {
         if (w <= 0 || h <= 0) {
             return false;

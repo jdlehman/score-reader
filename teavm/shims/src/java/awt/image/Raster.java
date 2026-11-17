@@ -81,11 +81,8 @@ public class Raster {
         return out;
     }
     public static WritableRaster createWritableRaster(SampleModel sm, DataBuffer db, Point origin) {
-        // TEAVM §12: mirror the JDK, which defaults a null origin to (0,0).
-        // ij ByteProcessor.createBufferedImage passes null here; without the
-        // default the 3-arg Raster ctor dereferences origin.x and traps
-        // under TeaVM WasmGC (GRID step, Picture.buildNoStaffBuffer, first
-        // seen in full-out18).
+        // TEAVM §12: as the JDK, a null origin is (0,0). ImageJ's
+        // ByteProcessor.createBufferedImage passes null here.
         if (origin == null) {
             origin = new Point(0, 0);
         }

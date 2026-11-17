@@ -2,12 +2,9 @@ package java.awt.geom;
 /** Minimal java.awt.geom.Ellipse2D. */
 public abstract class Ellipse2D extends RectangularShape {
     protected Ellipse2D() {}
-    // §31 (DIAG36): JDK-faithful geometry, copied verbatim from OpenJDK 25
-    // (java.desktop/java/awt/geom/Ellipse2D.java). The shim previously had
-    // NO contains override, so it inherited RectangularShape's
-    // bounding-rectangle test: fill(Shape) on an ellipse erased the whole
-    // rectangle, including ~192 corner pixels per head ellipse, which is
-    // the §30 head-erasure overshoot (Wasm erased ~800 px too much).
+    // §31: geometry copied from OpenJDK 25 (java.desktop/java/awt/geom/Ellipse2D.java), so that
+    // filling an ellipse covers the ellipse and not its bounding rectangle (§30 erases note
+    // heads with one).
     @Override
     public boolean contains(double x, double y) {
         // Normalize the coordinates compared to the ellipse

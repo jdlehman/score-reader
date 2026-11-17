@@ -106,7 +106,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Hand-rolled, non-JAXB MusicXML 4.0.3 partwise writer (Phase D, §22).
+ * MusicXML 4.0.3 partwise writer, without JAXB (§22).
  *
  * <p>Walks the already-computed Audiveris {@link Score} model directly and
  * writes MusicXML text with {@link StringBuilder} only — no proxymusic
@@ -690,9 +690,8 @@ public class MxlWriter
 
                             processChord(chord);
                             // §34: getDuration() is null only for measure
-                            // rests (never in this branch), but guard it the
-                            // same way — a null here used to NPE and drop the
-                            // measure on desktop / trap the run under TeaVM.
+                            // rests (never in this branch), but a null would
+                            // lose the measure, so it is guarded the same way.
                             Rational chordDur = chord.getDuration();
                             if (chordDur != null) {
                                 timeCounter = timeCounter.plus(chordDur);
@@ -2602,12 +2601,10 @@ public class MxlWriter
             for (Voice voice : measure.getVoices()) {
             }
             Collections.sort(events, (w1, w2) -> {
-                // §34: null timeOffset sorts last. Un-timed chords (RHYTHMS
-                // "no correct rhythm" stacks leave trailing chords with no
-                // timeOffset — identical on desktop and Wasm, DIAG40) must
-                // not kill the export: on desktop the NPE is caught and the
-                // whole measure is dropped; under TeaVM it is an uncatchable
-                // Wasm trap that kills the run. push(null) already flushes
+                // §34: null timeOffset sorts last. A stack the rhythm step
+                // couldn't fit leaves trailing chords with no timeOffset, and
+                // they must not stop the export: under TeaVM a null here is a
+                // trap that ends the read. push(null) already flushes
                 // remaining events, so nulls-last degrades to "wedge at end
                 // of measure" instead of losing the measure.
                 if (w1.timeOffset == null) {
