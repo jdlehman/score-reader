@@ -41,15 +41,21 @@ function cases(dir, prefix = '') {
 }
 
 /**
+ * A held-out case (test/holdout/README.md): test/holdout's, or one in the local test set's own
+ * holdout/ folder (EXTRA/holdout), which keeps the same rules.
+ */
+export const isHeldOut = name => name.startsWith('holdout/') || name.startsWith('extra/holdout/')
+
+/**
  * Every case: test/corpus, then EXTRA's (leaving out its copies of pieces the repo has), then the
- * held-out pages if asked for (HOLDOUT; test/holdout/README.md).
+ * held-out pages if asked for (HOLDOUT; test/holdout/README.md), the repository's and EXTRA's.
  */
 export function allCases(holdout = !!process.env.HOLDOUT) {
   const all = [
     ...cases(join(ROOT, 'test', 'corpus')),
     ...(EXTRA ? cases(EXTRA, 'extra/') : []),
     ...(holdout ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
-  ]
+  ].filter(c => holdout || !isHeldOut(c.name))
   return all.filter(c => !c.name.startsWith('extra/') || !all.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input)))
 }
 

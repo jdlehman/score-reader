@@ -16,6 +16,9 @@ pages. These pages are the check.
   `build.mjs` takes the first 20 songs that build, in that order, skipping one only for a reason it
   prints (it can't be drawn, its parts disagree, no notes).
 
+The local test set (`EXTRA`) can hold out pages of its own the same way, in its `holdout/` folder:
+they are left out of every run unless `HOLDOUT` is set, and the same rules apply.
+
 **Run**
 
     HOLDOUT=only RUN=holdout node test/corpus.mjs     # just these

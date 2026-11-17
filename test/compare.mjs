@@ -16,7 +16,7 @@
 // instrument. Only cases both runs read are compared; the others are listed.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { ROOT, allCases, joined, reads } from './cases.mjs'
+import { ROOT, allCases, isHeldOut, joined, reads } from './cases.mjs'
 import { bars } from './score.mjs'
 
 const [before, after, ...filters] = process.argv.slice(2)
@@ -97,7 +97,7 @@ for (const c of cases) {
   pages[net < 0 ? 'better' : net > 0 ? 'worse' : 'even']++
   const show = g => `${String(page[g].fixed).padStart(3)} ${String(page[g].broken).padStart(3)}  ${KINDS.map(e => page[g][e]).map(x => signed(x).padStart(4)).join(' ')}`
   lines.push(`${c.name.slice(0, 44).padEnd(44)} ${show('sung')}   ${show('accompaniment')}  ${signed(page.unpaired.extra).padStart(4)}`)
-  if (process.env.VERBOSE && !c.name.startsWith('holdout/')) {
+  if (process.env.VERBOSE && !isHeldOut(c.name)) {
     for (const { r, ea, eb } of changed.sort((x, y) => x.r.bar - y.r.bar || x.r.part - y.r.part)) {
       const part = r.part < 0 ? 'unpaired parts' : `${r.name.replace(/\s+/g, ' ')}${sung(answer.parts[r.part]) ? '' : ' (acc.)'}`
       const diff = KINDS.filter(e => ea[e] !== eb[e]).map(e => `${e === 'time' ? 'at the wrong time' : e} ${ea[e]}->${eb[e]}`).join(', ')

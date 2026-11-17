@@ -10,7 +10,7 @@
 //   SAVE=1 node test/corpus.mjs             save these scores as the new baseline
 //   JOBS=n reads at once (default 4; desktop 2); REUSE=1 scores the reads of the last run again
 //   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
-//   HOLDOUT=1 also reads the held-out pages (test/holdout), HOLDOUT=only reads only them: to confirm
+//   HOLDOUT=1 also reads the held-out pages (test/holdout, and EXTRA's holdout/), HOLDOUT=only reads only them: to confirm
 //     a fix made without looking at them, never to make one
 //   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
 //   WASM=<dir> reads with another WebAssembly build than .work/teavm/out (teavm/build.sh with
@@ -36,7 +36,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { basename, extname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { READING, asArgs } from '../app/settings.js'
-import { EXTRA, ROOT, allCases, joined, languageOf, reads } from './cases.mjs'
+import { EXTRA, ROOT, allCases, isHeldOut, joined, languageOf, reads } from './cases.mjs'
 import { parseMusicXml, score } from './score.mjs'
 
 const WORK = join(ROOT, '.work')
@@ -131,7 +131,7 @@ async function readWasm(batch) {
 /** The MusicXML files Audiveris wrote for one case (.mxl; .musicxml from WebAssembly): one, or one per movement. */
 const all = allCases().filter(c => !filters.length || filters.some(f => c.name.includes(f)))
   .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
-  .filter(c => process.env.HOLDOUT !== 'only' || c.name.startsWith('holdout/'))
+  .filter(c => process.env.HOLDOUT !== 'only' || isHeldOut(c.name))
 if (process.env.LIST) {
   for (const c of all) console.log(c.answer ? 'answer ' : '       ', c.name)
   process.exit(0)
