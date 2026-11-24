@@ -15,7 +15,8 @@
 //   there. Low when parts are jumbled across systems, or two parts were read as one.
 // - parts: how many parts the read has, against the answer.
 // - lyrics: the answer's syllables found in order in the paired part; lyricsExtra: how many of the
-//   read's syllables aren't (words put where the answer has none, or wrong ones).
+//   read's syllables aren't (words put where the answer has none, or wrong ones); none if the
+//   answer has no words.
 // - rhythm: the answer's notes found in the right bar and starting at the right time in it (in
 //   quarter notes from the bar's start), whatever part they landed in; for answers whose notes
 //   have onsets. A note found at the wrong beat counts in notes but not here. Pitch alone is weak
@@ -275,7 +276,8 @@ export function score(answer, readXml) {
     parts: parts.length,
     answerParts: answer.parts.length,
     lyrics: lyricsTotal ? lyricsFound / lyricsTotal : null,
-    lyricsExtra: parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.filter(n => syllable(n.lyric)).length, 0), 0) - lyricsFound,
+    // an answer with no words can't say which of the read's are wrong
+    lyricsExtra: lyricsTotal ? parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.filter(n => syllable(n.lyric)).length, 0), 0) - lyricsFound : null,
     measures: stacks.length,
     answerBars: count,
   }

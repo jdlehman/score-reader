@@ -125,6 +125,8 @@ test('extra syllables: words where the answer has none count, words it has don\'
   assert.equal(score(sung, words('la', 'lo')).lyricsExtra, 0)
   assert.equal(score(sung, words('la', 'lu')).lyricsExtra, 1) // one wrong
   assert.equal(score(sung, words('la', 'lo', 'li')).lyricsExtra, 1) // one where the answer has none
+  const wordless = { ...sung, parts: sung.parts.map(p => ({ notes: p.notes.map(({ lyric, ...n }) => n) })) }
+  assert.equal(score(wordless, words('la', 'lo', 'li')).lyricsExtra, null) // an answer without words can't judge them
 })
 
 test('bars that don\'t add up: past the time signature, or short inside the piece', () => {
