@@ -111,5 +111,20 @@ data for all six (`@tesseract.js-data/<code>/4.0.0`, 6 to 14 MB each, which the 
 needs); a browser downloads only the one picked. If it fails to load, words are read in English.
 What a language buys is accented letters (`test/language.test.mjs`).
 
+**Notes in one column start together (app/columns.js).** Audiveris times each part's bar on its
+own, so a beam, flag or dot it misses, or a triplet the engraving left unmarked, puts the rest of
+that part's bar at the wrong times, though the other parts show where its notes belong. After
+the read, a part's bar longer than its time signature (or shorter, inside the piece) is re-timed
+by the other parts' bars in the same system that add up: a note takes the time of the chords in
+its column (default-x within 2 tenths; a chord's column is where its heads on the stem's usual
+side stand), and the notes between two such notes follow the one before, stay, or follow the one
+after, whichever can be written; failing that, a run of equal notes is spread evenly, as a
+triplet, with the triplet marks Verovio needs to time it. Lengths are written again to match; a
+voice that plain, dotted or triplet values can't write stays as read. A page with no time
+signature (one from the middle of a piece) takes the bar length most of its bars have, if a
+common time signature has it. Measured 2026-11-24 with `test/prove.mjs` from the corpus's reads:
+75 sung and 33 accompaniment bars more right, 1,414 more notes at the right time, none worse;
+held-out pages 65 more notes, none worse.
+
 **Reading in a worker (teavm/).** The worker reads each page in two calls into Audiveris, up to
 the TEXTS step and the rest, and the page reads the words with tesseract.js in between.

@@ -72,7 +72,7 @@ for (const f of [CHANGE.pre, CHANGE.post]) if (f && !existsSync(f)) usage(`no fi
 // ---- builds
 
 /** The files a read depends on besides the build: the page's code and the reading scripts. */
-const READER = ['app/pdf.js', 'app/preflight.js', 'app/teavm.js', 'app/settings.js', 'teavm/node/read.mjs', 'teavm/node/ocr-run.mjs', 'test/pdf-grey.mjs', 'test/grey.py', 'package-lock.json']
+const READER = ['app/pdf.js', 'app/preflight.js', 'app/teavm.js', 'app/columns.js', 'app/settings.js', 'teavm/node/read.mjs', 'teavm/node/ocr-run.mjs', 'test/pdf-grey.mjs', 'test/grey.py', 'package-lock.json']
 
 /** A variant's fingerprint: its build, steps and settings, the reading code, and OCR. */
 function fingerprint(v) {

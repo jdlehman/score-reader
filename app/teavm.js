@@ -6,6 +6,7 @@
 // Each page is read in two calls into Audiveris (see teavm/entry/src/teavm/TeavmMain.java): up to
 // its words, and the rest. In between, ocr() reads the words: Tesseract is asynchronous, and a call
 // into WebAssembly can't wait for it.
+import { alignColumns } from './columns.js'
 
 /**
  * Read a score.
@@ -21,7 +22,8 @@
  *   in the middle of a page, so it must answer at once (a worker can fetch synchronously)
  * @param {(page: number, step: string) => void} [o.onStep]  as each step of a page starts (page 0: the export)
  * @returns {Promise<{scores: string[], failed: number[]}>} the MusicXML of each score (a movement
- *   each), and the pages that couldn't be read (left out)
+ *   each), its bars that don't add up re-timed by their columns (columns.js), and the pages that
+ *   couldn't be read (left out)
  */
 export async function readScore({ teavm, pages, constants, languages = '', ocr, templates, onStep }) {
   const java = teavm.exports
@@ -70,7 +72,17 @@ export async function readScore({ teavm, pages, constants, languages = '', ocr, 
   }
   const list = JSON.parse(java.scores())
   const utf8 = new TextDecoder()
-  return { scores: list.map(b64 => utf8.decode(fromBase64(b64))), failed }
+  return { scores: list.map(b64 => retimed(utf8.decode(fromBase64(b64)))), failed }
+}
+
+/** A score with its bars that don't add up re-timed by their columns (columns.js), or as read if that fails. */
+function retimed(xml) {
+  try {
+    return alignColumns(xml).xml
+  } catch (e) {
+    console.warn('Bars that don’t add up were left as read:', e)
+    return xml
+  }
 }
 
 /** A call into Audiveris; false if it failed past what Audiveris catches (a WebAssembly trap). */
