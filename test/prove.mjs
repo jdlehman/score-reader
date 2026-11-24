@@ -89,8 +89,10 @@ function fingerprint(v) {
   const templates = join(v.wasm, 'templates')
   if (existsSync(templates)) h.update(readdirSync(templates).sort().map(f => `${f}:${statSync(join(templates, f)).size}`).join())
   for (const f of READER) h.update(readFileSync(join(ROOT, f)))
-  for (const f of [v.pre, v.post]) for (const file of f ? moduleFiles(f) : []) h.update(readFileSync(file))
-  h.update(`${v.pre ? '' : '-'}|${v.post ? '' : '-'}`)
+  for (const f of [v.pre, v.post]) {
+    if (!f) h.update('-')
+    else for (const file of moduleFiles(f)) h.update(readFileSync(file))
+  }
   h.update(`${v.constants ?? ''}|${process.env.OCR ?? ''}`)
   return h.digest('hex').slice(0, 12)
 }
