@@ -3,7 +3,7 @@
 Score Reader runs Audiveris 5.11 with the changes and settings below. The Java changes are in
 `patches/0001-score-reader.patch` and are the same on the desktop (the corpus test's
 `ENGINE=desktop`) and in the browser. The browser build adds what TeaVM needs (`teavm/README.md`,
-`teavm/FIXES.md`). `test/corpus/README.md` explains how a change is judged.
+`teavm/FIXES.md`). `test/corpus/README.md` explains how a change is proved better (`test/prove.mjs`).
 
 ## Changes to Audiveris (patches/0001-score-reader.patch)
 

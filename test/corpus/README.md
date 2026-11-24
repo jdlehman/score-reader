@@ -27,20 +27,54 @@ Fixes are made against these pages, so they can come to fit them. `test/holdout/
 pages, drawn at random, that no fix is made against: a fix is confirmed there once, and its
 README has the rules.
 
-**Judging a change.** The report above marks a page worse if any score drops by a point, which
-catches what broke but can't weigh it: one bar fixed and one broken look the same as nothing. So
-read the corpus with and without the change (`RUN=` for each; the change's WebAssembly build made
-with `PATCHED=<its jar> TEAVM_WORK=.work/teavm-after teavm/build.sh` and read with `WASM=`) and
-compare the two runs bar by bar:
+## Proving a change
 
-    RUN=before node test/corpus.mjs; RUN=after WASM=.work/teavm-after/out node test/corpus.mjs
-    EXTRA=... node test/compare.mjs before after   # VERBOSE=1 lists each bar that changed
+A change goes in when `test/prove.mjs` says it is better: ours, or one in a pull request. The
+report above marks a page worse if any score drops by a point, which catches what broke but can't
+weigh it (one bar fixed and one broken look the same as nothing). `prove.mjs` reads the corpus
+with the change and with main, compares them bar by bar, and gives a verdict by the rule below.
 
-It counts the bars (one answer part's bar) each run gets right, separately for sung parts and
-accompaniment, and the notes missing, at the wrong time, or extra. Judge the sung parts first:
-they are what a singer reads. Audiveris doesn't read every page exactly the same way twice (a
-note can land at another time from one run of a build to the next), so a note or two on a page the
-change shouldn't touch is noise: read that page again with and without it.
+    PATCHED=<its jar> TEAVM_WORK=.work/teavm-x teavm/build.sh          # the change's build
+    EXTRA=... node test/prove.mjs x --wasm .work/teavm-x/out           # read, compare, verdict
+    EXTRA=... node test/prove.mjs x --wasm .work/teavm-x/out --holdout # then once, to confirm
+
+A change that isn't in the build says so instead: `--constants a=1,b=2` (Audiveris settings),
+`--pre <module>` (a step on the grey pages before the read), `--post <module>` (a step on the
+MusicXML after it); `teavm/node/read.mjs` describes the modules. Main's reads are kept and read
+again only when main's build or the reading code changes, so a verdict costs one read of the
+corpus (about two hours with `EXTRA`). `--main <dir>` names main's build if it isn't
+`.work/teavm/out`. The verdict is kept in `.work/corpus/verdicts/<name>.txt`, and
+`node test/compare.mjs` lists the bars that changed (`VERBOSE=1`).
+
+**What it counts.** A bar is one answer part's bar, as its singer or player reads it, in the read
+part paired with it; it is right when every note is there, starting on time, with nothing extra.
+Sung parts (lyrics or a voice's name) and accompaniment are counted apart. The measures, after
+minus before: sung bars right, accompaniment bars right, notes missing, notes at the wrong time,
+extra notes, syllables found, pages read, and reading time.
+
+**Noise.** `node test/prove.mjs repeat` (no change named) reads main a second time. If two reads
+of one build differ on a page, that page is allowed that much difference in later verdicts (kept
+in `.work/corpus/noise.json`); until the check has run, every difference counts. Run it again when
+main's build changes. A page read by one side only is read again, alone, before it counts (a busy
+machine can time a read out).
+
+**The rule**, on the pages fixes are made against:
+- **PROVED**: at least one measure better, and nothing worse: no measure worse in total, and no
+  page with fewer sung or accompaniment bars right, fewer syllables, more note errors, or not read
+  any more (each beyond its noise).
+- **TRADE-OFF**: better in some measure, worse in another or on some page. A person decides,
+  after looking at those bars, and says why in the commit.
+- **NOT PROVED**: nothing better; or fewer sung bars right in total; or a page that was read no
+  longer is.
+
+Then the held-out pages, once (`--holdout`): only their totals are shown, and which pages moved.
+Anything worse there in total makes the verdict NOT PROVED. Each use is logged, and a second look
+at the same change is warned of (`test/holdout/README.md` has the rules).
+
+Reading time only counts against a change, past +20%: main's reads are kept from another day,
+when the machine may have been busier, so a faster change is timed on its own, both builds back to
+back. A step outside the read that the corpus can't run (one needing the page's interface) isn't
+proved here: measure what it costs and gains some other way, and say how in its pull request.
 
 ## What may be committed
 

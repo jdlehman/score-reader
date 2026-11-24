@@ -195,7 +195,7 @@ function assign(gain) {
   return [...best.values()].reduce((x, y) => (y.total > x.total ? y : x)).of
 }
 
-const syllable = s => (s ?? '').toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '')
+export const syllable = s => (s ?? '').toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '')
 
 /** Longest common subsequence length of two lists. */
 function lcs(a, b) {

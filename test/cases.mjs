@@ -47,8 +47,21 @@ function cases(dir, prefix = '') {
 export const isHeldOut = name => name.startsWith('holdout/') || name.startsWith('extra/holdout/')
 
 /**
+ * Cases left out of every run: SKIP=a,b, and the local test set's own list (EXTRA/skip.txt, one
+ * per line, # for a comment), so that the repository names none of its pieces. A case is left out
+ * if its name contains one of them.
+ */
+const SKIP = [
+  ...(process.env.SKIP ? process.env.SKIP.split(',') : []),
+  ...(EXTRA && existsSync(join(EXTRA, 'skip.txt'))
+    ? readFileSync(join(EXTRA, 'skip.txt'), 'utf8').split('\n').map(l => l.replace(/#.*/, '').trim()).filter(Boolean)
+    : []),
+]
+
+/**
  * Every case: test/corpus, then EXTRA's (leaving out its copies of pieces the repo has), then the
- * held-out pages if asked for (HOLDOUT; test/holdout/README.md), the repository's and EXTRA's.
+ * held-out pages if asked for (HOLDOUT; test/holdout/README.md), the repository's and EXTRA's,
+ * without the skipped ones.
  */
 export function allCases(holdout = !!process.env.HOLDOUT) {
   const all = [
@@ -56,8 +69,12 @@ export function allCases(holdout = !!process.env.HOLDOUT) {
     ...(EXTRA ? cases(EXTRA, 'extra/') : []),
     ...(holdout ? cases(join(ROOT, 'test', 'holdout'), 'holdout/') : []),
   ].filter(c => holdout || !isHeldOut(c.name))
+    .filter(c => !SKIP.some(s => c.name.includes(s)))
   return all.filter(c => !c.name.startsWith('extra/') || !all.some(o => !o.name.startsWith('extra/') && basename(o.input) === basename(c.input)))
 }
+
+/** The folder a run's read of a case is kept in (WebAssembly: one a case), by its name. */
+export const caseKey = name => name.replace(/[^\w.-]+/g, '_')
 
 /** Short words common in each language the page offers (app/language.js), lower case. */
 const WORDS = {

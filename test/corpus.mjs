@@ -9,19 +9,27 @@
 //                                           also the pieces that can't be in the repo (licences)
 //   SAVE=1 node test/corpus.mjs             save these scores as the new baseline
 //   JOBS=n reads at once (default 4; desktop 2); REUSE=1 scores the reads of the last run again
-//   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these
+//   LIST=1 only lists the cases; SKIP=a,b leaves out cases whose name contains one of these (and
+//     EXTRA/skip.txt lists the local test set's own); CASES=<file> reads only the cases it names,
+//     one name a line, exactly
 //   HOLDOUT=1 also reads the held-out pages (test/holdout, and EXTRA's holdout/), HOLDOUT=only reads only them: to confirm
 //     a fix made without looking at them, never to make one
-//   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds
+//   RUN=<name> keeps this run's reads apart (.work/corpus/<name>), to compare two builds; a run
+//     reads into the same folder again keeps the reads of cases it doesn't read this time
 //   WASM=<dir> reads with another WebAssembly build than .work/teavm/out (teavm/build.sh with
 //     TEAVM_WORK), to compare it with this one
+//   CONSTANTS='a=1,b=2' reads with more Audiveris settings, after the page's (app/settings.js), so
+//     one of the same name replaces it
+//   PRE=<module>, POST=<module>: a step before the read (on the grey pages) or after it (on the
+//     MusicXML), to measure one that isn't in the page yet (teavm/node/read.mjs)
 //   OCR=0 leaves the words out (faster; lyrics aren't scored); OCR=deu reads every case's words as
 //     German; by default each case's are read in its language (cases.mjs, languageOf), as a reader
 //     would pick it on the page
 //   ENGINE=desktop reads with desktop Audiveris instead (Java, a few times faster, with Audiveris's
 //     logs and .omr files; words left out), against its own baseline (baseline-desktop.json):
-//     PATCHED=<jar> reads with other patched classes; CONSTANTS='a=1,b=2' with more settings, after
-//     the page's (app/settings.js), so one of the same name replaces it
+//     PATCHED=<jar> reads with other patched classes
+//
+// test/prove.mjs uses this to read a change and main, and says whether the change is better.
 //
 // How the page reads, here: an image is made grey as the page makes it (test/grey.py), a PDF is
 // drawn by the page's own code in Chrome (test/pdf-grey.mjs), and teavm/node/read.mjs reads them
@@ -36,7 +44,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { basename, extname, join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { READING, asArgs } from '../app/settings.js'
-import { EXTRA, ROOT, allCases, isHeldOut, joined, languageOf, reads } from './cases.mjs'
+import { EXTRA, ROOT, allCases, caseKey, isHeldOut, joined, languageOf, reads } from './cases.mjs'
 import { parseMusicXml, score } from './score.mjs'
 
 const WORK = join(ROOT, '.work')
@@ -99,7 +107,7 @@ async function read(batch) {
 }
 
 /**
- * Reads one case with Audiveris in WebAssembly, as the page would, into OUT/batch-<n>/: its image
+ * Reads one case with Audiveris in WebAssembly, as the page would, into OUT/batch-<key>/: its image
  * made grey as the page makes it (test/grey.py), or a PDF's pages drawn by the page's own code
  * (test/pdf-grey.mjs), then teavm/node/read.mjs, with the words read in the case's language.
  */
@@ -121,7 +129,7 @@ async function readWasm(batch) {
       { maxBuffer: 1 << 28, timeout: (20 + 10 * pages.length) * 60_000, env: { ...process.env, OCR: wordsOf(c) } }) // minutes: a dense orchestral page can take 25
     log = `words: ${wordsOf(c) || 'left out'}\n` + r.stdout + r.stderr
   } catch (e) {
-    log = (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message
+    log = `words: ${wordsOf(c) || 'left out'}\n` + (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message
   }
   for (const p of pages) rmSync(p + '.grey', { force: true })
   writeFileSync(join(dir, 'log.txt'), log)
@@ -129,8 +137,9 @@ async function readWasm(batch) {
 }
 
 /** The MusicXML files Audiveris wrote for one case (.mxl; .musicxml from WebAssembly): one, or one per movement. */
-const all = allCases().filter(c => !filters.length || filters.some(f => c.name.includes(f)))
-  .filter(c => !process.env.SKIP || !process.env.SKIP.split(',').some(f => c.name.includes(f)))
+const named = process.env.CASES && new Set(readFileSync(process.env.CASES, 'utf8').split('\n').filter(Boolean))
+const all = allCases(!!process.env.HOLDOUT || !!named).filter(c => !filters.length || filters.some(f => c.name.includes(f)))
+  .filter(c => !named || named.has(c.name))
   .filter(c => process.env.HOLDOUT !== 'only' || isHeldOut(c.name))
 if (process.env.LIST) {
   for (const c of all) console.log(c.answer ? 'answer ' : '       ', c.name)
@@ -147,10 +156,10 @@ if (!all.length) {
 // (multi-page/*/p01.png) go in different batches: in one they overwrote each other's read.
 mkdirSync(OUT, { recursive: true })
 const results = {}
-// (WebAssembly: a case a process, a book each)
-const batches = TEAVM ? [] : Array.from({ length: Math.max(Math.min(JOBS, all.length), Math.ceil(all.length / 10)) }, (_, index) => Object.assign([], { index }))
+// (WebAssembly: a case a process, a book each, in a folder named after the case)
+let batches = TEAVM ? [] : Array.from({ length: Math.max(Math.min(JOBS, all.length), Math.ceil(all.length / 10)) }, (_, index) => Object.assign([], { index }))
 const file = c => basename(c.input, extname(c.input))
-if (TEAVM) all.forEach((c, index) => batches.push(Object.assign([c], { index })))
+if (TEAVM) all.forEach(c => batches.push(Object.assign([c], { index: caseKey(c.name) })))
 else all.forEach((c, i) => {
   const free = batches.map((_, k) => batches[(i + k) % batches.length]).find(b => !b.some(o => file(o) === file(c)))
   const batch = free ?? Object.assign([], { index: batches.length })
@@ -158,17 +167,18 @@ else all.forEach((c, i) => {
   batch.push(c)
 })
 const t0 = Date.now()
-// which batch read each case, kept with the run: REUSE scores those reads again
+// which batch read each case, kept with the run: REUSE scores those reads again. A WebAssembly
+// run adds to the run's earlier reads (a folder a case); a desktop run's batches replace them.
 const manifest = join(OUT, 'batches.json')
+const was = existsSync(manifest) ? JSON.parse(readFileSync(manifest, 'utf8')) : {}
 let runs
 if (process.env.REUSE) {
-  const was = JSON.parse(readFileSync(manifest, 'utf8'))
-  for (const b of batches) b.length = 0
-  for (const c of all) if (was[c.name] != null) (batches[was[c.name]] ??= Object.assign([], { index: was[c.name] })).push(c)
-  for (let i = 0; i < batches.length; i++) batches[i] ??= Object.assign([], { index: i })
+  // a batch a case, in the folder its read is in (a desktop batch's folder holds several)
+  batches = all.filter(c => was[c.name] != null).map(c => Object.assign([c], { index: was[c.name] }))
   runs = batches.map(b => ({ dir: join(OUT, `batch-${b.index}`), seconds: null }))
 } else {
-  writeFileSync(manifest, JSON.stringify(Object.fromEntries(batches.flatMap(b => b.map(c => [c.name, b.index]))), null, 1))
+  const now = Object.fromEntries(batches.flatMap(b => b.map(c => [c.name, b.index])))
+  writeFileSync(manifest, JSON.stringify(TEAVM ? { ...was, ...now } : now, null, 1))
   runs = await pool(batches, JOBS, TEAVM ? readWasm : read)
 }
 console.error(`read ${all.length} cases in ${Math.round((Date.now() - t0) / 1000)} s`)
