@@ -49,8 +49,10 @@ corpus (about two hours with `EXTRA`). `--main <dir>` names main's build if it i
 **What it counts.** A bar is one answer part's bar, as its singer or player reads it, in the read
 part paired with it; it is right when every note is there, starting on time, with nothing extra.
 Sung parts (lyrics or a voice's name) and accompaniment are counted apart. The measures, after
-minus before: sung bars right, accompaniment bars right, notes missing, notes at the wrong time,
-extra notes, syllables found, pages read, and reading time.
+minus before: sung bars right, accompaniment bars right, notes right (there and starting on time),
+extra notes, syllables found, pages read, and reading time. Notes missing and at the wrong time
+are shown but not judged apart: a note can only be at the wrong time once it is found, so a change
+that finds notes puts some there, and a note found at the wrong time is no worse than one missed.
 
 **Noise.** `node test/prove.mjs repeat` (no change named) reads main a second time. If two reads
 of one build differ on a page, that page is allowed that much difference in later verdicts (kept

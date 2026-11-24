@@ -192,12 +192,16 @@ function compareCase(c) {
 }
 const rows = cases.map(compareCase)
 
-/** The measures, after minus before, over some rows; for each, whether more is better. */
+/**
+ * The measures, after minus before, over some rows; for each, whether more is better. A note is
+ * right when it is there and starts on time. Notes missing and at the wrong time are shown, not
+ * judged: a note can only be at the wrong time once it is found, so a change that finds notes
+ * puts some there, and a note found at the wrong time is no worse than one missed.
+ */
 const MEASURES = [
   ['sungBars', 'sung bars right', +1],
   ['accBars', 'accompaniment bars right', +1],
-  ['missing', 'notes missing', -1],
-  ['time', 'notes at the wrong time', -1],
+  ['right', 'notes right', +1],
   ['extra', 'extra notes', -1],
   ['syllables', 'syllables found', +1],
   ['read', 'pages read', +1],
@@ -207,6 +211,7 @@ function measure(r) {
   return {
     sungBars: g ? g.sung.fixed - g.sung.broken : 0,
     accBars: g ? g.accompaniment.fixed - g.accompaniment.broken : 0,
+    right: g ? -GROUPS.reduce((s, k) => s + g[k].missing + g[k].time, 0) : 0,
     missing: g ? GROUPS.reduce((s, k) => s + g[k].missing, 0) : 0,
     time: g ? GROUPS.reduce((s, k) => s + g[k].time, 0) : 0,
     extra: g ? GROUPS.reduce((s, k) => s + g[k].extra, 0) : 0,
@@ -216,7 +221,7 @@ function measure(r) {
 }
 const sum = list => {
   const t = Object.fromEntries(MEASURES.map(([k]) => [k, 0]))
-  for (const r of list) for (const [k, v] of Object.entries(measure(r))) t[k] += v
+  for (const r of list) for (const [k, v] of Object.entries(measure(r))) t[k] = (t[k] ?? 0) + v
   return t
 }
 const timeOf = list => {
@@ -315,8 +320,9 @@ for (const [k, label, better] of MEASURES) {
   if (mark === 'WORSE') losses.push(label)
   const detail = k === 'sungBars' || k === 'accBars'
     ? ` (fixed ${tuning.reduce((s, r) => s + (r.groups?.[k === 'sungBars' ? 'sung' : 'accompaniment'].fixed ?? 0), 0)}, broken ${tuning.reduce((s, r) => s + (r.groups?.[k === 'sungBars' ? 'sung' : 'accompaniment'].broken ?? 0), 0)})`
+    : k === 'right' ? ` (missing ${signed(t.missing)}, wrong time ${signed(t.time)})`
     : k === 'read' ? ` (${tuning.filter(r => r.read[0]).length} -> ${tuning.filter(r => r.read[1]).length} of ${tuning.length})` : ''
-  say(`  ${label.padEnd(26)} ${signed(v).padStart(6)}${detail.padEnd(26)} ${mark}`)
+  say(`  ${label.padEnd(26)} ${signed(v).padStart(6)}${detail.padEnd(34)} ${mark}`)
 }
 const [s0, s1] = timeOf(tuning)
 const ratio = s0 ? s1 / s0 - 1 : 0
