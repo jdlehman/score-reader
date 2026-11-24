@@ -14,12 +14,13 @@
 //   notes), as a singer would pick "my part" in Sectional; the share of the answer's notes found
 //   there. Low when parts are jumbled across systems, or two parts were read as one.
 // - parts: how many parts the read has, against the answer.
-// - lyrics: the answer's syllables found in order in the paired part.
+// - lyrics: the answer's syllables found in order in the paired part; lyricsExtra: how many of the
+//   read's syllables aren't (words put where the answer has none, or wrong ones).
 // - rhythm: the answer's notes found in the right bar and starting at the right time in it (in
 //   quarter notes from the bar's start), whatever part they landed in; for answers whose notes
 //   have onsets. A note found at the wrong beat counts in notes but not here. Pitch alone is weak
 //   evidence (another chorale's read scores 30-65% of notes against a chorale); this is stronger.
-// Not counted: how long notes are held.
+// Not counted: how long notes are held (barsThatDontAddUp, below, is where a change to them shows).
 import { inflateRawSync } from 'node:zlib'
 
 const STEPS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
@@ -212,7 +213,7 @@ function lcs(a, b) {
  * What score() and bars() share: the read's parts, its measures lined up with the answer's bars
  * (measureOf), and each answer part paired with a read part (of, gain).
  */
-function lineUp(answer, readXml) {
+export function lineUp(answer, readXml) {
   const parts = parseMusicXml(readXml)
   // pitched notes only: an unpitched (drum) note has no pitch to find
   answer = { ...answer, parts: answer.parts.map(p => ({ ...p, notes: p.notes.filter(n => Number.isFinite(n.midi)) })) }
@@ -241,7 +242,7 @@ export function score(answer, readXml) {
   answer = up.answer // its pitched notes
   if (!total) {
     // nothing pitched to score (a drum page): only whether it was read, and its parts
-    return { notes: null, precision: null, extra: readTotal, inPart: null, rhythm: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null }
+    return { notes: null, precision: null, extra: readTotal, inPart: null, rhythm: null, parts: parts.length, answerParts: answer.parts.length, lyrics: null, lyricsExtra: null }
   }
   let notes = 0
   for (const [bar, want] of allBars) notes += common(want, stacks[measureOf.get(bar)] ?? [])
@@ -274,6 +275,7 @@ export function score(answer, readXml) {
     parts: parts.length,
     answerParts: answer.parts.length,
     lyrics: lyricsTotal ? lyricsFound / lyricsTotal : null,
+    lyricsExtra: parts.reduce((s, p) => s + p.measures.reduce((t, m) => t + m.notes.filter(n => syllable(n.lyric)).length, 0), 0) - lyricsFound,
     measures: stacks.length,
     answerBars: count,
   }
@@ -315,4 +317,80 @@ export function bars(answer, readXml) {
     }
   })
   return rows
+}
+
+/** Bar lengths, in quarter notes, of common time signatures: 3/8, 2/4, 3/4, 4/4, 9/8, 5/4, 6/4, 4/2. */
+const STANDARD = [1.5, 2, 3, 4, 4.5, 5, 6, 8]
+
+/**
+ * How many part-bars of a read don't add up: a voice runs past the bar's length, or, inside the
+ * piece (not a part's first or last bar), every voice stops short of it. The length is the time
+ * signature's; where the read has none, the length most of its bars have, if a common time
+ * signature has it. Bars with no notes aren't counted. Needs no answer.
+ */
+export function barsThatDontAddUp(xml) {
+  const parts = []
+  for (const p of xml.matchAll(/<part(?:\s[^>]*)?>([\s\S]*?)<\/part>/g)) {
+    let divisions = 1
+    let length = null
+    const bars = []
+    for (const m of p[1].matchAll(/<measure(?:\s[^>]*)?>([\s\S]*?)<\/measure>/g)) {
+      let at = 0
+      let last = 0
+      let notes = 0
+      const ends = new Map() // voice -> where it ends, in divisions
+      for (const e of m[1].matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+        const [, kind, body] = e
+        if (kind === 'attributes') {
+          divisions = Number(tag(body, 'divisions')) || divisions
+          if (/<time\b/.test(body)) {
+            const beats = Number(tag(body, 'beats'))
+            const type = Number(tag(body, 'beat-type'))
+            length = beats && type ? (beats * 4) / type : null
+          }
+          continue
+        }
+        const duration = Number(tag(body, 'duration') ?? 0) || 0
+        if (kind === 'backup') {
+          at -= duration
+          continue
+        }
+        const voice = tag(body, 'voice') ?? '1'
+        if (kind === 'forward') {
+          at += duration
+          ends.set(voice, Math.max(ends.get(voice) ?? 0, at))
+          continue
+        }
+        if (/<grace\b/.test(body)) continue
+        const chord = /<chord\s*\/>/.test(body)
+        const onset = chord ? last : at
+        if (!chord) at += duration
+        last = onset
+        ends.set(voice, Math.max(ends.get(voice) ?? 0, onset + duration))
+        if (!/<rest\b/.test(body)) notes++
+      }
+      bars.push({ length, notes, ends: [...ends.values()].map(e => e / divisions) })
+    }
+    parts.push(bars)
+  }
+  const inside = (bars, i) => i > 0 && i < bars.length - 1
+  const counts = new Map()
+  for (const bars of parts) {
+    bars.forEach((b, i) => {
+      if (!inside(bars, i) || !b.notes || !b.ends.length) return
+      const k = Math.round(Math.max(...b.ends) * 960)
+      counts.set(k, (counts.get(k) ?? 0) + 1)
+    })
+  }
+  const top = [...counts].sort((x, y) => y[1] - x[1])[0]
+  const usual = top && top[1] >= 3 && STANDARD.some(l => Math.abs(l - top[0] / 960) < 1e-6) ? top[0] / 960 : null
+  let count = 0
+  for (const bars of parts) {
+    bars.forEach((b, i) => {
+      const length = b.length ?? usual
+      if (length == null || !b.notes || !b.ends.length) return
+      if (b.ends.some(e => e > length + 1e-6) || (inside(bars, i) && Math.max(...b.ends) < length - 1e-6)) count++
+    })
+  }
+  return count
 }

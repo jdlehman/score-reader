@@ -11,7 +11,7 @@
     "e2e:check": "node test/e2e-check.mjs",
     "e2e:edit": "node test/edit.mjs",
     "corpus": "node test/corpus.mjs",
-    "test": "node --test test/preflight.test.mjs test/language.test.mjs test/score.test.mjs test/ocr-split.test.mjs test/columns.test.mjs"
+    "test": "node --test test/preflight.test.mjs test/language.test.mjs test/score.test.mjs test/ocr-split.test.mjs test/columns.test.mjs test/drawn.test.mjs"
   },
   "dependencies": {
     "@tesseract.js-data/deu": "1.0.0",

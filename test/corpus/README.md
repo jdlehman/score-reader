@@ -40,7 +40,9 @@ with the change and with main, compares them bar by bar, and gives a verdict by 
 
 A change that isn't in the build says so instead: `--constants a=1,b=2` (Audiveris settings),
 `--pre <module>` (a step on the grey pages before the read), `--post <module>` (a step on the
-MusicXML after it); `teavm/node/read.mjs` describes the modules. Main's reads are kept and read
+MusicXML after it); `teavm/node/read.mjs` describes the modules. A step after the read alone is
+applied to main's reads, reading nothing, so its verdict takes seconds; one that uses the grey
+pages too says so (`export const needsPages = true`) and is read. Main's reads are kept and read
 again only when main's build or the reading code changes, so a verdict costs one read of the
 corpus (about two hours with `EXTRA`). `--main <dir>` names main's build if it isn't
 `.work/teavm/out`. The verdict is kept in `.work/corpus/verdicts/<name>.txt`, and
@@ -50,7 +52,12 @@ corpus (about two hours with `EXTRA`). `--main <dir>` names main's build if it i
 part paired with it; it is right when every note is there, starting on time, with nothing extra.
 Sung parts (lyrics or a voice's name) and accompaniment are counted apart. The measures, after
 minus before: sung bars right, accompaniment bars right, notes right (there and starting on time),
-extra notes, syllables found, pages read, and reading time. Notes missing and at the wrong time
+extra notes, syllables found, extra syllables (words the answer doesn't have there), pages read,
+and reading time. Two need no answer: bars that don't add up (a voice past the time signature, or
+inside the piece every voice short of it, where a change to notes' lengths shows), and, on the
+pages a change alters, the read as Verovio draws it (`test/drawn.mjs`): bars it draws with every
+note, and note times it puts elsewhere. The check panel and Sectional show and play what Verovio
+makes of a read. Notes missing and at the wrong time
 are shown but not judged apart: a note can only be at the wrong time once it is found, so a change
 that finds notes puts some there, and a note found at the wrong time is no worse than one missed.
 
@@ -62,8 +69,8 @@ machine can time a read out).
 
 **The rule**, on the pages fixes are made against:
 - **PROVED**: at least one measure better, and nothing worse: no measure worse in total, and no
-  page with fewer sung or accompaniment bars right, fewer syllables, more note errors, or not read
-  any more (each beyond its noise).
+  page with fewer sung or accompaniment bars right, fewer syllables, more extra syllables, more
+  note errors, fewer bars Verovio draws in full, or not read any more (each beyond its noise).
 - **TRADE-OFF**: better in some measure, worse in another or on some page. A person decides,
   after looking at those bars, and says why in the commit.
 - **NOT PROVED**: nothing better; or fewer sung bars right in total; or a page that was read no

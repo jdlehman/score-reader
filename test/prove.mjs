@@ -9,7 +9,9 @@
 //   --wasm <dir>         the change's WebAssembly build (PATCHED=<jar> TEAVM_WORK=<dir> teavm/build.sh)
 //   --constants a=1,b=2  Audiveris settings the change adds, after the page's (app/settings.js)
 //   --pre <module>       a step the change adds before the read, on the grey pages (teavm/node/read.mjs)
-//   --post <module>      a step it adds after the read, on the MusicXML
+//   --post <module>      a step it adds after the read, on the MusicXML. Alone, it is applied to
+//                        main's reads, reading nothing (it sees only the MusicXML), unless the module
+//                        exports needsPages (it uses the grey pages too)
 //   --main <dir>         main's WebAssembly build (default .work/teavm/out: ./build.sh on main)
 //   --base <run,...>     compare with these runs' reads instead of reading main (.work/corpus/<run>)
 //   --after <run,...>    take the change's reads from these runs: with a build named, reading only
@@ -31,15 +33,21 @@
 // picks up where it stopped when run again with the same build. A case read by one side only is
 // read again once, alone, before it counts.
 //
+// Besides the answers, a change is measured on what needs none: bars whose voices don't add up to
+// the time signature (where a change to notes' lengths shows), and, on the pages it changes, the
+// read as Verovio draws it (test/drawn.mjs): the check panel and Sectional show and play that.
+//
 // Held-out pages (test/holdout/README.md): only their totals are shown, and which pages moved;
 // each use is logged (.work/corpus/holdout-log.txt) and a second look at one change is warned of.
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { appendFileSync, existsSync, mkdirSync, openSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
-import { EXTRA, ROOT, allCases, isHeldOut, languageOf } from './cases.mjs'
+import { basename, dirname, join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { EXTRA, ROOT, allCases, isHeldOut, languageOf, reads } from './cases.mjs'
+import { compareDrawn } from './drawn.mjs'
 import { GROUPS, compareReads, locate, readOf, runDir } from './runs.mjs'
-import { score, syllable } from './score.mjs'
+import { barsThatDontAddUp, musicXmlText, score, syllable } from './score.mjs'
 
 // ---- arguments
 
@@ -81,14 +89,31 @@ function fingerprint(v) {
   const templates = join(v.wasm, 'templates')
   if (existsSync(templates)) h.update(readdirSync(templates).sort().map(f => `${f}:${statSync(join(templates, f)).size}`).join())
   for (const f of READER) h.update(readFileSync(join(ROOT, f)))
-  for (const f of [v.pre, v.post]) h.update(f ? readFileSync(f) : '-')
+  for (const f of [v.pre, v.post]) for (const file of f ? moduleFiles(f) : []) h.update(readFileSync(file))
+  h.update(`${v.pre ? '' : '-'}|${v.post ? '' : '-'}`)
   h.update(`${v.constants ?? ''}|${process.env.OCR ?? ''}`)
   return h.digest('hex').slice(0, 12)
 }
+/** A module and the files it imports by path, all the way down: what a step's fingerprint covers. */
+function moduleFiles(file, seen = new Set()) {
+  if (seen.has(file)) return [...seen]
+  seen.add(file)
+  for (const m of readFileSync(file, 'utf8').matchAll(/(?:\bfrom|\bimport)\s*\(?\s*['"]((?:\.{1,2})?\/[^'"]+)['"]/g)) {
+    const next = resolve(dirname(file), m[1])
+    if (existsSync(next)) moduleFiles(next, seen)
+  }
+  return [...seen]
+}
 const mainPrint = fingerprint(MAIN)
-const changePrint = fingerprint(CHANGE)
 const built = !!(options.wasm || options.constants || options.pre || options.post) // a change to read
 const repeat = !built && !options.after // main read again: the noise check
+// reads the change took from runs (--after, no build): it is those runs, so its print is theirs
+const changePrint = !built && options.after
+  ? createHash('sha256').update(`${mainPrint}|${options.after}|${options.after.split(',').map(run => { const f = join(runDir(run), 'batches.json'); return existsSync(f) ? readFileSync(f, 'utf8') : '' }).join('|')}`).digest('hex').slice(0, 12)
+  : fingerprint(CHANGE)
+// a step after the read alone needs no reading: it sees only the MusicXML, so it is applied to main's reads
+const postStep = options.post && !options.wasm && !options.constants && !options.pre && !options.after ? await import(pathToFileURL(CHANGE.post).href) : null
+const postOnly = !!postStep && !postStep.needsPages
 // the change's reads: its own run, and with --after those runs' first; reading only what they lack,
 // unless --after comes without a build to read the rest with
 const readsChange = built || !options.after
@@ -151,6 +176,7 @@ if (!base) {
   base = where(mainRun)
 }
 let after = afterRuns
+let postFailed = []
 if (readsChange) {
   const dir = runDir(name)
   const variantFile = join(dir, 'variant.json')
@@ -159,11 +185,50 @@ if (readsChange) {
     console.error(`the change's build or steps differ from its last reads: reading it again`)
     rmSync(dir, { recursive: true, force: true })
   }
+  if (postOnly) rmSync(dir, { recursive: true, force: true }) // made again each time: it takes seconds
   mkdirSync(dir, { recursive: true })
-  writeFileSync(variantFile, JSON.stringify({ fingerprint: changePrint, main: mainPrint, ...CHANGE, date: new Date().toISOString() }, null, 1) + '\n')
-  const kept = where(afterSpec)
-  await read(name, CHANGE, cases.filter(c => !done(kept, c)))
+  writeFileSync(variantFile, JSON.stringify({ fingerprint: changePrint, main: mainPrint, ...CHANGE, ...(postOnly && { from: 'main\'s reads, the step applied' }), date: new Date().toISOString() }, null, 1) + '\n')
+  if (postOnly) postFailed = await applyPost(name, base, cases, postStep.default)
+  else {
+    const kept = where(afterSpec)
+    await read(name, CHANGE, cases.filter(c => !done(kept, c)))
+  }
   after = where(afterSpec)
+}
+
+/**
+ * The change's reads made from main's, a step after the read applied to each (no reading): a
+ * case's MusicXML files as the step returns them, and its log with the step's time added to the
+ * reading time. A case the step fails on keeps its read, as the page would. Returns the failures.
+ */
+async function applyPost(run, from, list, step) {
+  const dir = runDir(run)
+  const batches = {}
+  const failed = []
+  let n = 0
+  for (const c of list) {
+    const src = from.get(c.name)
+    const files = src ? reads(src, c) : []
+    if (!files.length) continue
+    const out = join(dir, `batch-${n}`)
+    mkdirSync(out, { recursive: true })
+    const xmls = files.map(f => musicXmlText(readFileSync(f)))
+    const t0 = performance.now()
+    let scores = xmls
+    try {
+      scores = await step(xmls, [])
+    } catch (e) {
+      failed.push(`${c.name}: ${e.message}`)
+    }
+    const seconds = (performance.now() - t0) / 1000
+    files.forEach((f, i) => writeFileSync(join(out, basename(f).replace(/\.mxl$/, '.musicxml')), scores[i] ?? xmls[i]))
+    const log = existsSync(join(src, 'log.txt')) ? readFileSync(join(src, 'log.txt'), 'utf8') : ''
+    writeFileSync(join(out, 'log.txt'), log.replace(/(^|\n)read in ([\d.]+) s/, (_, a, t) => `${a}read in ${(Number(t) + seconds).toFixed(1)} s`))
+    batches[c.name] = n++
+  }
+  writeFileSync(join(dir, 'batches.json'), JSON.stringify(batches, null, 1) + '\n')
+  console.error(`the step after the read applied to main's reads of ${n} cases (.work/corpus/${run})`)
+  return failed
 }
 
 // a case one side read and the other didn't: read again, alone, the side that didn't (a read can
@@ -172,25 +237,40 @@ const readBy = (where, c) => readOf(where, c) != null
 const once = cases.filter(c => readBy(base, c) !== readBy(after, c))
 if (once.length) {
   if (!baseRuns) await read(mainRun, MAIN, once.filter(c => !readBy(base, c)), 1)
-  if (readsChange) await read(name, CHANGE, once.filter(c => !readBy(after, c)), 1)
+  if (readsChange && !postOnly) await read(name, CHANGE, once.filter(c => !readBy(after, c)), 1)
   if (!baseRuns) base = where(mainRun)
+  if (readsChange && postOnly) postFailed = await applyPost(name, base, cases, postStep.default)
   if (readsChange) after = where(afterSpec)
 }
 
 // ---- comparing
 
-/** One case's differences, after minus before. */
-function compareCase(c) {
+/**
+ * One case's differences, after minus before. Bars that don't add up and the Verovio drawing need
+ * no answer (a read of several movements joined for scoring has no lengths: those two are left out).
+ */
+let undrawn = 0
+async function compareCase(c) {
   const xml = [readOf(base, c), readOf(after, c)]
   const out = { name: c.name, held: isHeldOut(c.name), read: xml.map(x => x != null), seconds: [secondsOf(base, c), secondsOf(after, c)] }
-  if (!c.answer || !xml[0] || !xml[1]) return out
+  if (!xml[0] || !xml[1]) return out
+  if (xml.every(x => /<divisions>/.test(x))) {
+    out.brokenBars = barsThatDontAddUp(xml[1]) - barsThatDontAddUp(xml[0])
+    if (xml[0] !== xml[1]) {
+      out.drawn = await compareDrawn(xml[0], xml[1])
+      if (!out.drawn) undrawn++
+    }
+  }
+  if (!c.answer) return out
   const answer = JSON.parse(readFileSync(c.answer, 'utf8'))
   const { groups, changed } = compareReads(answer, xml[0], xml[1])
   const syllables = answer.parts.flatMap(p => p.notes.filter(n => Number.isFinite(n.midi) && syllable(n.lyric))).length
-  const found = x => Math.round((score(answer, x).lyrics ?? 0) * syllables)
-  return { ...out, groups, changedBars: changed.length, syllables: found(xml[1]) - found(xml[0]) }
+  const [s0, s1] = xml.map(x => score(answer, x))
+  const found = s => Math.round((s.lyrics ?? 0) * syllables)
+  return { ...out, groups, changedBars: changed.length, syllables: found(s1) - found(s0), extraSyllables: (s1.lyricsExtra ?? 0) - (s0.lyricsExtra ?? 0) }
 }
-const rows = cases.map(compareCase)
+const rows = []
+for (const c of cases) rows.push(await compareCase(c))
 
 /**
  * The measures, after minus before, over some rows; for each, whether more is better. A note is
@@ -204,6 +284,10 @@ const MEASURES = [
   ['right', 'notes right', +1],
   ['extra', 'extra notes', -1],
   ['syllables', 'syllables found', +1],
+  ['extraSyllables', 'extra syllables', -1],
+  ['brokenBars', "bars that don't add up", -1],
+  ['drawnFull', 'bars Verovio draws in full', +1],
+  ['drawnMoved', 'note times Verovio moves', -1],
   ['read', 'pages read', +1],
 ]
 function measure(r) {
@@ -216,6 +300,10 @@ function measure(r) {
     time: g ? GROUPS.reduce((s, k) => s + g[k].time, 0) : 0,
     extra: g ? GROUPS.reduce((s, k) => s + g[k].extra, 0) : 0,
     syllables: r.syllables ?? 0,
+    extraSyllables: r.extraSyllables ?? 0,
+    brokenBars: r.brokenBars ?? 0,
+    drawnFull: r.drawn ? r.drawn.full[1] - r.drawn.full[0] : 0,
+    drawnMoved: r.drawn ? r.drawn.moved[1] - r.drawn.moved[0] : 0,
     read: r.read[1] - r.read[0],
   }
 }
@@ -275,7 +363,7 @@ const TIME = Math.max(0.2, 2 * (noise?.seconds ?? 0))
 const tuning = rows.filter(r => !r.held)
 const held = rows.filter(r => r.held)
 say(`Proving ${name} against main (build ${mainPrint}${baseRuns ? `, reads from ${options.base}` : `, reads in .work/corpus/${mainRun}`})`)
-say(`the change: ${[options.wasm && `build ${options.wasm} (${changePrint})`, options.constants && `settings ${options.constants}`, options.pre && `before the read ${options.pre}`, options.post && `after the read ${options.post}`, options.after && `reads from ${options.after}`].filter(Boolean).join('; ')}`)
+say(`the change: ${[options.wasm && `build ${options.wasm} (${changePrint})`, options.constants && `settings ${options.constants}`, options.pre && `before the read ${options.pre}`, options.post && `after the read ${options.post}${postOnly ? ', applied to main\'s reads' : ''}`, options.after && `reads from ${options.after}`].filter(Boolean).join('; ')}`)
 const local = tuning.filter(r => r.name.startsWith('extra/')).length
 say(`${tuning.length} pages (${tuning.length - local} in the repository, ${local} in the local test set${EXTRA ? '' : ': EXTRA unset, so none'})${filters.length ? `, only those matching ${filters.join(' ')}: a quick look, not a verdict` : ''}`)
 say(noise ? `noise: two reads of main (build ${noise.main}, ${noise.date.slice(0, 10)}) differed on ${Object.keys(noise.cases).length} of ${noise.pages} pages; a page's own difference then is allowed it` : 'noise: not measured yet (node test/prove.mjs repeat, once per main build): every difference counts')
@@ -286,8 +374,10 @@ const lines = []
 for (const r of tuning) {
   const m = measure(r)
   if (r.read[0] && !r.read[1]) pageLosses.push(`${r.name}: not read any more`)
+  if (-m.drawnFull > allow(r.name, 'drawnFull')) pageLosses.push(`${r.name}: ${-m.drawnFull} bar(s) Verovio no longer draws in full`)
   if (!r.groups) continue
   const losses = []
+  if (m.extraSyllables > allow(r.name, 'extraSyllables')) losses.push(`${m.extraSyllables} extra syllable(s)`)
   if (-m.sungBars > allow(r.name, 'sungBars')) losses.push(`${-m.sungBars} sung bar(s) worse`)
   if (-m.accBars > allow(r.name, 'accBars')) losses.push(`${-m.accBars} accompaniment bar(s) worse`)
   if (-m.syllables > allow(r.name, 'syllables')) losses.push(`${-m.syllables} syllable(s) fewer`)
@@ -330,6 +420,10 @@ const timeMark = ratio > TIME ? 'WORSE' : ''
 say(`  ${'reading time'.padEnd(26)} ${s0 && s1 ? `${Math.round(s0)} s -> ${Math.round(s1)} s (${signed(Math.round(100 * ratio))}%; counts only against, past +${Math.round(100 * TIME)}%) ${timeMark}` : 'not timed (a run from before reads were timed)'}`)
 if (timeMark === 'WORSE') losses.push('reading time')
 say()
+const drawnPages = tuning.filter(r => r.drawn).length
+if (drawnPages || undrawn) say(`Verovio: ${drawnPages} changed page(s) compared${undrawn ? `, ${undrawn} not (Verovio made another number of bars, or couldn't load one)` : ''}`)
+if (postFailed.length) say(`the step failed on ${postFailed.length} case(s), each kept as read: ${postFailed.join('; ')}`)
+if (drawnPages || undrawn || postFailed.length) say()
 say(pageLosses.length ? `pages worse (${pageLosses.length}):` : 'pages worse: none')
 for (const l of pageLosses) say(`  ${l}`)
 say()
