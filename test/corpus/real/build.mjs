@@ -1,11 +1,11 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
-// Builds the real scans with answers (test/corpus/README.md, "Real scans with answers"): pages of
+// Builds the real scans with answers (test/corpus/README.md, "Real scans with answers"): songs from
 // public-domain IMSLP scans, each the edition an OpenScore Lieder Corpus song (CC0) was copied
-// from, so the song's MusicXML is the page's answer once it is cut where the scan's page breaks.
-// The bars on each page were read off the scan (OpenScore's MusicXML breaks where MuseScore laid
-// it out, not where the edition did).
+// from, so the song's MusicXML is the answer. Each case is the whole song, its scan pages cut out
+// as one PDF, as someone would upload it. The bars on each scan page were read off the scan; they
+// check that the pages cut cover the song.
 //   node test/corpus/real/build.mjs                       answers only, for the PDFs already here
-//   IMSLP=<folder with the IMSLP files> node test/corpus/real/build.mjs   also cuts the pages (macOS)
+//   IMSLP=<folder with the IMSLP files> node test/corpus/real/build.mjs   also cuts the PDFs (macOS)
 import { execFileSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
@@ -86,21 +86,22 @@ for (const song of SONGS) {
   const bars = parts[0].measures.length
   if (parts.some(p => p.measures.length !== bars)) throw new Error(`${song.name}: parts with different numbers of bars`)
   if (song.pages.at(-1)[2] !== bars) throw new Error(`${song.name}: the pages end at bar ${song.pages.at(-1)[2]}, the song at ${bars}`)
-  song.pages.forEach(([pdfPage, a, b], k) => {
+  song.pages.forEach(([pdfPage, a], k) => {
     if (a !== (k ? song.pages[k - 1][2] + 1 : 1)) throw new Error(`${song.name}: page ${k + 1} doesn't follow on`)
-    const name = `${song.name}-p${k + 1}`
-    if (IMSLP) execFileSync(CUT, [join(IMSLP, song.file), String(pdfPage), join(HERE, name + '.pdf')])
-    const answer = answerFrom(xml, {
-      from: a,
-      to: b,
-      names: song.partNames,
-      range: true, // a one-page song too: say which bars
-      page: name,
-      title: `${song.title}, scan page ${k + 1} of ${song.pages.length}, bars ${a}-${b}`,
-      source: `OpenScore Lieder Corpus (CC0 1.0), ${song.openscore}`,
-      scan: `IMSLP #${song.imslp}, PDF page ${pdfPage}: ${song.edition}. Public domain.`,
-    })
-    writeFileSync(join(HERE, name + '.json'), JSON.stringify(answer, null, 1) + '\n')
-    console.log(`${name}: bars ${a}-${b}, ${answer.total_notes} notes, ${answer.total_lyrics} syllables${IMSLP ? ', page cut' : ''}`)
+    if (k && pdfPage !== song.pages[k - 1][0] + 1) throw new Error(`${song.name}: its scan pages aren't one run`)
   })
+  // the whole song as one PDF, as it is uploaded: a page without a time signature then takes the
+  // one before it, as Audiveris does in a book
+  const name = `${song.name}-song`
+  const [first, last] = [song.pages[0][0], song.pages.at(-1)[0]]
+  if (IMSLP) execFileSync(CUT, [join(IMSLP, song.file), `${first}-${last}`, join(HERE, name + '.pdf')])
+  const answer = answerFrom(xml, {
+    names: song.partNames,
+    page: name,
+    title: `${song.title}, the whole song (${song.pages.length === 1 ? 'one scan page' : `${song.pages.length} scan pages`})`,
+    source: `OpenScore Lieder Corpus (CC0 1.0), ${song.openscore}`,
+    scan: `IMSLP #${song.imslp}, PDF ${first === last ? `page ${first}` : `pages ${first}-${last}`}: ${song.edition}. Public domain.`,
+  })
+  writeFileSync(join(HERE, name + '.json'), JSON.stringify(answer, null, 1) + '\n')
+  console.log(`${name}: ${answer.bars} bars, ${answer.total_notes} notes, ${answer.total_lyrics} syllables${IMSLP ? ', pages cut' : ''}`)
 }

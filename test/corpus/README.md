@@ -143,31 +143,31 @@ And from the OpenScore Orchestra Corpus (github.com/MarkGotham/Hauptstimme, scor
 
 ## Real scans with answers (`real/`)
 
-Pages of IMSLP scans of old printed editions, each cut out as a one-page PDF (so the page reads
-it as it would an uploaded PDF), with an answer from the OpenScore Lieder Corpus (**CC0 1.0**): each
-of these songs was copied into OpenScore from this very scan (OpenScore's `data/scores.yaml` names
-the IMSLP file), so its MusicXML, cut at the scan's page breaks, is the page's answer. The bars on
-each page were read off the scan; OpenScore's MusicXML breaks its pages where MuseScore laid them
-out, which isn't where the edition did. `real/build.mjs` writes the answers with `test/answer.mjs`
-(and, given the IMSLP files, cuts the pages; `real/cut.swift` says how exactly a cut page matches
-the original).
+Songs from IMSLP scans of old printed editions, each song's scan pages cut out as one PDF, as
+someone would upload it (so a page without a time signature takes the one before it), with an
+answer from the OpenScore Lieder Corpus (**CC0 1.0**): each of these songs was copied into
+OpenScore from this very scan (OpenScore's `data/scores.yaml` names the IMSLP file), so its
+MusicXML is the song's answer. `real/build.mjs` writes the answers with `test/answer.mjs` (and,
+given the IMSLP files, cuts the PDFs; `real/cut.swift` says how exactly a cut page matches the
+original). The bars on each scan page were read off the scan; they check that the pages cut cover
+the song.
 
 Next to the drawn pages of the same songs (`pages/`, `gute-nacht/`), these show what a real scan
 costs: the same music, printed by engravers in the 1870s-1920s and scanned.
 `real/drawn-vs-scan.mjs <run> <run>` compares the two over the bars the drawn pages hold.
-Measured 2026-11-16 with the site's build: over those bars, notes 100% drawn and 92% scanned,
-rhythm 98% and 78%. The 21 scan pages on their own: notes 87%, rhythm 60%, words about half. The
-Fauré (a 2400-pixel-wide scan of an 1878 print) reads worst, 57-74% of notes; Erlkönig and
-Lindenbaum keep their notes but lose rhythm in their piano triplets.
+Measured 2026-11-25 with the site's build: over those bars, notes 100% drawn and 92% scanned,
+rhythm 98% and 81%. The six songs whole: notes 86%, rhythm 69%, words about half. The Fauré (a
+2400-pixel-wide scan of an 1878 print) reads worst, 61% of notes; Erlkönig and Lindenbaum keep
+their notes but lose rhythm in their piano triplets.
 
-| Pages | Piece | Bars on each page | Scan (IMSLP file, PDF pages) | Edition | Licence |
+| Case | Piece | Bars on each scan page | Scan (IMSLP file, PDF pages) | Edition | Licence |
 |---|---|---|---|---|---|
-| lieder-schubert-gute-nacht-p1 … p4 | Schubert, "Gute Nacht", Winterreise D.911 no. 1 (OpenScore lc5015378) | 1-18, 19-50, 51-77, 78-105 | #60822, pp. 6-9 | Schubert's Werke XX/9, Breitkopf & Härtel 1895 | Public domain |
-| lieder-schubert-lindenbaum-p1 … p4 | Schubert, "Der Lindenbaum", D.911 no. 5 (lc5016466) | 1-24, 25-45, 46-62, 63-82 | #60822, pp. 20-23 | as above | Public domain |
-| lieder-schumann-widmung-p1, p2 | Schumann, "Widmung", Myrthen Op. 25 no. 1 (lc6885211) | 1-18, 19-44 | #270905, pp. 1-2 | Robert Schumann's Werke XIII, Breitkopf & Härtel, issued 1887 | Public domain |
-| lieder-brahms-wiegenlied-p1 | Brahms, "Wiegenlied", Op. 49 no. 4 (lc5701612) | 1-19 | #81909, p. 10 | Brahms, Sämtliche Werke 24, Breitkopf & Härtel 1926-27 | Public domain |
-| lieder-faure-apres-un-reve-p1 … p4 | Fauré, "Après un rêve", Op. 7 no. 1 (lc6810863) | 1-11, 12-23, 24-35, 36-48 | #24047, pp. 1-4 | J. Hamelle, Paris, ca. 1878 (first edition) | Public domain |
-| lieder-schubert-erlkoenig-p1 … p6 | Schubert, "Erlkönig", D.328, 4th version (lc29062370) | 1-23, 24-53, 54-75, 76-96, 97-122, 123-148 | #15041, pp. 1-6 | Schubert's Werke XX/3, Breitkopf & Härtel 1895 (scanned from a Kalmus reprint) | Public domain |
+| lieder-schubert-gute-nacht-song | Schubert, "Gute Nacht", Winterreise D.911 no. 1 (OpenScore lc5015378) | 1-18, 19-50, 51-77, 78-105 | #60822, pp. 6-9 | Schubert's Werke XX/9, Breitkopf & Härtel 1895 | Public domain |
+| lieder-schubert-lindenbaum-song | Schubert, "Der Lindenbaum", D.911 no. 5 (lc5016466) | 1-24, 25-45, 46-62, 63-82 | #60822, pp. 20-23 | as above | Public domain |
+| lieder-schumann-widmung-song | Schumann, "Widmung", Myrthen Op. 25 no. 1 (lc6885211) | 1-18, 19-44 | #270905, pp. 1-2 | Robert Schumann's Werke XIII, Breitkopf & Härtel, issued 1887 | Public domain |
+| lieder-brahms-wiegenlied-song | Brahms, "Wiegenlied", Op. 49 no. 4 (lc5701612) | 1-19 | #81909, p. 10 | Brahms, Sämtliche Werke 24, Breitkopf & Härtel 1926-27 | Public domain |
+| lieder-faure-apres-un-reve-song | Fauré, "Après un rêve", Op. 7 no. 1 (lc6810863) | 1-11, 12-23, 24-35, 36-48 | #24047, pp. 1-4 | J. Hamelle, Paris, ca. 1878 (first edition) | Public domain |
+| lieder-schubert-erlkoenig-song | Schubert, "Erlkönig", D.328, 4th version (lc29062370) | 1-23, 24-53, 54-75, 76-96, 97-122, 123-148 | #15041, pp. 1-6 | Schubert's Werke XX/3, Breitkopf & Härtel 1895 (scanned from a Kalmus reprint) | Public domain |
 
 Each scan's IMSLP entry is tagged "Public Domain", and each edition is dated on the scan or by
 IMSLP before 1931. The songs' words are by poets who died in the 19th century (Müller, Rückert,

@@ -1,7 +1,7 @@
 // Score Reader. Copyright (C) 2026 Jonathan Lehman. SPDX-License-Identifier: AGPL-3.0-or-later
 // What a real scan costs: the same bars of a song read from the page Verovio drew (pages/,
-// gute-nacht/) and from the scan (real/), notes and rhythm found in each, summed over the bars the
-// drawn page holds. Two corpus runs (RUN=<name>), which may be one run that read both.
+// gute-nacht/) and from the scan of the whole song (real/), notes and rhythm found in each, summed
+// over the bars the drawn page holds. Two corpus runs (RUN=<name>), which may be one run that read both.
 //   node test/corpus/real/drawn-vs-scan.mjs <drawn run> <scan run>
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -21,20 +21,20 @@ const rowsOf = (run, name, offset) => {
   return { rows: bars(answer, joined(files)).map(r => ({ ...r, bar: r.bar + off })) }
 }
 const SONGS = [
-  ['Gute Nacht (first 12 bars)', [['pages/lieder-gute-nacht', 0]], 'real/lieder-schubert-gute-nacht-p', 4],
-  ['Gute Nacht (whole song)', [1, 2, 3, 4].map(k => [`gute-nacht/gute-nacht-p0${k}`]), 'real/lieder-schubert-gute-nacht-p', 4],
-  ['Der Lindenbaum', [['pages/lieder-lindenbaum', 0]], 'real/lieder-schubert-lindenbaum-p', 4],
-  ['Widmung', [['pages/lieder-schumann-widmung', 0]], 'real/lieder-schumann-widmung-p', 2],
-  ['Wiegenlied', [['pages/lieder-brahms-wiegenlied', 0]], 'real/lieder-brahms-wiegenlied-p', 1],
-  ['Après un rêve', [['pages/lieder-faure-apres-un-reve', 0]], 'real/lieder-faure-apres-un-reve-p', 4],
-  ['Erlkönig', [['pages/lieder-schubert-erlkoenig', 12]], 'real/lieder-schubert-erlkoenig-p', 6],
+  ['Gute Nacht (first 12 bars)', [['pages/lieder-gute-nacht', 0]], 'real/lieder-schubert-gute-nacht-song'],
+  ['Gute Nacht (whole song)', [1, 2, 3, 4].map(k => [`gute-nacht/gute-nacht-p0${k}`]), 'real/lieder-schubert-gute-nacht-song'],
+  ['Der Lindenbaum', [['pages/lieder-lindenbaum', 0]], 'real/lieder-schubert-lindenbaum-song'],
+  ['Widmung', [['pages/lieder-schumann-widmung', 0]], 'real/lieder-schumann-widmung-song'],
+  ['Wiegenlied', [['pages/lieder-brahms-wiegenlied', 0]], 'real/lieder-brahms-wiegenlied-song'],
+  ['Après un rêve', [['pages/lieder-faure-apres-un-reve', 0]], 'real/lieder-faure-apres-un-reve-song'],
+  ['Erlkönig', [['pages/lieder-schubert-erlkoenig', 12]], 'real/lieder-schubert-erlkoenig-song'],
 ]
 const pct = (a, b) => (b ? `${Math.round((100 * a) / b)}%` : '-').padStart(5)
 console.log('song'.padEnd(28), 'bars'.padStart(5), '  drawn notes rhythm', '   scan notes rhythm')
 const tot = { d: [0, 0, 0, 0], s: [0, 0, 0, 0] }
-for (const [title, drawn, scanPrefix, n] of SONGS) {
+for (const [title, drawn, scan] of SONGS) {
   const d = drawn.flatMap(([name, off]) => rowsOf(drawnRun, name, off).rows)
-  const s = Array.from({ length: n }, (_, k) => rowsOf(scanRun, scanPrefix + (k + 1)).rows).flat()
+  const s = rowsOf(scanRun, scan).rows
   const barsD = new Set(d.map(r => r.bar))
   const sum = rows => rows.filter(r => r.part >= 0 && barsD.has(r.bar)).reduce((t, r) => [t[0] + r.found, t[1] + r.want, t[2] + r.onTime, t[3] + r.timed], [0, 0, 0, 0])
   const [a, b] = [sum(d), sum(s)]
