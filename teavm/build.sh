@@ -4,6 +4,7 @@
 #   teavm/build.sh   (needs .work/ from ./setup.sh, and .work/patched.jar from ./build.sh)
 # TEAVM_STRICT=0 builds without TeaVM's null and bounds checks (smaller and a little faster, but a
 # null dereference then kills the whole run instead of being an exception Audiveris can catch).
+# TEAVM_OPT=SIMPLE|ADVANCED|FULL sets TeaVM's optimisation level (ADVANCED by default).
 set -e
 cd "$(dirname "$0")/.."
 J=$(ls -d .work/jdk/*/Contents/Home/bin .work/jdk/*/bin 2>/dev/null | head -1) # macOS or Linux
@@ -88,7 +89,7 @@ cp -R teavm/policy/src/META-INF $W/policy/
 mkdir -p $W/compiler
 jc -cp "$LIB" -d $W/compiler teavm/Spike.java
 STRICT=-Dteavm.strict=true; [ "$TEAVM_STRICT" = 0 ] && STRICT=
-"$J/java" -Xmx4g $STRICT -cp "$W/fork-core:$L/*:$W/compiler" Spike wasm-gc $W/out teavm.TeavmMain @$W/classpath.txt > $W/compile.log 2>&1 || true
+"$J/java" -Xmx4g $STRICT -Dteavm.opt=${TEAVM_OPT:-ADVANCED} -cp "$W/fork-core:$L/*:$W/compiler" Spike wasm-gc $W/out teavm.TeavmMain @$W/classpath.txt > $W/compile.log 2>&1 || true
 if grep -q '^PROBLEM' $W/compile.log || [ ! -f $W/out/classes.wasm ]; then
   grep '^PROBLEM' $W/compile.log | head -20 >&2; echo "TeaVM failed: $W/compile.log" >&2; exit 1
 fi

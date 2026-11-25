@@ -15,28 +15,28 @@ const STEPS = [
   ['LOAD', 'Opening the page', 0.5],
   ['BINARY', 'Turning it black and white', 3],
   ['SCALE', 'Measuring the staff lines', 0.1],
-  ['GRID', 'Finding the staves', 5],
-  ['HEADERS', 'Reading clefs, keys and time signatures', 1.7],
-  ['STEM_SEEDS', 'Looking for stems', 1.2],
+  ['GRID', 'Finding the staves', 4.4],
+  ['HEADERS', 'Reading clefs, keys and time signatures', 1.3],
+  ['STEM_SEEDS', 'Looking for stems', 0.9],
   ['BEAMS', 'Finding beams', 11],
-  ['LEDGERS', 'Finding ledger lines', 1.6],
-  ['HEADS', 'Finding note heads (the longest part)', 13.5],
-  ['STEMS', 'Joining stems to notes', 8.3],
-  ['REDUCTION', 'Sorting out overlaps', 0.4],
-  ['CUE_BEAMS', 'Looking for small notes', 1.5],
+  ['LEDGERS', 'Finding ledger lines', 1],
+  ['HEADS', 'Finding note heads', 9],
+  ['STEMS', 'Joining stems to notes', 4],
+  ['REDUCTION', 'Sorting out overlaps', 0.2],
+  ['CUE_BEAMS', 'Looking for small notes', 1],
   ['WORDS', 'Reading the words', 4], // ocr.js, between Audiveris's two calls for a page (teavm.js)
-  ['TEXTS', 'Placing the words', 1.4],
+  ['TEXTS', 'Placing the words', 0.9],
   ['MEASURES', 'Finding bar lines', 0.1],
   ['CHORDS', 'Grouping notes into chords', 0.1],
-  ['CURVES', 'Finding ties and slurs', 3.3],
-  ['SYMBOLS', 'Reading other symbols', 2.6],
+  ['CURVES', 'Finding ties and slurs', 1.9],
+  ['SYMBOLS', 'Reading other symbols', 1.7],
   ['LINKS', 'Linking symbols to notes', 0.2],
   ['RHYTHMS', 'Working out the rhythm', 0.3],
   ['PAGE', 'Putting the page together', 0.2],
 ]
 const STEP = new Map(STEPS.map(([id, text, s], i) => [id, { text, i, before: STEPS.slice(0, i).reduce((a, x) => a + x[2], 0) }]))
 const PAGE_SECONDS = STEPS.reduce((a, x) => a + x[2], 0)
-const START_SECONDS = 4 // starting Audiveris (once its 12 MB are downloaded), before the first page
+const START_SECONDS = 4 // starting Audiveris (once its 9 MB are downloaded), before the first page
 
 /** What Audiveris writes: plain MusicXML. */
 const MUSICXML = 'application/vnd.recordare.musicxml+xml'
@@ -190,7 +190,7 @@ async function read(files) {
     show('pick')
     return
   }
-  $('status').textContent = 'Starting the reader (it downloads about 12 MB the first time)…'
+  $('status').textContent = 'Starting the reader (it downloads about 9 MB the first time)…'
   progress.pages = input.pages.length
   // in a worker: each page is a minute or more of work that can't be interrupted
   const worker = new Worker(new URL('teavm-worker.js', import.meta.url), { type: 'module' })

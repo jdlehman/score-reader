@@ -9,7 +9,7 @@ entries by § number.
 
 ```sh
 ./setup.sh && ./build.sh   # .work/: Audiveris, our patch, the JDK, TeaVM's jars; .work/patched.jar
-teavm/build.sh             # .work/teavm/out/: classes.wasm (~15 MB) and runtime.mjs, in about a minute
+teavm/build.sh             # .work/teavm/out/: classes.wasm (~9 MB) and runtime.mjs, in about a minute
 ```
 
 What it builds from:
@@ -28,6 +28,9 @@ What it builds from:
   them from Bravura and Leland at every point size from 32 to 200 (`generate/TemplateDump.java`,
   run by `build.sh`), one file a font and size, and the page fetches the one a page needs
   (`PreRenderedTemplates`).
+- **Optimisation**: TeaVM's ADVANCED level (`TEAVM_OPT` sets another). It reads a third faster
+  than SIMPLE, with the same output. FULL fails to compile: two of TeaVM's optimiser passes crash
+  on Audiveris's code.
 - **`policy/`**: the reflection TeaVM must keep. **`tools/RewriteJars.java`**: bytecode fixes to
   five of the release's jars.
 

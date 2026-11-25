@@ -35,7 +35,8 @@ public class Spike {
         tool.setClassPath(cp);
         tool.setClassLoader(new URLClassLoader(urls.toArray(URL[]::new), Spike.class.getClassLoader()));
         tool.setLog(new ConsoleTeaVMToolLog(false));
-        tool.setOptimizationLevel(TeaVMOptimizationLevel.SIMPLE);
+        // -Dteavm.opt=SIMPLE|ADVANCED|FULL (TeaVM's optimisation level)
+        tool.setOptimizationLevel(TeaVMOptimizationLevel.valueOf(System.getProperty("teavm.opt", "SIMPLE")));
         tool.setDebugInformationGenerated(true);
         // -Dteavm.strict=true: explicit null and array-bounds checks, so a null dereference throws
         // a catchable NullPointerException instead of trapping the whole Wasm instance
