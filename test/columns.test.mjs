@@ -140,3 +140,16 @@ test('four beamed eighths with the last read as a quarter: not a triplet, left a
   const xml = score([measure(1, time(2, 6), note({ x: 10, dur: 3, type: 'eighth', beam: 'begin' }), note({ x: 30, dur: 3, type: 'eighth', beam: 'continue' }), note({ x: 50, dur: 3, type: 'eighth', beam: 'continue' }), note({ x: 70, dur: 6, type: 'quarter', beam: 'end' }))])
   assert.equal(alignColumns(xml).bars, 0)
 })
+
+test('an empty bar written <measure/> keeps the part\'s later bars against the right bars of the others', () => {
+  // part 2 rests in bar 2 (written <measure/>) and reads bar 3 too long; part 1's bar 3 (not its bar 2,
+  // a whole note) shows where its notes go
+  const xml = score(
+    [measure(1, time(), quarters(1).replace(/^<measure number="1">|<\/measure>$/g, '')), measure(2, note({ x: 10, dur: 8, type: 'whole' })), quarters(3)],
+    [measure(1, time(), quarters(1).replace(/^<measure number="1">|<\/measure>$/g, '')), '<measure number="2" width="300"/>', measure(3, note({ x: 10, dur: 4, type: 'half' }), note({ x: 50, dur: 2, type: 'quarter' }), note({ x: 90, dur: 2, type: 'quarter' }), note({ x: 130, dur: 2, type: 'quarter' }))],
+  )
+  const { xml: out, bars } = alignColumns(xml)
+  assert.equal(bars, 1)
+  assert.deepEqual(onsets(out, 2)[1], [0, 1, 2, 3])
+  assert.match(out, /<measure number="2" width="300"\/>/)
+})

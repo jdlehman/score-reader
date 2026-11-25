@@ -90,9 +90,10 @@ function parseParts(xml) {
     let divisions = 1
     let timeLength = null
     const measures = []
-    for (const m of p[2].matchAll(/(<measure(?:\s[^>]*)?>)([\s\S]*?)<\/measure>/g)) {
-      const innerStart = partStart + m.index + m[1].length
-      const inner = m[2]
+    // an empty bar may be written <measure .../>, with no inner text
+    for (const m of p[2].matchAll(/<measure(?=[\s>/])[^>]*?(?:\/>|>([\s\S]*?)<\/measure>)/g)) {
+      const inner = m[1] ?? ''
+      const innerStart = partStart + m.index + (m[1] == null ? m[0].length : m[0].indexOf('>') + 1)
       const events = []
       let at = 0
       let last = 0
