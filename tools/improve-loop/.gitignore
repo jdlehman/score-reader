@@ -1,0 +1,8 @@
+# Local working files: run outputs, Audiveris outputs, recovered
+# images, dated verifier reports, and Python bytecode. None of these
+# is committed.
+runs/
+audiveris-out/
+recovered/
+verifier-health-*.md
+__pycache__/
