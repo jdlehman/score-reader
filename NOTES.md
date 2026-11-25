@@ -113,6 +113,13 @@ data for all six (`@tesseract.js-data/<code>/4.0.0`, 6 to 14 MB each, which the 
 needs); a browser downloads only the one picked. If it fails to load, words are read in English.
 What a language buys is accented letters (`test/language.test.mjs`).
 
+**A beamed chord's beams on its first note only (app/beams.js).** Audiveris writes a chord's
+beams on every note of the chord. Verovio, which draws the score after a read and in Sectional,
+then drops the notes of the beamed group ("Adding 'beam' to a 'chord'"): on the test pages with
+beamed chords it kept 14,063 of 24,218 notes, losing most of a piano bar at a time. After the
+read, the chord's other notes lose their `<beam>` elements and follow its first note, as most
+programs write a chord; Verovio then keeps 24,214.
+
 **Notes in one column start together (app/columns.js).** Audiveris times each part's bar on its
 own, so a beam, flag or dot it misses, or a triplet the engraving left unmarked, puts the rest of
 that part's bar at the wrong times, though the other parts show where its notes belong. After
