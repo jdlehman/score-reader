@@ -82,7 +82,10 @@ at the same change is warned of (`test/holdout/README.md` has the rules).
 
 Reading time only counts against a change, past +20%, and only on pages both sides read in the
 same run, back to back: reads made at other times differ with the machine's load by as much as a
-quarter (a change's reads from earlier runs, `--after`, or main's kept reads). A step after the
+quarter (a change's reads from earlier runs, `--after`, or main's kept reads). When no page was
+read on both sides, a sample of six pages is read back to back, one at a time, with main and then
+the change (two clean pages, two from songs of several pages, a scan and a photo, each near the
+middle of its kind's reading time; about 15 minutes), and time is judged on that. A step after the
 read applied to main's reads adds only its own time, so it is always compared. A step outside the read that the corpus can't run (one needing the page's interface) isn't
 proved here: measure what it costs and gains some other way, and say how in its pull request.
 

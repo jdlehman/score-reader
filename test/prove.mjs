@@ -21,9 +21,11 @@
 //   JOBS=n               reads at once (default 4); OCR as in test/corpus.mjs
 //
 // Reading time is compared only on pages both sides read in this run, back to back: reads made at
-// other times differ with the machine's load by as much as a quarter. A step after the read applied
-// to main's reads adds only its own time, so it is always compared. Time only counts against a
-// change (past +20%).
+// other times differ with the machine's load by as much as a quarter. When none were (main's reads
+// are kept from an earlier run), a sample of six pages is read back to back, one at a time, main
+// then the change (about 15 minutes; SAMPLE=0 leaves it out, SAMPLE=list only names the pages). A
+// step after the read applied to main's reads adds only its own time, so it is always compared.
+// Time only counts against a change (past +20%).
 //
 // With no change named (no --wasm, --constants, --pre, --post, --after), it reads main a second
 // time: the noise check. Two reads of one build that differ on a page give that page an allowance
@@ -326,6 +328,39 @@ const timeOf = list => {
   return [...[0, 1].map(i => both.reduce((s, r) => s + r.seconds[i], 0)), both.length]
 }
 
+// ---- reading time: a sample read back to back, when no page was read on both sides here
+
+/**
+ * Six pages read back to back, one at a time, with main and then with the variant given: two clean
+ * pages, two from songs of several pages, a scan and a photo, each near the middle of its kind's
+ * reading time (so one slow orchestral page doesn't decide it). Returns main's and the variant's
+ * seconds over the pages both read, and how many; null if left out.
+ */
+async function timingSample(variant) {
+  if (process.env.SAMPLE === '0' || filters.length) return null
+  const kind = c => (/photo/.test(c.name) ? 'photo' : /(^|\/)(scans|real)\//.test(c.name) ? 'scan' : /(^|\/)(multi-page|gute-nacht)\//.test(c.name) ? 'multi-page' : 'clean')
+  const sample = []
+  for (const [k, n] of [['clean', 2], ['multi-page', 2], ['scan', 1], ['photo', 1]]) {
+    const of = cases.filter(c => !isHeldOut(c.name) && kind(c) === k).map(c => [c, secondsOf(base, c)]).filter(([, t]) => t != null).sort((a, b) => a[1] - b[1])
+    const from = Math.max(0, Math.floor((of.length - n) / 2))
+    sample.push(...of.slice(from, from + n).map(([c]) => c))
+  }
+  if (process.env.SAMPLE === 'list') {
+    console.error(`timing sample: ${sample.map(c => c.name).join(', ')}`)
+    return null
+  }
+  const runs = [`${name}.time-main`, `${name}.time-change`]
+  for (const run of runs) rmSync(runDir(run), { recursive: true, force: true })
+  console.error(`timing: ${sample.length} pages read back to back, one at a time`)
+  for (const c of sample) {
+    await read(runs[0], MAIN, [c], 1)
+    await read(runs[1], variant, [c], 1)
+  }
+  const [a, b] = runs.map(where)
+  const pairs = sample.map(c => [secondsOf(a, c), secondsOf(b, c)]).filter(([x, y]) => x != null && y != null)
+  return pairs.length ? [pairs.reduce((t, p) => t + p[0], 0), pairs.reduce((t, p) => t + p[1], 0), pairs.length] : null
+}
+
 // ---- noise: two reads of main
 
 const NOISE = join(ROOT, '.work', 'corpus', 'noise.json')
@@ -346,7 +381,12 @@ if (repeat) {
     if (Object.values(moved).some(v => v) || r.changedBars) cases[r.name] = moved
   }
   const totals = Object.fromEntries(MEASURES.map(([k]) => [k, Object.values(cases).reduce((s, m) => s + m[k], 0)]))
-  const [t0, t1, timed] = timeOf(rows)
+  let [t0, t1, timed] = timeOf(rows)
+  let sampled = false
+  if (!t0 && !baseRuns) {
+    const s = await timingSample(MAIN)
+    if (s) [t0, t1, timed, sampled] = [...s, true]
+  }
   const noise = { main: mainPrint, date: new Date().toISOString(), pages: rows.length, cases, totals, seconds: t0 ? Math.abs(t1 / t0 - 1) : null }
   if (filters.length) say('(a quick look: filters given, so noise.json is left as it was)')
   else if (baseRuns) say(`(main against ${options.base}, not against itself: noise.json is left as it was)`)
@@ -355,7 +395,7 @@ if (repeat) {
   const moved = Object.keys(cases)
   say(moved.length ? `${moved.length} page(s) read differently the second time:` : 'every page read the same both times: any difference a change makes is the change\'s')
   for (const n of moved) say(`  ${n}: ${MEASURES.filter(([k]) => cases[n][k]).map(([k, label]) => `${label} ${cases[n][k]}`).join(', ') || 'bars moved'}`)
-  say(t0 ? `reading time ${Math.round(t0)} s -> ${Math.round(t1)} s (${signed(Math.round(100 * (t1 / t0 - 1)))}%), on the ${timed} pages read both times in this run` : 'reading time: not compared (main\'s reads weren\'t both made in this run)')
+  say(t0 ? `reading time ${Math.round(t0)} s -> ${Math.round(t1)} s (${signed(Math.round(100 * (t1 / t0 - 1)))}%), on ${sampled ? `a sample of ${timed} pages read twice back to back, one at a time` : `the ${timed} pages read both times in this run`}` : 'reading time: not compared (main\'s reads weren\'t both made in this run)')
   finish('NOISE', 0)
 }
 
@@ -422,10 +462,15 @@ for (const [k, label, better] of MEASURES) {
     : k === 'read' ? ` (${tuning.filter(r => r.read[0]).length} -> ${tuning.filter(r => r.read[1]).length} of ${tuning.length})` : ''
   say(`  ${label.padEnd(26)} ${signed(v).padStart(6)}${detail.padEnd(34)} ${mark}`)
 }
-const [s0, s1, timed] = timeOf(tuning)
+let [s0, s1, timed] = timeOf(tuning)
+let sampled = false
+if (!s0 && built && !postOnly) {
+  const s = await timingSample(CHANGE)
+  if (s) [s0, s1, timed, sampled] = [...s, true]
+}
 const ratio = s0 ? s1 / s0 - 1 : 0
 const timeMark = ratio > TIME ? 'WORSE' : ''
-say(`  ${'reading time'.padEnd(26)} ${s0 && s1 ? `${Math.round(s0)} s -> ${Math.round(s1)} s (${signed(Math.round(100 * ratio))}% on ${timed} page(s) ${postOnly ? 'with the step applied to main\'s reads' : 'read back to back'}; counts only against, past +${Math.round(100 * TIME)}%) ${timeMark}` : 'not compared: no page was read on both sides in this run (reads made at other times differ with the machine\'s load)'}`)
+say(`  ${'reading time'.padEnd(26)} ${s0 && s1 ? `${Math.round(s0)} s -> ${Math.round(s1)} s (${signed(Math.round(100 * ratio))}% on ${sampled ? `a sample of ${timed} pages read back to back, one at a time` : `${timed} page(s) ${postOnly ? 'with the step applied to main\'s reads' : 'read back to back'}`}; counts only against, past +${Math.round(100 * TIME)}%) ${timeMark}` : 'not compared: no page was read on both sides in this run (reads made at other times differ with the machine\'s load), and no sample was read (SAMPLE=0, filters, or reads taken from runs)'}`)
 if (timeMark === 'WORSE') losses.push('reading time')
 say()
 const drawnPages = tuning.filter(r => r.drawn).length
