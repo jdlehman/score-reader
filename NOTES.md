@@ -42,9 +42,11 @@ leaves out a page that fails. These switches make desktop batch mode (the corpus
   finds a peak at an end of its range; missed, their sixteenths are read as quarters.
 - `NoteHeadsBuilder`, `wholeCatalog`: whole notes are matched with Leland's template as well as
   Bravura's, the better kept. Bravura's whole note is wider than MuseScore's or LilyPond's.
-- `ClefBuilder.lookForOctave`: a treble clef with a small separate "8" just below it is the
-  tenors' octave clef, as LilyPond draws it. Only below: above it, a tempo mark or bar number can
-  pass for the 8.
+- `ClefBuilder.lookForOctave`: a treble clef with a small "8" just below it is the tenors' octave
+  clef, as LilyPond draws it. The 8 may stand apart, a small glyph centred under the clef, or touch
+  the clef's curl (LilyPond 2.24), and so be part of the clef's own glyph: a treble clef ends 1.5
+  to 2.1 staff spaces below the staff, so a glyph reaching 2.2 to 3.2 below, with a hole in its ink
+  there, ends in the 8. Only below: above it, a tempo mark or bar number can pass for the 8.
 - `KeyInter.lookupCandidates`: a lone ♭ or ♯ is a key change when another staff of the system has
   the same change within a staff space of it. Otherwise Audiveris takes it for the accidental of
   the note just after it, and a part keeps the old key.
