@@ -7,7 +7,7 @@
 //     --names Soprano,... the parts' names, in order, where the file's are wrong or blank
 //     --title "..."  --source "..."  what the answer says it is, and where the MusicXML came from
 import { readFileSync } from 'node:fs'
-import { musicXmlText, parseMusicXml } from './score.mjs'
+import { MEASURE, musicXmlText, parseMusicXml } from './score.mjs'
 
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
@@ -15,7 +15,7 @@ const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 function timeAt(xml, bar) {
   const first = xml.match(/<part\b[\s\S]*?<\/part>/)[0]
   let time = [4, 4]
-  for (const [i, m] of [...first.matchAll(/<measure\b[\s\S]*?<\/measure>/g)].entries()) {
+  for (const [i, m] of [...first.matchAll(MEASURE)].entries()) {
     if (i >= bar) break
     const t = m[0].match(/<time\b[^>]*>\s*<beats>(\d+)<\/beats>\s*<beat-type>(\d+)<\/beat-type>/)
     if (t) time = [Number(t[1]), Number(t[2])]

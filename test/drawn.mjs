@@ -5,6 +5,7 @@
 // Verovio keeps every note, and how many of the MusicXML's note times it puts elsewhere.
 import createModule from 'verovio/wasm'
 import { LOG_OFF, VerovioToolkit, enableLog } from 'verovio/esm'
+import { MEASURE } from './score.mjs'
 
 let toolkit = null
 
@@ -22,7 +23,7 @@ export async function drawnBars(xml) {
   }
   if (!toolkit.loadData(xml)) return null
   const mei = toolkit.getMEI()
-  const drawn = [...mei.matchAll(/<measure\b[\s\S]*?<\/measure>/g)].map(m => (m[0].match(/<note\b/g) ?? []).length)
+  const drawn = [...mei.matchAll(MEASURE)].map(m => (m[0].match(/<note\b/g) ?? []).length)
   const timemap = toolkit.renderToTimemap({ includeMeasures: true, includeRests: false })
   const starts = timemap.filter(e => e.measureOn).map(e => e.qstamp)
   const heard = new Set(timemap.filter(e => e.on?.length).map(e => Math.round(e.qstamp * 96)))
@@ -56,11 +57,11 @@ function musicXmlBars(xml) {
   for (const p of xml.matchAll(/<part(?:\s[^>]*)?>([\s\S]*?)<\/part>/g)) {
     let divisions = 1
     let i = 0
-    for (const m of p[1].matchAll(/<measure(?:\s[^>]*)?>([\s\S]*?)<\/measure>/g)) {
+    for (const m of p[1].matchAll(MEASURE)) {
       const bar = (bars[i++] ??= { notes: 0, onsets: [] })
       let at = 0
       let last = 0
-      for (const e of m[1].matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+      for (const e of (m[1] ?? '').matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
         const [, kind, body] = e
         const duration = Number(tag(body, 'duration') ?? 0) || 0
         if (kind === 'attributes') divisions = Number(tag(body, 'divisions')) || divisions

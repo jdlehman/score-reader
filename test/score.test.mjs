@@ -141,3 +141,11 @@ test('words: XML entities are their characters, a ligature its letters', () => {
   assert.deepEqual(parseMusicXml(xml)[0].measures[0].notes.map(n => n.lyric), ["mort'", 'été'])
   assert.equal(syllable('ﬁl'), 'fil')
 })
+
+test('an empty bar written <measure .../> is a bar: the bars after it stay in step', () => {
+  const xml = `<score-partwise><part id="P1"><measure number="1">${note(60)}</measure><measure number="2">${note(62)}</measure><measure number="3">${note(64)}</measure></part><part id="P2"><measure number="1">${note(48)}</measure><measure number="2" width="400"/><measure number="3">${note(52)}</measure></part></score-partwise>`
+  const parts = parseMusicXml(xml)
+  assert.deepEqual(parts.map(p => p.measures.length), [3, 3])
+  assert.deepEqual(parts[1].measures.map(m => m.notes.map(n => n.midi)), [[48], [], [52]])
+  assert.equal(barsThatDontAddUp(xml), 0)
+})

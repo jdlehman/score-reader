@@ -25,6 +25,8 @@
 import { inflateRawSync } from 'node:zlib'
 
 const STEPS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+/** A measure, its inner text in [1]: an empty one may be written <measure .../> (no [1]); not <measure-style>. */
+export const MEASURE = /<measure(?=[\s>/])[^>]*?(?:\/>|>([\s\S]*?)<\/measure>)/g
 const ENTITIES = { amp: '&', apos: "'", quot: '"', lt: '<', gt: '>' }
 /** XML text with its entities (&apos;, &#233;) as the characters they stand for. */
 const xmlText = s => s?.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(\w+));/gi, (e, hex, dec, name) => (hex ? String.fromCodePoint(parseInt(hex, 16)) : dec ? String.fromCodePoint(Number(dec)) : ENTITIES[name] ?? e))
@@ -75,11 +77,11 @@ export function parseMusicXml(xml) {
   for (const p of xml.matchAll(/<part\b[^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/part>/g)) {
     const measures = []
     let divisions = 1 // per quarter note; set by <attributes>, kept from measure to measure
-    for (const m of p[2].matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/g)) {
+    for (const m of p[2].matchAll(MEASURE)) {
       const notes = []
       let at = 0 // where the next note starts, in divisions
       let last = 0 // where the last note started: a <chord/> note starts there too
-      for (const e of m[1].matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+      for (const e of (m[1] ?? '').matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
         const [, kind, body] = e
         const duration = Number(tag(body, 'duration') ?? 0) || 0
         if (kind === 'attributes') divisions = Number(tag(body, 'divisions')) || divisions
@@ -340,12 +342,12 @@ export function barsThatDontAddUp(xml) {
     let divisions = 1
     let length = null
     const bars = []
-    for (const m of p[1].matchAll(/<measure(?:\s[^>]*)?>([\s\S]*?)<\/measure>/g)) {
+    for (const m of p[1].matchAll(MEASURE)) {
       let at = 0
       let last = 0
       let notes = 0
       const ends = new Map() // voice -> where it ends, in divisions
-      for (const e of m[1].matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
+      for (const e of (m[1] ?? '').matchAll(/<(note|backup|forward|attributes)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
         const [, kind, body] = e
         if (kind === 'attributes') {
           divisions = Number(tag(body, 'divisions')) || divisions
