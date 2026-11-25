@@ -40,7 +40,7 @@ export function alignColumns(xml, why = null, scaled = false) {
   const reasons = {}
   skip = reason => (reasons[reason] = (reasons[reason] ?? 0) + 1)
   const parts = parseParts(xml)
-  if (parts.length < 2) return { xml, bars: 0 }
+  if (!parts.length) return { xml, bars: 0 }
   finer = new Map()
   const usual = usualLength(parts)
   for (const p of parts) for (const m of p.measures) m.length = m.timeLength ?? usual
@@ -50,7 +50,6 @@ export function alignColumns(xml, why = null, scaled = false) {
     const here = parts.map((p, pi) => ({ p, pi, m: p.measures[i], last: i === p.measures.length - 1 })).filter(x => x.m)
     const state = here.map(x => ({ ...x, fits: fits(x.m, i === 0 || x.last) }))
     const trusted = state.filter(s => s.fits === true).flatMap(s => chords(s.m)).filter(c => Number.isFinite(c.x))
-    if (!trusted.length) continue
     for (const s of state) {
       if (s.fits !== false) continue
       const text = retime(s.m, trusted)
@@ -248,7 +247,7 @@ const sameValue = (a, b) => a.type === b.type && a.dots === b.dots && (a.tm?.act
 function retime(m, trusted) {
   const edits = [] // [start, end, text] within the measure's inner text
   for (const run of runs(m)) {
-    const plan = planRun(run, m, trusted)
+    const plan = (trusted.length ? planRun(run, m, trusted) : null) ?? planTriplets(run, m)
     if (plan) edits.push(...plan)
   }
   if (!edits.length) return null
@@ -274,21 +273,9 @@ function retime(m, trusted) {
 
 /** The edits that re-time one run (voice) of a broken bar, or null if it can't be re-timed. */
 function planRun(run, m, trusted) {
-  const notes = run.events.filter(e => e.kind === 'note')
-  if (!notes.length || notes.some(e => e.measureRest)) return null
-  if (new Set(notes.map(e => e.voice)).size > 1) return skip('voices mixed in one run'), null
-  // slots: a note or rest that takes time, with the chord notes that sound with it
-  const slots = []
-  let lead = null // a forward before the first slot: the voice comes in later
-  for (const e of run.events) {
-    if (e.kind === 'forward') {
-      if (slots.length) return skip('gap inside the voice'), null
-      lead = e
-    } else if (e.grace) continue
-    else if (e.chord && slots.length) slots[slots.length - 1].notes.push(e)
-    else slots.push({ notes: [e], time: e.time, duration: e.duration })
-  }
-  if (!slots.length) return null
+  const voice = slotsOf(run)
+  if (!voice) return null
+  const { slots, lead } = voice
   const d = m.divisions
   // each slot's time from its column: the one time all trusted chords in that column have
   for (const s of slots) {
@@ -312,6 +299,83 @@ function planRun(run, m, trusted) {
   if (plan) return skip('retimed'), plan
   skip(fails[0])
   return null
+}
+
+/**
+ * A run's slots: each note or rest that takes time, with the chord notes that sound with it, and
+ * a forward before the first (the voice comes in later); null if the run isn't one plain voice.
+ */
+function slotsOf(run) {
+  const notes = run.events.filter(e => e.kind === 'note')
+  if (!notes.length || notes.some(e => e.measureRest)) return null
+  if (new Set(notes.map(e => e.voice)).size > 1) return skip('voices mixed in one run'), null
+  const slots = []
+  let lead = null
+  for (const e of run.events) {
+    if (e.kind === 'forward') {
+      if (slots.length) return skip('gap inside the voice'), null
+      lead = e
+    } else if (e.grace) continue
+    else if (e.chord && slots.length) slots[slots.length - 1].notes.push(e)
+    else slots.push({ notes: [e], time: e.time, duration: e.duration })
+  }
+  return slots.length ? { slots, lead } : null
+}
+
+/**
+ * The edits that make a voice running past its bar end on it by reading its groups of three as
+ * triplets, or null. An engraving often leaves the 3 off a triplet, and a group that starts with
+ * a rest has a beam over two notes only, so nothing on the page marks it. Every three slots of
+ * one length, an eighth or shorter (the values a beam joins; a longer triplet is nearly always
+ * marked), none a triplet yet, beamed as a group of three (beamedAsThree), starting on a multiple
+ * of the triplet's length (two of the value) from the bar's start, become a triplet; kept only if
+ * the voice then ends on the bar's end, so a bar too long for another reason (a note read twice,
+ * a value misread) stays as read.
+ */
+function planTriplets(run, m) {
+  const d = m.divisions
+  if (run.end / d <= m.length + EPS) return null
+  const voice = slotsOf(run)
+  if (!voice) return null
+  const { slots, lead } = voice
+  const starts = []
+  let t = slots[0].time / d
+  let groups = 0
+  for (let i = 0; i < slots.length;) {
+    const v = slots[i].duration / d
+    const three = slots.slice(i, i + 3)
+    const span = 2 * v
+    if (v <= 0.5 + EPS && three.length === 3 && three.every(s => s.duration === slots[i].duration && !s.notes[0].tm) && beamedAsThree(three) && near(t / span, Math.round(t / span))) {
+      starts.push(t, t + span / 3, t + (2 * span) / 3)
+      t += span
+      i += 3
+      groups++
+    } else {
+      starts.push(t)
+      t += v
+      i++
+    }
+  }
+  if (!groups) return skip('triplets: no group of three'), null
+  if (!near(t, m.length)) return skip('triplets: the voice would not end on the bar'), null
+  const fails = []
+  const plan = writePlan(slots, starts, run, m, lead, fails)
+  if (plan) return skip('triplets'), plan
+  skip(`triplets: ${fails[0]}`)
+  return null
+}
+
+/** A slot's first beam: begin, continue, end, or null (no beam, a rest, a hook). */
+const beamOf = slot => slot.notes[0].text.match(/<beam\b[^>]*number="1"[^>]*>(begin|continue|end)<\/beam>/)?.[1] ?? null
+
+/**
+ * Whether three slots are beamed as a group of their own, as a triplet is: one beam over all
+ * three, or a rest or flagged note and then a beam over the other two. A beam that runs on past
+ * them (four eighths) is not.
+ */
+function beamedAsThree([a, b, c]) {
+  const [x, y, z] = [a, b, c].map(beamOf)
+  return (x === 'begin' && y === 'continue' && z === 'end') || (x == null && y === 'begin' && z === 'end')
 }
 
 /**

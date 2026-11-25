@@ -5,8 +5,8 @@ import { test } from 'node:test'
 import { alignColumns } from '../app/columns.js'
 import { parseMusicXml } from './score.mjs'
 
-const note = ({ x, dur, type, voice = 1, step = 'C', rest = false, dots = 0, chord = false }) =>
-  `<note default-x="${x}">${chord ? '<chord/>' : ''}${rest ? '<rest/>' : `<pitch><step>${step}</step><octave>4</octave></pitch>`}<duration>${dur}</duration><voice>${voice}</voice><type>${type}</type>${'<dot />'.repeat(dots)}<stem>up</stem></note>`
+const note = ({ x, dur, type, voice = 1, step = 'C', rest = false, dots = 0, chord = false, beam = null }) =>
+  `<note default-x="${x}">${chord ? '<chord/>' : ''}${rest ? '<rest/>' : `<pitch><step>${step}</step><octave>4</octave></pitch>`}<duration>${dur}</duration><voice>${voice}</voice><type>${type}</type>${'<dot />'.repeat(dots)}<stem>up</stem>${beam ? `<beam number="1">${beam}</beam>` : ''}</note>`
 const time = (beats = 4, divisions = 2) => `<attributes><divisions>${divisions}</divisions><time><beats>${beats}</beats><beat-type>4</beat-type></time></attributes>`
 const measure = (n, ...body) => `<measure number="${n}">${body.join('')}</measure>`
 const score = (...parts) => `<?xml version="1.0"?><score-partwise><part-list>${parts.map((_, i) => `<score-part id="P${i + 1}"><part-name>V${i + 1}</part-name></score-part>`).join('')}</part-list>${parts.map((ms, i) => `<part id="P${i + 1}">${ms.join('')}</part>`).join('')}</score-partwise>`
@@ -123,4 +123,20 @@ test('a chord\'s second head, printed beside the stem, is not its column', () =>
   const p2 = measure(2, note({ x: 20, dur: 2, type: 'quarter' }), note({ x: 79, dur: 2, type: 'quarter' }), note({ x: 157, dur: 1, type: 'eighth' }), ...chord(204, 1), '<backup><duration>6</duration></backup>', note({ x: 20, dur: 7, type: 'half', voice: 2, dots: 2 }))
   const xml = score([measure(1, time(3)), p1, quarters(3, [20, 79, 157])], [measure(1, time(3)), p2, quarters(3, [20, 79, 157])])
   assert.deepEqual(alignColumns(xml).xml.match(/<part id="P2">[\s\S]*?<measure number="2">[\s\S]*?<\/measure>/)[0], xml.match(/<part id="P2">[\s\S]*?<measure number="2">[\s\S]*?<\/measure>/)[0])
+})
+
+test('a rest and two beamed eighths, twice, running past a 2/4 bar: unmarked triplets, even in one part', () => {
+  const group = x => [note({ x, dur: 3, type: 'eighth', rest: true }), note({ x: x + 10, dur: 3, type: 'eighth', step: 'D', beam: 'begin' }), note({ x: x + 20, dur: 3, type: 'eighth', step: 'B', beam: 'end' })]
+  const xml = score([measure(1, time(2, 6), ...group(10), ...group(60))])
+  assert.deepEqual(onsets(xml, 0)[0], [0.5, 1, 2, 2.5]) // as read: 3 quarters in a 2/4 bar
+  const { xml: out, bars } = alignColumns(xml)
+  assert.equal(bars, 1)
+  assert.deepEqual(onsets(out, 0)[0].map(o => +o.toFixed(4)), [0.3333, 0.6667, 1.3333, 1.6667])
+  assert.equal((out.match(/<time-modification>/g) ?? []).length, 6)
+  assert.equal((out.match(/<tuplet type="start"/g) ?? []).length, 2)
+})
+
+test('four beamed eighths with the last read as a quarter: not a triplet, left as read', () => {
+  const xml = score([measure(1, time(2, 6), note({ x: 10, dur: 3, type: 'eighth', beam: 'begin' }), note({ x: 30, dur: 3, type: 'eighth', beam: 'continue' }), note({ x: 50, dur: 3, type: 'eighth', beam: 'continue' }), note({ x: 70, dur: 6, type: 'quarter', beam: 'end' }))])
+  assert.equal(alignColumns(xml).bars, 0)
 })

@@ -135,5 +135,14 @@ common time signature has it. Measured 2026-11-24 with `test/prove.mjs` from the
 75 sung and 33 accompaniment bars more right, 1,414 more notes at the right time, none worse;
 held-out pages 65 more notes, none worse.
 
+A voice the columns can't place (in a part alone, or with no part that adds up) and that runs
+past its bar is tried as unmarked triplets: every three eighths (or shorter) of one length that
+are beamed as a group of their own (one beam over the three, or a rest or flagged note and a beam
+over the other two) and start on a beat of the triplet become a triplet, and this is kept only if
+the voice then ends on the bar's end. A beam running on past the three (four eighths, the last
+misread as a quarter) is not a triplet. Measured 2026-11-25: 295 more notes at the right time
+(Erlkönig, Lindenbaum, Widmung and the canticle most), 3 accompaniment bars more right, 74 fewer
+bars that don't add up, none worse; held-out pages 6 more notes, none worse.
+
 **Reading in a worker (teavm/).** The worker reads each page in two calls into Audiveris, up to
 the TEXTS step and the rest, and the page reads the words with tesseract.js in between.
