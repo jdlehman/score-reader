@@ -80,9 +80,10 @@ Then the held-out pages, once (`--holdout`): only their totals are shown, and wh
 Anything worse there in total makes the verdict NOT PROVED. Each use is logged, and a second look
 at the same change is warned of (`test/holdout/README.md` has the rules).
 
-Reading time only counts against a change, past +20%: main's reads are kept from another day,
-when the machine may have been busier, so a faster change is timed on its own, both builds back to
-back. A step outside the read that the corpus can't run (one needing the page's interface) isn't
+Reading time only counts against a change, past +20%, and only on pages both sides read in the
+same run, back to back: reads made at other times differ with the machine's load by as much as a
+quarter (a change's reads from earlier runs, `--after`, or main's kept reads). A step after the
+read applied to main's reads adds only its own time, so it is always compared. A step outside the read that the corpus can't run (one needing the page's interface) isn't
 proved here: measure what it costs and gains some other way, and say how in its pull request.
 
 ## What may be committed

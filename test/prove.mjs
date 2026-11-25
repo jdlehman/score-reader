@@ -20,8 +20,10 @@
 //   filter...            only cases whose name contains one of these: a quick look, not a verdict
 //   JOBS=n               reads at once (default 4); OCR as in test/corpus.mjs
 //
-// Reading time only counts against a change (past +20%): main's kept reads are from another day,
-// so a faster change is timed on its own, both builds back to back.
+// Reading time is compared only on pages both sides read in this run, back to back: reads made at
+// other times differ with the machine's load by as much as a quarter. A step after the read applied
+// to main's reads adds only its own time, so it is always compared. Time only counts against a
+// change (past +20%).
 //
 // With no change named (no --wasm, --constants, --pre, --post, --after), it reads main a second
 // time: the noise check. Two reads of one build that differ on a page give that page an allowance
@@ -168,7 +170,10 @@ async function read(run, v, list, jobs = JOBS) {
   console.error(`reading ${list.length} case${list.length === 1 ? '' : 's'} into .work/corpus/${run} (log: .work/corpus/${run}/prove.log)`)
   const log = openSync(join(runDir(run), 'prove.log'), 'a')
   await new Promise(done => spawn(process.execPath, [join(ROOT, 'test', 'corpus.mjs')], { env, stdio: ['ignore', log, log] }).on('close', done))
+  for (const c of list) (readNow[run] ??= new Set()).add(c.name)
 }
+/** The cases each run read in this invocation: only those read on both sides here are timed against each other. */
+const readNow = {}
 
 const mainRun = `main-${mainPrint}`
 let base = baseRuns
@@ -314,9 +319,11 @@ const sum = list => {
   for (const r of list) for (const [k, v] of Object.entries(measure(r))) t[k] = (t[k] ?? 0) + v
   return t
 }
+/** Reading seconds of main and the change over the rows read back to back here (or the step applied to main's reads), and how many. */
 const timeOf = list => {
-  const both = list.filter(r => r.seconds[0] != null && r.seconds[1] != null)
-  return [0, 1].map(i => both.reduce((s, r) => s + r.seconds[i], 0))
+  const together = r => postOnly || (readNow[mainRun]?.has(r.name) && readNow[name]?.has(r.name))
+  const both = list.filter(r => r.seconds[0] != null && r.seconds[1] != null && together(r))
+  return [...[0, 1].map(i => both.reduce((s, r) => s + r.seconds[i], 0)), both.length]
 }
 
 // ---- noise: two reads of main
@@ -339,8 +346,8 @@ if (repeat) {
     if (Object.values(moved).some(v => v) || r.changedBars) cases[r.name] = moved
   }
   const totals = Object.fromEntries(MEASURES.map(([k]) => [k, Object.values(cases).reduce((s, m) => s + m[k], 0)]))
-  const [t0, t1] = timeOf(rows)
-  const noise = { main: mainPrint, date: new Date().toISOString(), pages: rows.length, cases, totals, seconds: t0 ? Math.abs(t1 / t0 - 1) : 0 }
+  const [t0, t1, timed] = timeOf(rows)
+  const noise = { main: mainPrint, date: new Date().toISOString(), pages: rows.length, cases, totals, seconds: t0 ? Math.abs(t1 / t0 - 1) : null }
   if (filters.length) say('(a quick look: filters given, so noise.json is left as it was)')
   else if (baseRuns) say(`(main against ${options.base}, not against itself: noise.json is left as it was)`)
   else writeFileSync(NOISE, JSON.stringify(noise, null, 1) + '\n')
@@ -348,16 +355,15 @@ if (repeat) {
   const moved = Object.keys(cases)
   say(moved.length ? `${moved.length} page(s) read differently the second time:` : 'every page read the same both times: any difference a change makes is the change\'s')
   for (const n of moved) say(`  ${n}: ${MEASURES.filter(([k]) => cases[n][k]).map(([k, label]) => `${label} ${cases[n][k]}`).join(', ') || 'bars moved'}`)
-  say(`reading time ${Math.round(t0)} s -> ${Math.round(t1)} s (${t0 ? signed(Math.round(100 * (t1 / t0 - 1))) : 0}%)`)
+  say(t0 ? `reading time ${Math.round(t0)} s -> ${Math.round(t1)} s (${signed(Math.round(100 * (t1 / t0 - 1)))}%), on the ${timed} pages read both times in this run` : 'reading time: not compared (main\'s reads weren\'t both made in this run)')
   finish('NOISE', 0)
 }
 
 const noise = existsSync(NOISE) ? JSON.parse(readFileSync(NOISE, 'utf8')) : null
 const allow = (caseName, k) => noise?.cases[caseName]?.[k] ?? 0
 const allowTotal = k => noise?.totals[k] ?? 0
-// Reading time counts against a change when it grows past this. It never counts for one: main's
-// reads are kept from another day, when the machine may have been busier or cooler, so a faster
-// change has to be timed on its own, both builds back to back.
+// Reading time counts against a change when it grows past this, on pages both sides read back to
+// back in this run; it never counts for one.
 const TIME = Math.max(0.2, 2 * (noise?.seconds ?? 0))
 
 // ---- the verdict on the tuning pages
@@ -416,10 +422,10 @@ for (const [k, label, better] of MEASURES) {
     : k === 'read' ? ` (${tuning.filter(r => r.read[0]).length} -> ${tuning.filter(r => r.read[1]).length} of ${tuning.length})` : ''
   say(`  ${label.padEnd(26)} ${signed(v).padStart(6)}${detail.padEnd(34)} ${mark}`)
 }
-const [s0, s1] = timeOf(tuning)
+const [s0, s1, timed] = timeOf(tuning)
 const ratio = s0 ? s1 / s0 - 1 : 0
 const timeMark = ratio > TIME ? 'WORSE' : ''
-say(`  ${'reading time'.padEnd(26)} ${s0 && s1 ? `${Math.round(s0)} s -> ${Math.round(s1)} s (${signed(Math.round(100 * ratio))}%; counts only against, past +${Math.round(100 * TIME)}%) ${timeMark}` : 'not timed (a run from before reads were timed)'}`)
+say(`  ${'reading time'.padEnd(26)} ${s0 && s1 ? `${Math.round(s0)} s -> ${Math.round(s1)} s (${signed(Math.round(100 * ratio))}% on ${timed} page(s) ${postOnly ? 'with the step applied to main\'s reads' : 'read back to back'}; counts only against, past +${Math.round(100 * TIME)}%) ${timeMark}` : 'not compared: no page was read on both sides in this run (reads made at other times differ with the machine\'s load)'}`)
 if (timeMark === 'WORSE') losses.push('reading time')
 say()
 const drawnPages = tuning.filter(r => r.drawn).length
