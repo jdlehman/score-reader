@@ -1,0 +1,6 @@
+# Only needed for the deblur method (recover.py). The baseline method
+# and the scorer need nothing beyond the Python standard library.
+opencv-python-headless
+numpy
+Pillow
+scipy
