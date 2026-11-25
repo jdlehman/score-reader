@@ -25,6 +25,9 @@
 import { inflateRawSync } from 'node:zlib'
 
 const STEPS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+const ENTITIES = { amp: '&', apos: "'", quot: '"', lt: '<', gt: '>' }
+/** XML text with its entities (&apos;, &#233;) as the characters they stand for. */
+const xmlText = s => s?.replace(/&(?:#x([0-9a-f]+)|#(\d+)|(\w+));/gi, (e, hex, dec, name) => (hex ? String.fromCodePoint(parseInt(hex, 16)) : dec ? String.fromCodePoint(Number(dec)) : ENTITIES[name] ?? e))
 
 /** The MusicXML text of an .mxl (a zip) or of plain MusicXML bytes. */
 export function musicXmlText(bytes) {
@@ -96,7 +99,7 @@ export function parseMusicXml(xml) {
           const alter = Number(tag(pitch, 'alter') ?? 0)
           if (!(step in STEPS) || !Number.isFinite(octave)) continue
           // a tied-on note is the same note held: the answer counts it as a note too
-          const lyric = body.match(/<lyric\b[^>]*>[\s\S]*?<text\b[^>]*>([^<]*)<\/text>/)?.[1] // <text font-size=...> too
+          const lyric = xmlText(body.match(/<lyric\b[^>]*>[\s\S]*?<text\b[^>]*>([^<]*)<\/text>/)?.[1]) // <text font-size=...> too
           notes.push({ midi: 12 * (octave + 1) + STEPS[step] + Math.round(alter), lyric, onset: onset / divisions })
         }
       }
@@ -197,7 +200,8 @@ function assign(gain) {
   return [...best.values()].reduce((x, y) => (y.total > x.total ? y : x)).of
 }
 
-export const syllable = s => (s ?? '').toLowerCase().normalize('NFC').replace(/[^\p{L}\p{N}]/gu, '')
+// NFKC: a ligature (ﬁ) is its letters
+export const syllable = s => (s ?? '').toLowerCase().normalize('NFKC').replace(/[^\p{L}\p{N}]/gu, '')
 
 /** Longest common subsequence length of two lists. */
 function lcs(a, b) {

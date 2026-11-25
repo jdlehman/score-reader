@@ -2,7 +2,7 @@
 // The corpus scorer: a dropped measure costs only itself, and jumbled parts show in inPart.
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { bars, barsThatDontAddUp, score } from './score.mjs'
+import { bars, barsThatDontAddUp, parseMusicXml, score, syllable } from './score.mjs'
 
 const STEP = ['C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B']
 const note = midi => `<note><pitch><step>${STEP[midi % 12]}</step>${[1, 3, 6, 8, 10].includes(midi % 12) ? '<alter>1</alter>' : ''}<octave>${Math.floor(midi / 12) - 1}</octave></pitch></note>`
@@ -134,4 +134,10 @@ test('bars that don\'t add up: past the time signature, or short inside the piec
   const piece = (...bars) => `<score-partwise><part id="P0">${bars.map((b, i) => `<measure>${i === 0 ? '<attributes><divisions>1</divisions><time><beats>3</beats><beat-type>4</beat-type></time></attributes>' : ''}${b.map(n).join('')}</measure>`).join('')}</part></score-partwise>`
   assert.equal(barsThatDontAddUp(piece([1], [1, 1, 1], [3], [2])), 0) // a pickup and a short last bar are bars too
   assert.equal(barsThatDontAddUp(piece([3], [2, 2], [1, 1], [3])), 2) // one too long, one short inside
+})
+
+test('words: XML entities are their characters, a ligature its letters', () => {
+  const xml = `<score-partwise><part id="P0"><measure>${note(72).replace('</note>', '<lyric><text>mort&apos;</text></lyric></note>')}${note(74).replace('</note>', '<lyric><text>&#233;t&#xE9;</text></lyric></note>')}</measure></part></score-partwise>`
+  assert.deepEqual(parseMusicXml(xml)[0].measures[0].notes.map(n => n.lyric), ["mort'", 'été'])
+  assert.equal(syllable('ﬁl'), 'fil')
 })
