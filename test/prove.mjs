@@ -11,7 +11,9 @@
 //   --pre <module>       a step the change adds before the read, on the grey pages (teavm/node/read.mjs)
 //   --post <module>      a step it adds after the read, on the MusicXML. Alone, it is applied to
 //                        main's reads, reading nothing (it sees only the MusicXML), unless the module
-//                        exports needsPages (it uses the grey pages too)
+//                        exports needsPages (it uses the grey pages too). Main's reads have been
+//                        through readScore's own steps (app/teavm.js), so a new version of one of
+//                        those isn't a --post: run on them, it would run twice. Read again instead
 //   --main <dir>         main's WebAssembly build (default .work/teavm/out: ./build.sh on main)
 //   --base <run,...>     compare with these runs' reads instead of reading main (.work/corpus/<run>)
 //   --after <run,...>    take the change's reads from these runs: with a build named, reading only

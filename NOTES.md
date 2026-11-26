@@ -30,6 +30,9 @@ leaves out a page that fails. These switches make desktop batch mode (the corpus
   barlines that join staves already are. A choir's barlines stop at each staff to leave room for
   the words, and without this one could later be read as a stem, merging two bars. Each must run
   from its staff's first line to its last, within half a staff space (`maxFrozenBarShortfall`).
+- `BarsRetriever.pageBraces`: a system found with no brace takes the braces that more than half of
+  the sheet's other systems with the same staves (count, line counts, sizes) share. A piano brace
+  missed on one system made its two staves new parts, cut off from the parts around them.
 - `Voices.refineSystem` skips a part with no measure in a stack, where Audiveris threw and lost the
   page.
 - `ClefBuilder.HEADER_CLEF_SHAPES`: no percussion clef at the start of a 5-line staff (a 1-line

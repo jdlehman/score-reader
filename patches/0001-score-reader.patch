@@ -1219,10 +1219,161 @@ index 00f766d..7a341e8 100644
      // purgeClefs //
      //------------//
 diff --git a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
-index a1705b2..89ab613 100644
+index a1705b2..767c6f5 100644
 --- a/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
 +++ b/app/src/main/java/org/audiveris/omr/sheet/grid/BarsRetriever.java
-@@ -2008,6 +2008,9 @@ public class BarsRetriever
+@@ -931,22 +931,61 @@ public class BarsRetriever
+     {
+         final List<Staff> sheetStaves = staffManager.getStaves();
+ 
+-        for (SystemInfo system : sheet.getSystems()) {
+-            logger.debug("createParts {}", system);
+-
+-            final List<PartGroup> allGroups = system.getPartGroups(); // All groups in this system
++        // Score Reader: each system's "true" braced groups first, so that a system with none can
++        // take the braces the sheet's other systems of the same staves share (pageBraces): a brace
++        // missed on one system made its staves new parts, cut off from the parts around them
++        final Map<SystemInfo, TreeSet<PartGroup>> bracedOf = new java.util.LinkedHashMap<>();
+ 
+-            // Look for "true" braced groups
++        for (SystemInfo system : sheet.getSystems()) {
+             TreeSet<PartGroup> bracedGroups = new TreeSet<>(PartGroup.byFirstId);
+ 
+             if (!constants.forceSeparateParts.isSet()) {
+-                for (PartGroup pg : allGroups) {
++                for (PartGroup pg : system.getPartGroups()) {
+                     if (isTrueBraceGroup(pg)) {
+                         bracedGroups.add(pg);
+                     }
+                 }
+             }
+ 
++            bracedOf.put(system, bracedGroups);
++        }
++
++        for (SystemInfo system : sheet.getSystems()) {
++            logger.debug("createParts {}", system);
++
++            final List<PartGroup> allGroups = system.getPartGroups(); // All groups in this system
++            final TreeSet<PartGroup> bracedGroups = bracedOf.get(system);
++
++            // Score Reader: no brace here, where the sheet's like systems mostly have them
++            final List<int[]> adopted = bracedGroups.isEmpty() ? pageBraces(system, bracedOf) : null;
++
++            if (adopted != null) {
++                final int first = system.getFirstStaff().getId();
++                int nextId = first;
++
++                for (int[] span : adopted) {
++                    for (int id = nextId; id < first + span[0]; id++) {
++                        Staff staff = sheetStaves.get(id - 1);
++                        createPart(system, staff, staff);
++                    }
++
++                    createPart(
++                            system,
++                            sheetStaves.get(first + span[0] - 1),
++                            sheetStaves.get(first + span[1] - 1));
++                    nextId = first + span[1] + 1;
++                }
++
++                for (int id = nextId; id <= system.getLastStaff().getId(); id++) {
++                    Staff staff = sheetStaves.get(id - 1);
++                    createPart(system, staff, staff);
++                }
++
++                logger.info("{} takes the braces of the sheet's like systems", system);
++
++                continue;
++            }
++
+             // Assign all staves
+             int nextId = system.getFirstStaff().getId(); // ID of next staff to be assigned
+ 
+@@ -988,6 +1027,82 @@ public class BarsRetriever
+         }
+     }
+ 
++    //------------//
++    // pageBraces //
++    //------------//
++    /**
++     * Score Reader: the braced spans (staff indices within a system) that more than half of the
++     * sheet's other systems with the same staves (count, line counts, sizes) share, for a system
++     * found with no brace; null if they don't agree on any, or have none.
++     *
++     * @param system   the system with no brace
++     * @param bracedOf each system's "true" braced groups
++     * @return the spans [first, last] to take, or null
++     */
++    private List<int[]> pageBraces (SystemInfo system,
++                                    Map<SystemInfo, TreeSet<PartGroup>> bracedOf)
++    {
++        final List<Staff> staves = system.getStaves();
++        final Map<String, Integer> votes = new java.util.HashMap<>();
++        final Map<String, List<int[]>> spansOf = new java.util.HashMap<>();
++        int peers = 0;
++
++        for (Map.Entry<SystemInfo, TreeSet<PartGroup>> entry : bracedOf.entrySet()) {
++            final SystemInfo other = entry.getKey();
++            final List<Staff> others = other.getStaves();
++
++            if (other == system || others.size() != staves.size()) {
++                continue;
++            }
++
++            boolean same = true;
++
++            for (int i = 0; i < staves.size(); i++) {
++                if (others.get(i).getLineCount() != staves.get(i).getLineCount()
++                        || others.get(i).isSmall() != staves.get(i).isSmall()) {
++                    same = false;
++                    break;
++                }
++            }
++
++            if (!same) {
++                continue;
++            }
++
++            peers++;
++
++            if (entry.getValue().isEmpty()) {
++                continue;
++            }
++
++            final int first = other.getFirstStaff().getId();
++            final List<int[]> spans = new ArrayList<>();
++            final StringBuilder key = new StringBuilder();
++
++            for (PartGroup pg : entry.getValue()) {
++                final int a = pg.getFirstStaffId() - first;
++                final int b = pg.getLastStaffId() - first;
++                spans.add(new int[] { a, b });
++                key.append(a).append('-').append(b).append(',');
++            }
++
++            votes.merge(key.toString(), 1, Integer::sum);
++            spansOf.put(key.toString(), spans);
++        }
++
++        String best = null;
++        int count = 0;
++
++        for (Map.Entry<String, Integer> vote : votes.entrySet()) {
++            if (vote.getValue() > count || (vote.getValue() == count && vote.getKey().compareTo(best) < 0)) {
++                best = vote.getKey();
++                count = vote.getValue();
++            }
++        }
++
++        return (best != null && 2 * count > peers) ? spansOf.get(best) : null;
++    }
++
+     //----------------------//
+     // deleteRelatedColumns //
+     //----------------------//
+@@ -2008,6 +2123,9 @@ public class BarsRetriever
          watch.start("createConnectionInters");
          createConnectionInters(); // Create barline and bracket connection across staves
  
@@ -1232,7 +1383,7 @@ index a1705b2..89ab613 100644
          watch.start("groupBarlines");
          groupBarlines(); // Detect grouped barlines
  
-@@ -2028,6 +2031,54 @@ public class BarsRetriever
+@@ -2028,6 +2146,54 @@ public class BarsRetriever
          }
      }
  
@@ -1287,7 +1438,7 @@ index a1705b2..89ab613 100644
      //-------------//
      // projectorOf //
      //-------------//
-@@ -2605,6 +2656,12 @@ public class BarsRetriever
+@@ -2605,6 +2771,12 @@ public class BarsRetriever
                  1.0,
                  "Maximum extension for a barline above or below staff line");
  
